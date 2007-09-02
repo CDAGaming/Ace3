@@ -1,3 +1,4 @@
+--[[ $Id$ ]]
 local MAJOR, MINOR = "AceAddon-3.0", 0
 local AceAddon, oldminor = LibStub:NewLibrary( MAJOR, MINOR )
 
