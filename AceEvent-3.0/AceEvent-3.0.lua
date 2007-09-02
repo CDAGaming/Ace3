@@ -1,0 +1,171 @@
+local ACEEVENT_MAJOR = "AceEvent-3.0"
+local ACEEVENT_MINOR = 1
+
+local AceEvent = LibStub:NewLibrary(ACEEVENT_MAJOR, ACEEVENT_MINOR)
+if not AceEvent then return end
+
+-- upgrading
+AceEvent.events = AceEvent.events or {}     -- Blizzard events
+AceEvent.messages = AceEvent.messages or {}	-- Own messages
+AceEvent.frame = AceEvent.frame or CreateFrame("Frame", "AceEvent30Frame") -- our event frame
+AceEvent.embeds = AceEvent.embeds or {} -- what objects embed this lib
+
+-- upgrading of embeds is done at the bottom of the file
+
+-- local upvalues
+local events = AceEvent.events
+local messages = AceEvent.messages
+
+local function safecall( func, ... )
+	local success, err = pcall(func,...)
+	if not success then geterrorhandler()(err:find("%.lua:%d+:") and err or (debugstack():match("\n(.-: )in.-\n") or "") .. err) end
+end
+
+-- generic event and message firing function
+-- fires the event/message into the given registry
+local function Fire(registry, event, ...)
+	local slot = registry[event]
+	if not slot then return end
+	
+	for obj, method in pairs( slot ) do
+		if type(method) == "string" then
+			safecall( obj[method], obj, ... )
+		else
+			safecall( method, ... )
+		end
+	end	
+end
+
+-- Generic registration and unregisration for messages and events
+local function RegOrUnreg(self, unregister, registry, event, method )
+	assert( self ~= AceEvent )
+	assert( type(event) == "string" )
+	local slot = registry[event]
+
+	if not slot then
+		slot = {} -- purposefully created even on unregister to reduce logic here AND in :UnlistenEvent(). The chance that it didn't already exist is VERY slim either way.
+		registry[event] = slot
+	end
+
+	if unregister then -- unregister
+		slot[self] = nil
+	else -- overwrite any old registration
+		assert( type( method ) == "string" or type(method) == "nil" or type(method) == "function" )
+		if not method then
+			assert( self[event] )
+			method = event
+		end
+		slot[self] = method
+	end
+end
+
+--- embedding and embed handling
+
+local mixins = {
+	"RegisterEvent", "UnregisterEvent",
+	"RegisterMessage", "UnregisterMessage",
+	"SendMessage",
+	"UnregisterAllEvents", "UnregisterAllMessages",
+} 
+
+-- AceEvent:Embed( target )
+-- target (object) - target object to embed AceEvent in
+--
+-- Embeds AceEevent into the target object making the functions from the mixins list available on target:..
+function AceEvent:Embed( target )
+	for k, v in pairs( mixins ) do
+		target[v] = self[v]
+	end
+	self.embeds[target] = true
+end
+
+-- AceEvent:OnEmbedDisable( target )
+-- target (object) - target object that is being disabled
+--
+-- Unregister all events messages etc when the target disables.
+-- this method should be called by the target manually or by an addon framework
+function AceEvent:OnEmbedDisable( target )
+	target:UnregisterAllEvents()
+	target:UnregisterAllMessages()
+end
+
+-- AceEvent:RegisterEvent( event, method )
+-- event (string) - Blizzard event to register for
+-- method (string or function) - Method to call on self or function to call when event is triggered
+--
+-- Registers a blizzard event and binds it to the given method
+function AceEvent:RegisterEvent( event, method )
+	RegOrUnreg(self, false, events, event, method)
+	AceEvent.frame:RegisterEvent(event)
+end
+
+-- AceEvent:UnregisterEvent( event )
+-- event (string) - Blizzard event to unregister
+--
+-- Unregisters a blizzard event
+function AceEvent:UnregisterEvent( event )
+	RegOrUnreg(self, true, events, event )
+	if not next(events[event]) then	-- events[event] _will_ exist after RegOrUnreg call
+		AceEvent.frame:UnregisterEvent(event)
+	end
+end
+
+-- AceEvent:RegisterMessage( message, method )
+-- message (string) - Inter Addon message to register for
+-- method (string or function) - Method to call on self or function to call when message is received
+--
+-- Registers an inter addon message and binds it to the given method
+function AceEvent:RegisterMessage( message, method )
+	RegOrUnreg(self, false, messages, message, method )
+end
+
+-- AceEvent:UnregisterMessage( message )
+-- message (string) - Interaddon message to unregister
+--
+-- Unregisters an interaddon message
+function AceEvent:UnregisterMessage( message )
+	RegOrUnreg(self, true, messages, message )
+end
+
+-- AceEvent:SendMessage( message, ... )
+-- message (string) - Message to send
+-- ... (tuple) - Arguments to the message
+-- 
+-- Sends an interaddon message with arguments
+function AceEvent:SendMessage(message, ... )
+	Fire(messages, message, ...)
+end
+
+-- AceEvent:UnregisterAllEvents()
+-- 
+-- Unregisters all events registered by self
+function AceEvent:UnregisterAllEvents()
+	for event, slot in pairs( events ) do
+		if slot[self] then
+			self:UnregisterEvent( event) -- call unregisterevent instead of regunreg here to make sure the frame gets unregistered if needed
+		end
+	end
+end
+
+-- AceEvent:UnregisterAllMessages()
+-- 
+-- Unregisters all messages registered by self
+function AceEvent:UnregisterAllMessages()
+	for message, slot in pairs( messages ) do
+		if slot[self] then
+			RegOrUnreg(self, true, messages, message )
+		end
+	end
+end
+
+-- Last step of upgrading
+
+-- Fire blizzard events into the event listeners
+AceEvent.frame:SetScript("OnEvent", function(this, event, ...)
+	Fire(events, event, ...)
+end)
+
+--- Upgrade our old embeds
+for target, v in pairs( AceEvent.embeds ) do
+	AceEvent:Embed( target )
+end
