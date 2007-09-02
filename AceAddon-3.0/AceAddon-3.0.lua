@@ -25,18 +25,18 @@ end
 --
 -- returns the addon object when succesful
 function AceAddon:NewAddon( name, ... )
-	assert( type( name ) == "string", "Bad argument #2 to 'NewAddon' (string expected)" )
+	assert(type(name) == "string", "Bad argument #2 to 'NewAddon' (string expected)")
 	
 	if self.addons[name] then
-		error( ("AceAddon '%s' already exists."):format(name), 2 )
+		error(("AceAddon '%s' already exists."):format(name), 2)
 	end
 	
-	local addon = { name = name}
+	local addon = {name = name}
 	self.addons[name] = addon
-	self:EmbedLibraries( addon, ... )
+	self:EmbedLibraries(addon, ...)
 	
 	-- add to queue of addons to be initialized upon ADDON_LOADED
-	table.insert( self.initializequeue, addon )
+	table.insert(self.initializequeue, addon)
 	return addon
 end
 
@@ -59,7 +59,7 @@ end
 function AceAddon:EmbedLibraries( addon, ... )
 	for i=1,select("#", ... ) do
 		-- TODO: load on demand?
-		local libname = select( i, ... )
+		local libname = select(i, ...)
 		self:EmbedLibrary(addon, libname, false, 3)
 	end
 end
@@ -73,12 +73,12 @@ function AceAddon:EmbedLibrary( addon, libname, silent, offset )
 	local lib = LibStub:GetLibrary(libname, true)
 	if not silent and not lib then
 		error(("Cannot find a library instance of %q."):format(tostring(libname)), offset or 2)
-	elseif lib and type(lib.Embed) ~= "function" then
+	elseif lib and type(lib.Embed) == "function" then
 		lib:Embed(addon)
-		table.insert( self.embeds[addon], libname )  
+		table.insert(self.embeds[addon], libname)  
 		return true
 	elseif lib then
-		error( ("Library '%s' is not Embed capable"):format(libname), offset or 2 )
+		error(("Library '%s' is not Embed capable"):format(libname), offset or 2)
 	end
 end
 
@@ -88,11 +88,11 @@ end
 -- calls OnInitialize on the addon object if available
 -- calls OnEmbedInitialize on embedded libs in the addon object if available
 function AceAddon:InitializeAddon( addon )
-	safecall( addon.OnInitialize, addon )
+	safecall(addon.OnInitialize, addon)
 	
-	for k, libname in ipairs( self.embeds[addon] ) do
+	for k, libname in ipairs(self.embeds[addon]) do
 		local lib = LibStub:GetLibrary(libname, true)
-		if lib then safecall( lib.OnEmbedInitialize, lib, addon ) end
+		if lib then safecall(lib.OnEmbedInitialize, lib, addon) end
 	end
 end
 
@@ -104,10 +104,10 @@ end
 function AceAddon:EnableAddon( addon )
 	-- TODO: enable only if needed
 	-- TODO: handle 'first'? Or let addons do it on their own?
-	safecall( addon.OnEnable, addon )
-	for k, libname in ipairs( self.embeds[addon] ) do
+	safecall(addon.OnEnable, addon)
+	for k, libname in ipairs(self.embeds[addon]) do
 		local lib = LibStub:GetLibrary(libname, true)
-		if lib then safecall( lib.OnEmbedEnable, lib, addon ) end
+		if lib then safecall(lib.OnEmbedEnable, lib, addon) end
 	end
 end
 
@@ -120,11 +120,11 @@ function AceAddon:DisableAddon( addon )
 	-- TODO: disable only if enabled
 	safecall( addon.OnDisable, addon )
 	if self.embeds[addon] then
-		for k, libname in ipairs( self.embeds[addon] ) do
+		for k, libname in ipairs(self.embeds[addon]) do
 			local lib = LibStub:GetLibrary(libname, true)
-			if lib then	safecall( lib.OnEmbedDisable, lib, addon ) end
+			if lib then safecall(lib.OnEmbedDisable, lib, addon) end
 		end
-	end	
+	end
 end
 
 -- Event Handling
@@ -132,9 +132,9 @@ local function onEvent( this, event, arg1 )
 	if event == "ADDON_LOADED" or event == "PLAYER_LOGIN" then
 		for i = 1, #AceAddon.initializequeue do
 			local addon = AceAddon.initializequeue[i]
-			AceAddon:InitializeAddon( addon )
+			AceAddon:InitializeAddon(addon)
 			AceAddon.initializequeue[i] = nil
-			table.insert( AceAddon.enablequeue, addon )
+			table.insert(AceAddon.enablequeue, addon)
 		end
 		
 		if IsLoggedIn() then
