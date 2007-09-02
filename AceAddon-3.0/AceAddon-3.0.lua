@@ -120,12 +120,10 @@ end
 function AceAddon:DisableAddon( addon )
 	-- TODO: disable only if enabled
 	safecall( addon.OnDisable, addon )
-	if self.embeds[addon] then
-		for k, libname in ipairs(self.embeds[addon]) do
-			local lib = LibStub:GetLibrary(libname, true)
-			if lib then safecall(lib.OnEmbedDisable, lib, addon) end
-		end
-	end
+    for k, libname in ipairs(self.embeds[addon]) do
+        local lib = LibStub:GetLibrary(libname, true)
+        if lib then safecall(lib.OnEmbedDisable, lib, addon) end
+    end
 end
 
 -- Event Handling
@@ -146,14 +144,6 @@ local function onEvent( this, event, arg1 )
 			end
 		end
 	end
-	
-	-- TODO: do we want to disable addons on logout?
-		-- Mikk: unnecessary code running imo, since disable isn't == logout (we can enable and disable in-game)
-		-- Ammo: AceDB wants to massage the db on logout
-		-- Mikk: AceDB can listen for PLAYER_LOGOUT on its own, and if it massages the db on disable, it'll ahve to un-massage it on reenables
-		-- K: I say let it do it on PLAYER_LOGOUT, Or if it must it already will know OnEmbedDisable
-		-- Nev: yeah, let AceDB figure out logout on its own, and keep it seperate from disable.
-		-- DISCUSSION WANTED!
 end
 
 --The next few funcs are just because no one should be reaching into the internal registries
