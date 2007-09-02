@@ -1,20 +1,22 @@
-local MAJOR = "AceAddon-3.0"
-local MINOR = 0
+local MAJOR, MINOR = "AceAddon-3.0", 0
+local AceAddon, oldminor = LibStub:NewLibrary( MAJOR, MINOR )
 
-local AceAddon = LibStub:NewLibrary( MAJOR, MINOR )
+if not AceAddon then 
+    return -- No Upgrade needed.
+elseif not oldminor then -- This is the first version
+    AceAddon.frame = CreateFrame("Frame", "AceAddon30Frame") -- Our very own frame
+    AceAddon.addons = {} -- addons in general
+    AceAddon.initializequeue = {} -- addons that are new and not initialized
+    AceAddon.enablequeue = {} -- addons that are initialized and waiting to be enabled
+    AceAddon.embeds = setmetatable({}, {__index = function(tbl, key) tbl[key] = {} return tbl[key] end }) -- contains a list of libraries embedded in an addon
+end
 
-if not AceAddon then return end
-
--- upgrading
-AceAddon.frame = AceAddon.frame or CreateFrame("Frame", "AceAddon30Frame") -- our event frame
-AceAddon.addons = AceAddon.addons or {} -- addons in general
-AceAddon.initializequeue = AceAddon.initializequeue or {} -- addons that are new and not initialized
-AceAddon.enablequeue = AceAddon.enablequeue or {} -- addons that are initialized and waiting to be enabled
-AceAddon.embeds = AceAddon.embeds or {} -- contains a list of libraries embedded in an addon
-
-local function safecall( func, ... )
-	local success, err = pcall(func,...)
-	if not success then geterrorhandler()(err:find("%.lua:%d+:") and err or (debugstack():match("\n(.-: )in.-\n") or "") .. err) end
+local function safecall(func,...)
+    if type(func) == "function" then 
+        local success, err = pcall(func,...)
+        if not err:find("%.lua:%d+:") then err = (debugstack():match("\n(.-: )in.-\n") or "") .. err end 
+        geterrorhandler()(err)
+    end
 end
 
 -- AceAddon:NewAddon( name, [lib, lib, lib, ...] )
@@ -28,13 +30,11 @@ function AceAddon:NewAddon( name, ... )
 	if self.addons[name] then
 		error( ("AceAddon '%s' already exists."):format(name), 2 )
 	end
-
-	local addon = {}
-	addon.name = name
-
+    
+    local addon = { name = name}
+	self.addons[name] = addon
 	self:EmbedLibraries( addon, ... )
 
-	self.addons[name] = addon
 	-- add to queue of addons to be initialized upon ADDON_LOADED
 	table.insert( self.initializequeue, addon )
 	return addon
@@ -60,15 +60,26 @@ function AceAddon:EmbedLibraries( addon, ... )
 	for i=1,select("#", ... ) do
 		-- TODO: load on demand?
 		local libname = select( i, ... )
-		local lib = LibStub:GetLibrary( libname )
-		if type( lib.Embed ) ~= "function" then
-			error( ("Library '%s' is not Embed capable"):format(libname), 2 )
-		else
-			lib:Embed( addon )
-			if not self.embeds[addon] then self.embeds[addon] = {} end
-			table.insert( self.embeds[addon], libname ) -- register addon using lib
-		end
+		self:EmbedLibrary(addon, libname, false, 3)
 	end	
+end
+
+-- AceAddon:EmbedLibrary( addon, libname, silent, offset )
+-- addon (object) - addon to embed the libs in
+-- libname (string) - lib to embed
+-- [silent] (boolean) - optional, marks an embed to fail silently if the library doesn't exist.
+-- [offset] (number) - will push the error messages back to said offset defaults to 2
+function AceAddon:EmbedLibrary( addon, libname, silent, offset )
+    local lib = LibStub:GetLibrary(libname, true)
+    if not silent and not lib then
+        error(("Cannot find a library instance of %q."):format(tostring(libname)), offset or 2)
+    elseif lib and type(lib.Embed) ~= "function" then
+        lib:Embed(addon)
+        table.insert( self.embeds[addon], libname )  
+        return true
+    elseif lib then
+        error( ("Library '%s' is not Embed capable"):format(libname), offset or 2 )
+    end
 end
 
 -- AceAddon:IntializeAddon( addon )
@@ -77,18 +88,12 @@ end
 -- calls OnInitialize on the addon object if available
 -- calls OnEmbedInitialize on embedded libs in the addon object if available
 function AceAddon:InitializeAddon( addon )
-	if type( addon.OnInitialize ) == "function" then
-		safecall( addon.OnInitialize, addon )
-	end
+	safecall( addon.OnInitialize, addon )
 
-	if self.embeds[addon] then
-		for k, libname in ipairs( self.embeds[addon] ) do
-			local lib = LibStub:GetLibrary(libname, true)
-			if lib and type( lib.OnEmbedInitialize ) == "function" then
-				safecall( lib.OnEmbedInitialize, lib, addon )
-			end
-		end
-	end	
+    for k, libname in ipairs( self.embeds[addon] ) do
+        local lib = LibStub:GetLibrary(libname, true)
+        if lib then safecall( lib.OnEmbedInitialize, lib, addon ) end
+    end
 end
 
 -- AceAddon:EnableAddon( addon )
@@ -98,18 +103,12 @@ end
 -- calls OnEmbedEnable on embedded libs in the addon object if available
 function AceAddon:EnableAddon( addon )
 	-- TODO: enable only if needed
-	if type( addon.OnEnable ) == "function" then
-		-- TODO: handle 'first'? Or let addons do it on their own?
-		safecall( addon.OnEnable, addon )
-	end
-	if self.embeds[addon] then
-		for k, libname in ipairs( self.embeds[addon] ) do
-			local lib = LibStub:GetLibrary(libname, true)
-			if lib and type( lib.OnEmbedEnable ) == "function" then
-				safecall( lib.OnEmbedEnable, lib, addon )
-			end
-		end
-	end	
+	-- TODO: handle 'first'? Or let addons do it on their own?
+	safecall( addon.OnEnable, addon )
+	for k, libname in ipairs( self.embeds[addon] ) do
+        local lib = LibStub:GetLibrary(libname, true)
+        if lib then safecall( lib.OnEmbedEnable, lib, addon ) end
+    end
 end
 
 -- AceAddon:DisableAddon( addon )
@@ -119,15 +118,11 @@ end
 -- calls OnEmbedDisable on embedded libs in the addon object if available
 function AceAddon:DisableAddon( addon )
 	-- TODO: disable only if enabled
-	if type( addon.OnDisable ) == "function" then
-		safecall( addon.OnDisable, addon )
-	end
+	safecall( addon.OnDisable, addon )
 	if self.embeds[addon] then
 		for k, libname in ipairs( self.embeds[addon] ) do
 			local lib = LibStub:GetLibrary(libname, true)
-			if lib and type( lib.OnEmbedDisable ) == "function" then
-				safecall( lib.OnEmbedDisable, lib, addon )
-			end
+			if lib then	safecall( lib.OnEmbedDisable, lib, addon ) end
 		end
 	end	
 end
@@ -155,8 +150,15 @@ local function onEvent( this, event, arg1 )
 		-- Mikk: unnecessary code running imo, since disable isn't == logout (we can enable and disable in-game)
 		-- Ammo: AceDB wants to massage the db on logout
 		-- Mikk: AceDB can listen for PLAYER_LOGOUT on its own, and if it massages the db on disable, it'll ahve to un-massage it on reenables
+        -- K: I say let it do it on PLAYER_LOGOUT, Or if it must it already will know OnEmbedDisable
 		-- DISCUSSION WANTED!
 end
+
+--The next few funcs are just because no one should be reaching into the internal registries
+--Thoughts?
+function AceAddon:IterateAddons() return pairs(self.addons) end
+function AceAddon:IterateEmbedsOnAddon(addon) return pairs(self.embeds[addon]) end
+
 AceAddon.frame:RegisterEvent("ADDON_LOADED")
 AceAddon.frame:RegisterEvent("PLAYER_LOGIN")
 AceAddon.frame:SetScript( "OnEvent", onEvent )
