@@ -7,6 +7,7 @@ if not AceAddon then
 elseif not oldminor then -- This is the first version
 	AceAddon.frame = CreateFrame("Frame", "AceAddon30Frame") -- Our very own frame
 	AceAddon.addons = {} -- addons in general
+    AceAddon.statuses = {} -- statuses of addon.  
 	AceAddon.initializequeue = {} -- addons that are new and not initialized
 	AceAddon.enablequeue = {} -- addons that are initialized and waiting to be enabled
 	AceAddon.embeds = setmetatable({}, {__index = function(tbl, key) tbl[key] = {} return tbl[key] end }) -- contains a list of libraries embedded in an addon
@@ -103,13 +104,15 @@ end
 -- calls OnEnable on the addon object if available
 -- calls OnEmbedEnable on embedded libs in the addon object if available
 function AceAddon:EnableAddon( addon )
-	-- TODO: enable only if needed
+    if self.statuses[addon.name] then return false end
 	-- TODO: handle 'first'? Or let addons do it on their own?
 	safecall(addon.OnEnable, addon)
 	for k, libname in ipairs(self.embeds[addon]) do
 		local lib = LibStub:GetLibrary(libname, true)
 		if lib then safecall(lib.OnEmbedEnable, lib, addon) end
 	end
+    self.statuses[addon.name] = true
+    return true
 end
 
 -- AceAddon:DisableAddon( addon )
@@ -118,12 +121,14 @@ end
 -- calls OnDisable on the addon object if available
 -- calls OnEmbedDisable on embedded libs in the addon object if available
 function AceAddon:DisableAddon( addon )
-	-- TODO: disable only if enabled
+    if not self.statuses[addon.name] then return false end
 	safecall( addon.OnDisable, addon )
     for k, libname in ipairs(self.embeds[addon]) do
         local lib = LibStub:GetLibrary(libname, true)
         if lib then safecall(lib.OnEmbedDisable, lib, addon) end
     end
+    self.statuses[addon.name] = nil
+    return true
 end
 
 -- Event Handling
@@ -150,6 +155,7 @@ end
 --Thoughts?
 function AceAddon:IterateAddons() return pairs(self.addons) end
 function AceAddon:IterateEmbedsOnAddon(addon) return pairs(self.embeds[addon]) end
+function AceAddon:IterateAddonStatus() return pairs(self.statuses) end
 
 AceAddon.frame:RegisterEvent("ADDON_LOADED")
 AceAddon.frame:RegisterEvent("PLAYER_LOGIN")
