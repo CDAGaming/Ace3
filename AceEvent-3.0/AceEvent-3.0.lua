@@ -1,14 +1,15 @@
-local ACEEVENT_MAJOR = "AceEvent-3.0"
-local ACEEVENT_MINOR = 1
+--[[ $Id$ ]]
+local ACEEVENT_MAJOR, ACEEVENT_MINOR = "AceEvent-3.0", 1
+local AceEvent, oldminor = LibStub:NewLibrary(ACEEVENT_MAJOR, ACEEVENT_MINOR)
 
-local AceEvent = LibStub:NewLibrary(ACEEVENT_MAJOR, ACEEVENT_MINOR)
-if not AceEvent then return end
-
--- upgrading
-AceEvent.events = AceEvent.events or {}     -- Blizzard events
-AceEvent.messages = AceEvent.messages or {}	-- Own messages
-AceEvent.frame = AceEvent.frame or CreateFrame("Frame", "AceEvent30Frame") -- our event frame
-AceEvent.embeds = AceEvent.embeds or {} -- what objects embed this lib
+if not AceEvent then 
+	return
+elseif not oldminor then  -- This is the first version
+	AceEvent.events = {} -- Blizzard events
+	AceEvent.messages = {} -- Own messages
+	AceEvent.frame = CreateFrame("Frame", "AceEvent30Frame") -- our event frame
+	AceEvent.embeds = {} -- what objects embed this lib
+end
 
 -- upgrading of embeds is done at the bottom of the file
 
@@ -18,7 +19,8 @@ local messages = AceEvent.messages
 
 local function safecall( func, ... )
 	local success, err = pcall(func,...)
-	if not success then geterrorhandler()(err:find("%.lua:%d+:") and err or (debugstack():match("\n(.-: )in.-\n") or "") .. err) end
+	if not err:find("%.lua:%d+:") then err = (debugstack():match("\n(.-: )in.-\n") or "") .. err end 
+	geterrorhandler()(err)
 end
 
 -- generic event and message firing function
@@ -33,7 +35,7 @@ local function Fire(registry, event, ...)
 		else
 			safecall( method, ... )
 		end
-	end	
+	end
 end
 
 -- Generic registration and unregisration for messages and events
@@ -41,12 +43,12 @@ local function RegOrUnreg(self, unregister, registry, event, method )
 	assert( self ~= AceEvent )
 	assert( type(event) == "string" )
 	local slot = registry[event]
-
+	
 	if not slot then
 		slot = {} -- purposefully created even on unregister to reduce logic here AND in :UnlistenEvent(). The chance that it didn't already exist is VERY slim either way.
 		registry[event] = slot
 	end
-
+	
 	if unregister then -- unregister
 		slot[self] = nil
 	else -- overwrite any old registration
