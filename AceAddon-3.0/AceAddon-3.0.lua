@@ -2,21 +2,21 @@ local MAJOR, MINOR = "AceAddon-3.0", 0
 local AceAddon, oldminor = LibStub:NewLibrary( MAJOR, MINOR )
 
 if not AceAddon then 
-    return -- No Upgrade needed.
+	return -- No Upgrade needed.
 elseif not oldminor then -- This is the first version
-    AceAddon.frame = CreateFrame("Frame", "AceAddon30Frame") -- Our very own frame
-    AceAddon.addons = {} -- addons in general
-    AceAddon.initializequeue = {} -- addons that are new and not initialized
-    AceAddon.enablequeue = {} -- addons that are initialized and waiting to be enabled
-    AceAddon.embeds = setmetatable({}, {__index = function(tbl, key) tbl[key] = {} return tbl[key] end }) -- contains a list of libraries embedded in an addon
+	AceAddon.frame = CreateFrame("Frame", "AceAddon30Frame") -- Our very own frame
+	AceAddon.addons = {} -- addons in general
+	AceAddon.initializequeue = {} -- addons that are new and not initialized
+	AceAddon.enablequeue = {} -- addons that are initialized and waiting to be enabled
+	AceAddon.embeds = setmetatable({}, {__index = function(tbl, key) tbl[key] = {} return tbl[key] end }) -- contains a list of libraries embedded in an addon
 end
 
 local function safecall(func,...)
-    if type(func) == "function" then 
-        local success, err = pcall(func,...)
-        if not err:find("%.lua:%d+:") then err = (debugstack():match("\n(.-: )in.-\n") or "") .. err end 
-        geterrorhandler()(err)
-    end
+	if type(func) == "function" then 
+		local success, err = pcall(func,...)
+		if not err:find("%.lua:%d+:") then err = (debugstack():match("\n(.-: )in.-\n") or "") .. err end 
+		geterrorhandler()(err)
+	end
 end
 
 -- AceAddon:NewAddon( name, [lib, lib, lib, ...] )
@@ -30,11 +30,11 @@ function AceAddon:NewAddon( name, ... )
 	if self.addons[name] then
 		error( ("AceAddon '%s' already exists."):format(name), 2 )
 	end
-    
-    local addon = { name = name}
+	
+	local addon = { name = name}
 	self.addons[name] = addon
 	self:EmbedLibraries( addon, ... )
-
+	
 	-- add to queue of addons to be initialized upon ADDON_LOADED
 	table.insert( self.initializequeue, addon )
 	return addon
@@ -61,7 +61,7 @@ function AceAddon:EmbedLibraries( addon, ... )
 		-- TODO: load on demand?
 		local libname = select( i, ... )
 		self:EmbedLibrary(addon, libname, false, 3)
-	end	
+	end
 end
 
 -- AceAddon:EmbedLibrary( addon, libname, silent, offset )
@@ -70,16 +70,16 @@ end
 -- [silent] (boolean) - optional, marks an embed to fail silently if the library doesn't exist.
 -- [offset] (number) - will push the error messages back to said offset defaults to 2
 function AceAddon:EmbedLibrary( addon, libname, silent, offset )
-    local lib = LibStub:GetLibrary(libname, true)
-    if not silent and not lib then
-        error(("Cannot find a library instance of %q."):format(tostring(libname)), offset or 2)
-    elseif lib and type(lib.Embed) ~= "function" then
-        lib:Embed(addon)
-        table.insert( self.embeds[addon], libname )  
-        return true
-    elseif lib then
-        error( ("Library '%s' is not Embed capable"):format(libname), offset or 2 )
-    end
+	local lib = LibStub:GetLibrary(libname, true)
+	if not silent and not lib then
+		error(("Cannot find a library instance of %q."):format(tostring(libname)), offset or 2)
+	elseif lib and type(lib.Embed) ~= "function" then
+		lib:Embed(addon)
+		table.insert( self.embeds[addon], libname )  
+		return true
+	elseif lib then
+		error( ("Library '%s' is not Embed capable"):format(libname), offset or 2 )
+	end
 end
 
 -- AceAddon:IntializeAddon( addon )
@@ -89,11 +89,11 @@ end
 -- calls OnEmbedInitialize on embedded libs in the addon object if available
 function AceAddon:InitializeAddon( addon )
 	safecall( addon.OnInitialize, addon )
-
-    for k, libname in ipairs( self.embeds[addon] ) do
-        local lib = LibStub:GetLibrary(libname, true)
-        if lib then safecall( lib.OnEmbedInitialize, lib, addon ) end
-    end
+	
+	for k, libname in ipairs( self.embeds[addon] ) do
+		local lib = LibStub:GetLibrary(libname, true)
+		if lib then safecall( lib.OnEmbedInitialize, lib, addon ) end
+	end
 end
 
 -- AceAddon:EnableAddon( addon )
@@ -106,9 +106,9 @@ function AceAddon:EnableAddon( addon )
 	-- TODO: handle 'first'? Or let addons do it on their own?
 	safecall( addon.OnEnable, addon )
 	for k, libname in ipairs( self.embeds[addon] ) do
-        local lib = LibStub:GetLibrary(libname, true)
-        if lib then safecall( lib.OnEmbedEnable, lib, addon ) end
-    end
+		local lib = LibStub:GetLibrary(libname, true)
+		if lib then safecall( lib.OnEmbedEnable, lib, addon ) end
+	end
 end
 
 -- AceAddon:DisableAddon( addon )
@@ -136,7 +136,7 @@ local function onEvent( this, event, arg1 )
 			AceAddon.initializequeue[i] = nil
 			table.insert( AceAddon.enablequeue, addon )
 		end
-
+		
 		if IsLoggedIn() then
 			for i = 1, #AceAddon.enablequeue do
 				local addon = AceAddon.enablequeue[i]
@@ -150,7 +150,8 @@ local function onEvent( this, event, arg1 )
 		-- Mikk: unnecessary code running imo, since disable isn't == logout (we can enable and disable in-game)
 		-- Ammo: AceDB wants to massage the db on logout
 		-- Mikk: AceDB can listen for PLAYER_LOGOUT on its own, and if it massages the db on disable, it'll ahve to un-massage it on reenables
-        -- K: I say let it do it on PLAYER_LOGOUT, Or if it must it already will know OnEmbedDisable
+		-- K: I say let it do it on PLAYER_LOGOUT, Or if it must it already will know OnEmbedDisable
+		-- Nev: yeah, let AceDB figure out logout on its own, and keep it seperate from disable.
 		-- DISCUSSION WANTED!
 end
 
