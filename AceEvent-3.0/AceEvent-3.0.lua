@@ -21,6 +21,7 @@ local messages = AceEvent.messages
 
 local function safecall( func, ... )
 	local success, err = pcall(func,...)
+	if success then return err end
 	if not err:find("%.lua:%d+:") then err = (debugstack():match("\n(.-: )in.-\n") or "") .. err end 
 	geterrorhandler()(err)
 end
