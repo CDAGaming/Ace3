@@ -245,6 +245,7 @@ end
 function AceAddon:IterateAddons() return pairs(self.addons) end
 function AceAddon:IterateEmbedsOnAddon(addon) return pairs(self.embeds[addon]) end
 function AceAddon:IterateAddonStatus() return pairs(self.statuses) end
+function AceAddon:IterateModulesOfAddon(addon) return pairs(addon.modules) end
 
 -- Event Handling
 local function onEvent( this, event, arg1 )
