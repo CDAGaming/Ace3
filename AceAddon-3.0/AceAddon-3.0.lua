@@ -41,6 +41,8 @@ function AceAddon:NewAddon( name, ... )
 	
 	local addon = {name = name}
 	self.addons[name] = addon
+	addon.modules = {}
+	addon.defaultModuleLibraries = {}
 	Embed( addon ) -- embed NewModule, GetModule methods
 	self:EmbedLibraries(addon, ...)
 	
@@ -168,8 +170,6 @@ local mixins = {
 	SetEnabledState = SetEnabledState
 }
 local pmixins = {
-	modules = {}, 
-	defaultModuleLibraries = {},
 	defaultModuleState = true, 
 	enabledState = true, 
 	IsModule = function(self) return false end
