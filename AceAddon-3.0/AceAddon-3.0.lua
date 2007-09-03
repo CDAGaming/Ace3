@@ -23,7 +23,7 @@ local function safecall(func,...)
 end
 
 -- local functions that will be implemented further down
-local Embed, NewModule, GetModule
+local Embed, NewModule, GetModule, SetDefaultModuleState, SetDefaultModuleLibraries
 
 -- AceAddon:NewAddon( name, [lib, lib, lib, ...] )
 -- name (string) - unique addon object name
@@ -65,7 +65,6 @@ end
 -- [lib] (string) - optional libs to embed
 function AceAddon:EmbedLibraries( addon, ... )
 	for i=1,select("#", ... ) do
-		
 		local libname = select(i, ...)
 		self:EmbedLibrary(addon, libname, false, 3)
 	end
@@ -130,14 +129,24 @@ local function NewModule(self, name, prototype, ... )
 		module = AceAddon:EmbedLibraries( module, prototype, ... )
 	end
 	
-	safecall(self.OnModuleCreated, self) -- Was in Ace2 and I think it could be a cool thing to have handy.  
+	AceAddon:EmbedLibraries( module, unpack(self.defaultModuleLibraries))
+	
+	safecall(self.OnModuleCreated, self, module) -- Was in Ace2 and I think it could be a cool thing to have handy.  
 	self.modules[name] = module
 	
 	return module
 end
 
-local mixins = {NewModule = NewModule, GetModule = GetModule, }
-local pmixins = { modules = {}, IsModule = function(self) return false end}
+local function SetDefaultModuleLibraries(self, ...)
+	self.defaultModuleLibraries = {...}
+end
+
+local function SetDefaultModuleState(self, state)
+	self.defaultModuleState = state
+end
+
+local mixins = {NewModule = NewModule, GetModule = GetModule, SetDefaultModuleLibraries = SetDefaultModuleLibraries, SetDefaultModuleState = SetDefaultModuleState}
+local pmixins = { modules = {}, defaultModuleLibraries = {}, defaultModuleState = true, IsModule = function(self) return false end}
 -- Embed( target )
 -- target (object) - target object to embed aceaddon in
 -- 
