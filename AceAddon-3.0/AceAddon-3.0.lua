@@ -65,7 +65,7 @@ end
 -- [lib] (string) - optional libs to embed
 function AceAddon:EmbedLibraries( addon, ... )
 	for i=1,select("#", ... ) do
-		-- TODO: load on demand?
+		
 		local libname = select(i, ...)
 		self:EmbedLibrary(addon, libname, false, 3)
 	end
@@ -77,7 +77,8 @@ end
 -- [silent] (boolean) - optional, marks an embed to fail silently if the library doesn't exist.
 -- [offset] (number) - will push the error messages back to said offset defaults to 2
 function AceAddon:EmbedLibrary( addon, libname, silent, offset )
-	local lib = LibStub:GetLibrary(libname, true)
+	-- TODO: load on demand?
+    local lib = LibStub:GetLibrary(libname, true)
 	if not silent and not lib then
 		error(("Cannot find a library instance of %q."):format(tostring(libname)), offset or 2)
 	elseif lib and type(lib.Embed) == "function" then
@@ -92,10 +93,10 @@ end
 -- addon:GetModule( name, [silent])
 -- name (string) - unique module object name
 -- silent (boolean) - if true, module is optional, silently return nil if its not found
---
+--      
 -- throws an error if the addon object can not be found (except silent is set)
 -- returns the module object if found
-function GetModule(self, name, silent)
+local function GetModule(self, name, silent)
 	if not silent and not self.modules[name] then
 		error(("Cannot find a module named '%s'."):format(name), 2)
 	end
@@ -112,8 +113,6 @@ local function NewModule(self, name, prototype, ... )
 	assert( type( name ) == "string", "Bad argument #2 to 'NewModule' (string expected)" )
 	assert( type( prototype ) == "string" or type( prototype ) == "string" or type( prototype ) == "nil" ), "Bad argument #3 to 'NewModule' (string, table or nil expected)" )
 
-	if not self.modules then self.modules = {} end
-	
 	if self.modules[name] then
 		error( ("Module '%s' already exists."):format(name), 2 )
 	end
@@ -121,7 +120,9 @@ local function NewModule(self, name, prototype, ... )
 	-- modules are basically addons. We treat them as such. They will be added to the initializequeue properly as well.
 	-- NewModule can only be called after the parent addon is present thus the modules will be initialized after their parent is.
 	local module = AceAddon:NewAddon( ("%s_%s"):format( self.name or tostring(self), name) )
-		
+	
+	module.IsModule = function(self) return true end
+	
 	if type( prototype ) == "table" then
 		module = AceAddon:EmbedLibraries( module, ... )
 		setmetatable(module, {__index=prototype})  -- More of a Base class type feel.
@@ -135,8 +136,8 @@ local function NewModule(self, name, prototype, ... )
 	return module
 end
 
-local mixins = {NewModule = NewModule, GetModule = GetModule, modules = {}}
-
+local mixins = {NewModule = NewModule, GetModule = GetModule, }
+local pmixins = { modules = {}, IsModule = function(self) return false end}
 -- Embed( target )
 -- target (object) - target object to embed aceaddon in
 -- 
@@ -145,6 +146,9 @@ function Embed( target )
 	for k, v in pairs( mixins ) do
 		target[k] = v
 	end
+	for k, v in pairs( pmixins ) do
+		target[k] = target[k] or v
+	end	
 end
 
 
@@ -181,10 +185,8 @@ function AceAddon:EnableAddon( addon )
 	self.statuses[addon.name] = true
 
 	-- enable possible modules.
-	if addon.modules then
-		for name, module in pairs( addon.modules ) do
-			self:EnableAddon( module )
-		end
+	for name, module in pairs( addon.modules ) do
+		self:EnableAddon( module )
 	end
 
 	return true
@@ -205,10 +207,8 @@ function AceAddon:DisableAddon( addon )
 	self.statuses[addon.name] = nil
 
 	-- disable possible modules.
-	if addon.modules then
-		for name, module in pairs( addon.modules ) do
-			self:DisableAddon( module )
-		end
+	for name, module in pairs( addon.modules ) do
+		self:DisableAddon( module )
 	end
 
 	return true
