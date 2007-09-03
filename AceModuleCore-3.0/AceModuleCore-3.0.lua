@@ -72,7 +72,7 @@ function AceModuleCore:Embed( target )
 	for k, v in pairs( mixins ) do
 		target[k] = v
 	end
-	table.insert(self.embeded, target)
+	self.embeded[target] = true
 end
 
 function AceModuleCore:OnEmbedInitialize( target ) do
@@ -91,4 +91,9 @@ function AceModuleCore:OnEmbedDisable( target )
 	for name, module in pairs( target.modules ) do
 		AceAddon:DisableAddon( module ) - this whole deal needs serious testing
 	end
+end
+
+--- Upgrade our old embeds
+for target, v in pairs( AceModuleCore.embeded ) do
+	AceModuleCore:Embed( target )
 end
