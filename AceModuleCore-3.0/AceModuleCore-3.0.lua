@@ -3,13 +3,13 @@ local AceModuleCore, oldversion = LibStub:NewLibrary( MAJOR, MINOR )
 local AceAddon = LibStub:GetLibrary("AceAddon-3.0")
 
 if not AceAddon then
-    error(MAJOR.." requires AceAddon-3.0")
+	error(MAJOR.." requires AceAddon-3.0")
 end
 
 if not AceModuleCore then 
-    return 
+	return 
 elseif not oldversion then
-    AceModuleCore.embeded = {} -- contains a list of namespaces this has been embeded into
+	AceModuleCore.embeded = {} -- contains a list of namespaces this has been embeded into
 end
 
 local function safecall(func,...)
@@ -46,19 +46,19 @@ function NewModule(self, name, prototype, ... )
 	if self.modules[name] then
 		error( ("Module '%s' already exists."):format(name), 2 )
 	end
-    
-    local module = AceAddon:NewAddon(string.format("%s_%s", self.name or tostring(self), name)
-        
+	
+	local module = AceAddon:NewAddon( ("%s_%s"):format( self.name or tostring(self), name) )
+		
 	if type( prototype ) == "table" then
 		module = AceAddon:EmbedLibraries( module, ... )
-        setmetatable(module, {__index=prototype})  -- More of a Base class type feel.
+		setmetatable(module, {__index=prototype})  -- More of a Base class type feel.
 	elseif prototype then
 		module = AceAddon:EmbedLibraries( module, prototype, ... )
 	end
-    
-    safecall(module.OnModuleCreated, self) -- Was in Ace2 and I think it could be a cool thing to have handy.  
+	
+	safecall(module.OnModuleCreated, self) -- Was in Ace2 and I think it could be a cool thing to have handy.  
 	self.modules[name] = module
-    
+	
 	return module
 end
 
@@ -72,20 +72,23 @@ function AceModuleCore:Embed( target )
 	for k, v in pairs( mixins ) do
 		target[k] = v
 	end
-    table.insert(self.embeded, target)
+	table.insert(self.embeded, target)
+end
+
+function AceModuleCore:OnEmbedInitialize( target ) do
+	for name, module in pairs( target.modules ) do
+		AceAddon:InitializeAddon( module ) -- this whole deal needs serious testing
+	end
 end
 
 function AceModuleCore:OnEmbedEnable( target )
 	for name, module in pairs( target.modules ) do
-		AceAddon:EnableAddon( module )
+		AceAddon:EnableAddon( module ) -- this whole deal needs serious testing
 	end
 end
 
 function AceModuleCore:OnEmbedDisable( target )
 	for name, module in pairs( target.modules ) do
-		AceAddon:DisableAddon( module )
+		AceAddon:DisableAddon( module ) - this whole deal needs serious testing
 	end
 end
-
-
-
