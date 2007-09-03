@@ -121,6 +121,7 @@ local function NewModule(self, name, prototype, ... )
 	local module = AceAddon:NewAddon( ("%s_%s"):format( self.name or tostring(self), name) )
 	
 	module.IsModule = function(self) return true end
+	module:SetEnabledState(self.defaultModuleState)
 	
 	if type( prototype ) == "table" then
 		module = AceAddon:EmbedLibraries( module, ... )
@@ -145,8 +146,13 @@ local function SetDefaultModuleState(self, state)
 	self.defaultModuleState = state
 end
 
-local mixins = {NewModule = NewModule, GetModule = GetModule, SetDefaultModuleLibraries = SetDefaultModuleLibraries, SetDefaultModuleState = SetDefaultModuleState}
-local pmixins = { modules = {}, defaultModuleLibraries = {}, defaultModuleState = true, IsModule = function(self) return false end}
+local function SetEnabledState(self, state)
+	self.enabledState = state
+end
+
+local mixins = {NewModule = NewModule, GetModule = GetModule, SetDefaultModuleLibraries = SetDefaultModuleLibraries, SetDefaultModuleState = SetDefaultModuleState,
+				SetEnabledState = SetEnabledState}
+local pmixins = { modules = {}, defaultModuleLibraries = {}, defaultModuleState = true, enabledState = true, IsModule = function(self) return false end}
 -- Embed( target )
 -- target (object) - target object to embed aceaddon in
 -- 
@@ -184,7 +190,7 @@ end
 -- calls OnEnable on the addon object if available
 -- calls OnEmbedEnable on embedded libs in the addon object if available
 function AceAddon:EnableAddon( addon )
-	if self.statuses[addon.name] then return false end
+	if self.statuses[addon.name] or not addon.enabledStatus then return false end
 	-- TODO: handle 'first'? Or let addons do it on their own?
 	safecall(addon.OnEnable, addon)
 	for k, libname in ipairs(self.embeds[addon]) do
