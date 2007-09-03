@@ -97,7 +97,7 @@ end
 --      
 -- throws an error if the addon object can not be found (except silent is set)
 -- returns the module object if found
-local function GetModule(self, name, silent)
+function GetModule(self, name, silent)
 	if not silent and not self.modules[name] then
 		error(("Cannot find a module named '%s'."):format(name), 2)
 	end
@@ -110,7 +110,7 @@ end
 -- [lib] (string) - optional libs to embed in the addon object
 --
 -- returns the addon object when succesful
-local function NewModule(self, name, prototype, ... )
+function NewModule(self, name, prototype, ... )
 	assert( type( name ) == "string", "Bad argument #2 to 'NewModule' (string expected)" )
 	assert( type( prototype ) == "string" or type( prototype ) == "string" or type( prototype ) == "nil", "Bad argument #3 to 'NewModule' (string, table or nil expected)" )
 	
