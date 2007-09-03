@@ -9,7 +9,9 @@ elseif not oldminor then  -- This is the first version
 	AceEvent.messages = {} -- Own messages
 	AceEvent.frame = CreateFrame("Frame", "AceEvent30Frame") -- our event frame
 	AceEvent.embeds = {} -- what objects embed this lib
+	-- ANY new members must be added AFTER the if clause!
 end
+
 
 -- upgrading of embeds is done at the bottom of the file
 
