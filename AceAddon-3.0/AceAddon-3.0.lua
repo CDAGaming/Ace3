@@ -17,13 +17,15 @@ end
 local function safecall(func,...)
 	if type(func) == "function" then 
 		local success, err = pcall(func,...)
+		if success then return err end
+		
 		if not err:find("%.lua:%d+:") then err = (debugstack():match("\n(.-: )in.-\n") or "") .. err end 
 		geterrorhandler()(err)
 	end
 end
 
 -- local functions that will be implemented further down
-local Embed, NewModule, GetModule, SetDefaultModuleState, SetDefaultModuleLibraries
+local Embed, NewModule, GetModule, SetDefaultModuleState, SetDefaultModuleLibraries, SetEnabledState
 
 -- AceAddon:NewAddon( name, [lib, lib, lib, ...] )
 -- name (string) - unique addon object name
@@ -110,7 +112,7 @@ end
 -- returns the addon object when succesful
 local function NewModule(self, name, prototype, ... )
 	assert( type( name ) == "string", "Bad argument #2 to 'NewModule' (string expected)" )
-	assert( type( prototype ) == "string" or type( prototype ) == "string" or type( prototype ) == "nil" ), "Bad argument #3 to 'NewModule' (string, table or nil expected)" )
+	assert( type( prototype ) == "string" or type( prototype ) == "string" or type( prototype ) == "nil", "Bad argument #3 to 'NewModule' (string, table or nil expected)" )
 	
 	if self.modules[name] then
 		error( ("Module '%s' already exists."):format(name), 2 )
@@ -138,15 +140,23 @@ local function NewModule(self, name, prototype, ... )
 	return module
 end
 
-local function SetDefaultModuleLibraries(self, ...)
+-- addon:SetDefaultModuleLibraries( [lib, lib, lib, ...]  )
+-- [lib] (string) - libs to embed in every module
+function SetDefaultModuleLibraries(self, ...)
 	self.defaultModuleLibraries = {...}
 end
 
-local function SetDefaultModuleState(self, state)
+-- addon:SetDefaultModuleState( state )
+-- state (boolean) - default state for new modules (enabled=true, disabled=false)
+function SetDefaultModuleState(self, state)
 	self.defaultModuleState = state
 end
 
-local function SetEnabledState(self, state)
+-- addon:SetEnabledState ( state )
+-- state ( boolean ) - set the state of an addon or module  (enabled=true, disabled=false)
+--
+-- should only be called before any Enabling actually happend, aka in OnInitialize
+function SetEnabledState(self, state)
 	self.enabledState = state
 end
 
