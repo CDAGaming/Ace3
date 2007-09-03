@@ -150,9 +150,20 @@ local function SetEnabledState(self, state)
 	self.enabledState = state
 end
 
-local mixins = {NewModule = NewModule, GetModule = GetModule, SetDefaultModuleLibraries = SetDefaultModuleLibraries, SetDefaultModuleState = SetDefaultModuleState,
-				SetEnabledState = SetEnabledState}
-local pmixins = { modules = {}, defaultModuleLibraries = {}, defaultModuleState = true, enabledState = true, IsModule = function(self) return false end}
+local mixins = {
+	NewModule = NewModule,
+	GetModule = GetModule,
+	SetDefaultModuleLibraries = SetDefaultModuleLibraries,
+	SetDefaultModuleState = SetDefaultModuleState,
+	SetEnabledState = SetEnabledState
+}
+local pmixins = {
+	modules = {}, 
+	defaultModuleLibraries = {},
+	defaultModuleState = true, 
+	enabledState = true, 
+	IsModule = function(self) return false end
+}
 -- Embed( target )
 -- target (object) - target object to embed aceaddon in
 -- 
@@ -190,7 +201,7 @@ end
 -- calls OnEnable on the addon object if available
 -- calls OnEmbedEnable on embedded libs in the addon object if available
 function AceAddon:EnableAddon( addon )
-	if self.statuses[addon.name] or not addon.enabledStatus then return false end
+	if self.statuses[addon.name] or not addon.enabledState then return false end
 	-- TODO: handle 'first'? Or let addons do it on their own?
 	safecall(addon.OnEnable, addon)
 	for k, libname in ipairs(self.embeds[addon]) do
@@ -229,6 +240,12 @@ function AceAddon:DisableAddon( addon )
 	return true
 end
 
+--The next few funcs are just because no one should be reaching into the internal registries
+--Thoughts?
+function AceAddon:IterateAddons() return pairs(self.addons) end
+function AceAddon:IterateEmbedsOnAddon(addon) return pairs(self.embeds[addon]) end
+function AceAddon:IterateAddonStatus() return pairs(self.statuses) end
+
 -- Event Handling
 local function onEvent( this, event, arg1 )
 	if event == "ADDON_LOADED" or event == "PLAYER_LOGIN" then
@@ -249,11 +266,6 @@ local function onEvent( this, event, arg1 )
 	end
 end
 
---The next few funcs are just because no one should be reaching into the internal registries
---Thoughts?
-function AceAddon:IterateAddons() return pairs(self.addons) end
-function AceAddon:IterateEmbedsOnAddon(addon) return pairs(self.embeds[addon]) end
-function AceAddon:IterateAddonStatus() return pairs(self.statuses) end
 
 AceAddon.frame:RegisterEvent("ADDON_LOADED")
 AceAddon.frame:RegisterEvent("PLAYER_LOGIN")
