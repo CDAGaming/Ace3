@@ -77,7 +77,7 @@ end
 -- [offset] (number) - will push the error messages back to said offset defaults to 2
 function AceAddon:EmbedLibrary( addon, libname, silent, offset )
 	-- TODO: load on demand?
-    local lib = LibStub:GetLibrary(libname, true)
+	local lib = LibStub:GetLibrary(libname, true)
 	if not silent and not lib then
 		error(("Cannot find a library instance of %q."):format(tostring(libname)), offset or 2)
 	elseif lib and type(lib.Embed) == "function" then
@@ -111,7 +111,7 @@ end
 local function NewModule(self, name, prototype, ... )
 	assert( type( name ) == "string", "Bad argument #2 to 'NewModule' (string expected)" )
 	assert( type( prototype ) == "string" or type( prototype ) == "string" or type( prototype ) == "nil" ), "Bad argument #3 to 'NewModule' (string, table or nil expected)" )
-
+	
 	if self.modules[name] then
 		error( ("Module '%s' already exists."):format(name), 2 )
 	end
@@ -265,7 +265,6 @@ local function onEvent( this, event, arg1 )
 		end
 	end
 end
-
 
 AceAddon.frame:RegisterEvent("ADDON_LOADED")
 AceAddon.frame:RegisterEvent("PLAYER_LOGIN")
