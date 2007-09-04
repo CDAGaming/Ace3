@@ -162,17 +162,21 @@ function SetEnabledState(self, state)
 	self.enabledState = state
 end
 
+
+local function IterateModules( self ) return pairs(self.modules) end
 local mixins = {
 	NewModule = NewModule,
 	GetModule = GetModule,
 	SetDefaultModuleLibraries = SetDefaultModuleLibraries,
 	SetDefaultModuleState = SetDefaultModuleState,
-	SetEnabledState = SetEnabledState
+	SetEnabledState = SetEnabledState,
+	IterateModules = IterateModules,
 }
+local function IsModule( self ) return false end
 local pmixins = {
 	defaultModuleState = true,
 	enabledState = true,
-	IsModule = function(self) return false end
+	IsModule = IsModule,
 }
 -- Embed( target )
 -- target (object) - target object to embed aceaddon in
