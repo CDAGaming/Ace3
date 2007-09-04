@@ -15,6 +15,9 @@ elseif not oldminor then -- This is the first version
 end
 
 local function safecall(func, ...)
+	-- we check to see if the func is passed is actually a function here and don't error when it isn't
+	-- this safecall is used for optional functions like OnInitialize OnEnable etc. When they are not
+	-- present execution should continue without hinderance
 	if type(func) == "function" then
 		local success, err = pcall(func, ...)
 		if success then return err end
