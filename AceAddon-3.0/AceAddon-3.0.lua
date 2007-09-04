@@ -262,6 +262,7 @@ local function onEvent( this, event, arg1 )
 	if event == "ADDON_LOADED" or event == "PLAYER_LOGIN" then
 		for i = 1, #AceAddon.initializequeue do
 			local addon = AceAddon.initializequeue[i]
+			addon.baseName = arg1
 			AceAddon:InitializeAddon(addon)
 			AceAddon.initializequeue[i] = nil
 			table.insert(AceAddon.enablequeue, addon)
