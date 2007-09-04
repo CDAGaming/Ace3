@@ -2,24 +2,24 @@
 local MAJOR, MINOR = "AceAddon-3.0", 0
 local AceAddon, oldminor = LibStub:NewLibrary( MAJOR, MINOR )
 
-if not AceAddon then 
+if not AceAddon then
 	return -- No Upgrade needed.
-elseif not oldminor then -- This is the first version 
+elseif not oldminor then -- This is the first version
 	-- ANY NEW MEMBERS OF ACEADDON SHOULD BE ADDED _AFTER_ THE IF CLAUSE
 	AceAddon.frame = CreateFrame("Frame", "AceAddon30Frame") -- Our very own frame
 	AceAddon.addons = {} -- addons in general
-	AceAddon.statuses = {} -- statuses of addon.  
+	AceAddon.statuses = {} -- statuses of addon.
 	AceAddon.initializequeue = {} -- addons that are new and not initialized
 	AceAddon.enablequeue = {} -- addons that are initialized and waiting to be enabled
 	AceAddon.embeds = setmetatable({}, {__index = function(tbl, key) tbl[key] = {} return tbl[key] end }) -- contains a list of libraries embedded in an addon
 end
 
 local function safecall(func,...)
-	if type(func) == "function" then 
+	if type(func) == "function" then
 		local success, err = pcall(func,...)
 		if success then return err end
-		
-		if not err:find("%.lua:%d+:") then err = (debugstack():match("\n(.-: )in.-\n") or "") .. err end 
+
+		if not err:find("%.lua:%d+:") then err = (debugstack():match("\n(.-: )in.-\n") or "") .. err end
 		geterrorhandler()(err)
 	end
 end
@@ -34,18 +34,18 @@ local Embed, NewModule, GetModule, SetDefaultModuleState, SetDefaultModuleLibrar
 -- returns the addon object when succesful
 function AceAddon:NewAddon( name, ... )
 	assert(type(name) == "string", "Bad argument #2 to 'NewAddon' (string expected)")
-	
+
 	if self.addons[name] then
 		error(("AceAddon '%s' already exists."):format(name), 2)
 	end
-	
+
 	local addon = {name = name}
 	self.addons[name] = addon
 	addon.modules = {}
 	addon.defaultModuleLibraries = {}
 	Embed( addon ) -- embed NewModule, GetModule methods
 	self:EmbedLibraries(addon, ...)
-	
+
 	-- add to queue of addons to be initialized upon ADDON_LOADED
 	table.insert(self.initializequeue, addon)
 	return addon
@@ -82,11 +82,11 @@ end
 function AceAddon:EmbedLibrary( addon, libname, silent, offset )
 	-- TODO: load on demand?
 	local lib = LibStub:GetLibrary(libname, true)
-	if not silent and not lib then
+	if not lib and not silent then
 		error(("Cannot find a library instance of %q."):format(tostring(libname)), offset or 2)
 	elseif lib and type(lib.Embed) == "function" then
 		lib:Embed(addon)
-		table.insert(self.embeds[addon], libname)  
+		table.insert(self.embeds[addon], libname)
 		return true
 	elseif lib then
 		error(("Library '%s' is not Embed capable"):format(libname), offset or 2)
@@ -96,11 +96,11 @@ end
 -- addon:GetModule( name, [silent])
 -- name (string) - unique module object name
 -- silent (boolean) - if true, module is optional, silently return nil if its not found
---      
+--
 -- throws an error if the addon object can not be found (except silent is set)
 -- returns the module object if found
 function GetModule(self, name, silent)
-	if not silent and not self.modules[name] then
+	if not self.modules[name] and not silent then
 		error(("Cannot find a module named '%s'."):format(name), 2)
 	end
 	return self.modules[name]
@@ -114,31 +114,31 @@ end
 -- returns the addon object when succesful
 function NewModule(self, name, prototype, ... )
 	assert( type( name ) == "string", "Bad argument #2 to 'NewModule' (string expected)" )
-	assert( type( prototype ) == "string" or type( prototype ) == "string" or type( prototype ) == "nil", "Bad argument #3 to 'NewModule' (string, table or nil expected)" )
-	
+	assert( type( prototype ) == "string" or type( prototype ) == "table" or type( prototype ) == "nil", "Bad argument #3 to 'NewModule' (string, table or nil expected)" )
+
 	if self.modules[name] then
 		error( ("Module '%s' already exists."):format(name), 2 )
 	end
-	
+
 	-- modules are basically addons. We treat them as such. They will be added to the initializequeue properly as well.
 	-- NewModule can only be called after the parent addon is present thus the modules will be initialized after their parent is.
 	local module = AceAddon:NewAddon( ("%s_%s"):format( self.name or tostring(self), name) )
-	
-	module.IsModule = function(self) return true end
+
+	module.IsModule = function(self) return true end -- why recreate the function if it always returns true?
 	module:SetEnabledState(self.defaultModuleState)
-	
+
 	if type( prototype ) == "table" then
 		module = AceAddon:EmbedLibraries( module, ... )
 		setmetatable(module, {__index=prototype})  -- More of a Base class type feel.
 	elseif prototype then
 		module = AceAddon:EmbedLibraries( module, prototype, ... )
 	end
-	
+
 	AceAddon:EmbedLibraries( module, unpack(self.defaultModuleLibraries))
-	
-	safecall(self.OnModuleCreated, self, module) -- Was in Ace2 and I think it could be a cool thing to have handy.  
+
+	safecall(self.OnModuleCreated, self, module) -- Was in Ace2 and I think it could be a cool thing to have handy.
 	self.modules[name] = module
-	
+
 	return module
 end
 
@@ -170,13 +170,13 @@ local mixins = {
 	SetEnabledState = SetEnabledState
 }
 local pmixins = {
-	defaultModuleState = true, 
-	enabledState = true, 
+	defaultModuleState = true,
+	enabledState = true,
 	IsModule = function(self) return false end
 }
 -- Embed( target )
 -- target (object) - target object to embed aceaddon in
--- 
+--
 -- this is a local function specifically since it's meant to be only called internally
 function Embed( target )
 	for k, v in pairs( mixins ) do
@@ -184,7 +184,7 @@ function Embed( target )
 	end
 	for k, v in pairs( pmixins ) do
 		target[k] = target[k] or v
-	end	
+	end
 end
 
 
@@ -195,7 +195,7 @@ end
 -- calls OnEmbedInitialize on embedded libs in the addon object if available
 function AceAddon:InitializeAddon( addon )
 	safecall(addon.OnInitialize, addon)
-	
+
 	for k, libname in ipairs(self.embeds[addon]) do
 		local lib = LibStub:GetLibrary(libname, true)
 		if lib then safecall(lib.OnEmbedInitialize, lib, addon) end
@@ -206,7 +206,7 @@ function AceAddon:InitializeAddon( addon )
 end
 
 -- AceAddon:EnableAddon( addon )
--- addon (object) - addon to enable 
+-- addon (object) - addon to enable
 --
 -- calls OnEnable on the addon object if available
 -- calls OnEmbedEnable on embedded libs in the addon object if available
@@ -266,7 +266,7 @@ local function onEvent( this, event, arg1 )
 			AceAddon.initializequeue[i] = nil
 			table.insert(AceAddon.enablequeue, addon)
 		end
-		
+
 		if IsLoggedIn() then
 			for i = 1, #AceAddon.enablequeue do
 				local addon = AceAddon.enablequeue[i]
