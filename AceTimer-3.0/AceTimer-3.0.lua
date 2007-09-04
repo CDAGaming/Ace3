@@ -14,6 +14,7 @@
 -- PRO: In lag bursts, the system simly skips missed timer intervals to decrease load
 --   CON: Algorithms depending on a timer firing "N times per minute" will fail
 -- PRO: (Re-)scheduling is O(1) with a VERY small constant. It's a simple table insertion in a hash bucket.
+-- PRO: ALLOWS scheduling multiple timers with the same funcref/method
 -- CAUTION: The BUCKETS constant constrains how many timers can be efficiently handled. With too many hash collisions, performance will decrease.
 
 
@@ -51,7 +52,7 @@ end
 
 local lastint = floor(GetTime()*HZ)
 
-local OnUpdate()
+local function OnUpdate()
 	local now = GetTime()
 	local nowint = floor(now*HZ)
 	
@@ -197,5 +198,28 @@ function AceTimer:CancelAllTimers()
 end
 
 
+-- Embed handling
+
+AceTimer.embeds = AceTimer.embeds or {}
+
+local embeds = {
+	"ScheduleTimer", "ScheduleRepeatingTimer", 
+	"CancelTimer", "CancelAllTimers"
+}
+
+function AceTimer:Embed(object)
+	AceTimer.embeds[object] = true
+	for k,v in pairs(embeds) do
+		object[v] = AceTimer[v]
+	end
+end
+
+for addon,_ in pairs(AceTimer.embeds) do
+	AceTimer:Embed(addon)
+end
+
+
 -- Finishing touchups
+
 AceTimer.frame:SetScript("OnUpdate", OnUpdate)
+
