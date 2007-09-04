@@ -30,6 +30,7 @@ local HZ=11					-- Timers will not be fired more often than HZ-1 times per secon
 local BUCKETS=131		-- Prime for good distribution
 												-- If this number is ever changed, all entries need to be rehashed on lib upgrade.
 
+
 AceTimer.hash = AceTimer.hash or {}			-- Array of [0..BUCKET-1]={[timerobj]=time, [timerobj2]=time2, ...}
 AceTimer.selfs = AceTimer.selfs or {}		-- Array of [self]={[handle]=timerobj, [handle2]=timerobj2, ...}
 AceTimer.frame = AceTimer.frame or CreateFrame("Frame", "AceTimer30Frame")
@@ -39,6 +40,7 @@ for i=0,BUCKETS-1 do
 	hash[i] = hash[i] or {}
 end
 
+
 local function safecall(func,...)
 	local ok, res = pcall(func,...)
 	if ok then return res end
@@ -47,7 +49,7 @@ local function safecall(func,...)
 end
 
 
-
+-----------------------------------------------------------------------
 -- OnUpdate function - traverse buckets, always chasing "now", and fire timers that have expired
 
 local lastint = floor(GetTime()*HZ)
@@ -56,7 +58,7 @@ local function OnUpdate()
 	local now = GetTime()
 	local nowint = floor(now*HZ)
 	
-	if nowint==lastint then
+	if nowint==lastint then		-- Have we passed into a new hash bucket?
 		return
 	end
 
@@ -70,12 +72,11 @@ local function OnUpdate()
 	local soon=now+1	-- +1 is safe as long as 1 < HZ < BUCKETS/2
 
 	
-	for curint=lastint,nowint do	-- loop until we catch up with "now", usually only 1 iteration
+	for curint=lastint,nowint do						-- loop until we catch up with "now", usually only 1 iteration
 		local curbucket = curint % BUCKETS
 		local curbuckettable = hash[curbucket]
 		
 		for timer,when in pairs(curbuckettable) do		-- all timers in the current bucket
-		
 			if when<soon then
 				
 				-- Call the timer func, either as a method on given object, or a straight function ref
@@ -90,7 +91,7 @@ local function OnUpdate()
 				if not delay then
 					-- single-shot timer
 					curbuckettable[timer] = nil
-					AceTimer.timers[tostring(timer)] = nil
+					AceTimer.selfs[timer.object][tostring(timer)] = nil
 				else
 					-- repeating timer
 					local newtime = when+delay
@@ -103,8 +104,8 @@ local function OnUpdate()
 						curbuckettable[timer] = newtime
 					end
 				end
+			
 			end -- if when<soon
-		
 		end -- for timer,when in pairs(curbuckettable)
 	
 	end	-- for curint=lastint,nowint
@@ -114,6 +115,7 @@ local function OnUpdate()
 end
 
 
+-----------------------------------------------------------------------
 -- Reg(): Workhorse for :ScheduleTimer() / :ScheduleRepeatingTimer()
 
 local function Reg(self, method, delay, arg, repeating)
@@ -126,9 +128,12 @@ local function Reg(self, method, delay, arg, repeating)
 		delay = 1/(HZ-1)
 	end
 	
+	-- Create and stuff timer in the correct hash bucket
+	local now = GetTime()
 	local timer = { object=self, method=method, delay=(repeating and delay), arg=arg }
 	hash[ floor((now+delay)*HZ) % BUCKETS ][timer] = now + delay
 	
+	-- Insert timer in our self->handle->timer registry
 	local handle=tostring(timer)
 	
 	local selftimers = AceTimer.selfs[self]
@@ -142,6 +147,7 @@ local function Reg(self, method, delay, arg, repeating)
 end
 
 
+-----------------------------------------------------------------------
 -- AceTimer:ScheduleTimer( method, delay, arg )
 -- AceTimer:ScheduleRepeatingTimer( method, delay, arg )
 --
@@ -160,6 +166,7 @@ function AceTimer:ScheduleRepeatingTimer(method,delay,arg)
 end
 
 
+-----------------------------------------------------------------------
 -- AceTimer:CancelTimer(handle)
 --
 -- handle - Opaque object given by ScheduleTimer
@@ -182,6 +189,7 @@ function AceTimer:CancelTimer(handle)
 end
 
 
+-----------------------------------------------------------------------
 -- AceTimer:CancelAllTimers()
 --
 -- Cancels all timers registered to given 'self'
@@ -198,18 +206,19 @@ function AceTimer:CancelAllTimers()
 end
 
 
+-----------------------------------------------------------------------
 -- Embed handling
 
 AceTimer.embeds = AceTimer.embeds or {}
 
-local embeds = {
+local mixins = {
 	"ScheduleTimer", "ScheduleRepeatingTimer", 
 	"CancelTimer", "CancelAllTimers"
 }
 
 function AceTimer:Embed(object)
 	AceTimer.embeds[object] = true
-	for k,v in pairs(embeds) do
+	for k,v in pairs(mixins) do
 		object[v] = AceTimer[v]
 	end
 end
@@ -219,6 +228,7 @@ for addon,_ in pairs(AceTimer.embeds) do
 end
 
 
+-----------------------------------------------------------------------
 -- Finishing touchups
 
 AceTimer.frame:SetScript("OnUpdate", OnUpdate)
