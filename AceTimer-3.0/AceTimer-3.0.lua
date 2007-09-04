@@ -116,7 +116,7 @@ end
 
 -- Reg(): Workhorse for :ScheduleTimer() / :ScheduleRepeatingTimer()
 
-local function Reg(self,method,delay,arg,repeat)
+local function Reg(self, method, delay, arg, repeating)
 	assert(self~=AceTimer, "ScheduleTimer: error: called using AceTimer as 'self'")
 	
 	assert(type(method)=="function" or (self~=AceTimer and type(method)=="string" and type(self[method])=="function"),
@@ -126,7 +126,7 @@ local function Reg(self,method,delay,arg,repeat)
 		delay = 1/(HZ-1)
 	end
 	
-	local timer = { object=self, method=method, delay=(repeat and delay), arg=arg }
+	local timer = { object=self, method=method, delay=(repeating and delay), arg=arg }
 	hash[ floor((now+delay)*HZ) % BUCKETS ][timer] = now + delay
 	
 	local handle=tostring(timer)
@@ -134,7 +134,7 @@ local function Reg(self,method,delay,arg,repeat)
 	local selftimers = AceTimer.selfs[self]
 	if not selftimers then
 		selftimers = {}
-		AceTimer.selfs[self] = {}
+		AceTimer.selfs[self] = selftimers
 	end
 	selftimers[handle] = timer
 	
