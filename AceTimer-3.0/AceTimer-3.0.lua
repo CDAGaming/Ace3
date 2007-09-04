@@ -55,21 +55,23 @@ local OnUpdate()
 	
 	local soon=now+1	-- +1 is safe as long as 1 < HZ < BUCKETS/2
 	
-	for curint=curint,nowint do
+	for curint=curint,nowint do	-- loop until we catch up with "now", usually only 1 iteration
 		local curbucket = curint % BUCKETS
-	
-		for timer,when in pairs(hash[curbucket]) do
+		local curbuckettable = hash[curbucket]
+		
+		for timer,when in pairs(curbuckettable) do		-- all timers in the current bucket
 			if when<soon then
-				timer.method()	-- TODO: REAL CALL!
+				timer.method(timer.arg)
+				
 				local delay=timer.delay
 				local newtime = when+delay
-				if newtime<now then
+				if newtime<now then			-- TODO: Still won't catch cases of landing in the same bucket!
 					newtime = now+delay
 				end
 				local newbucket = floor(newtime*HZ) % BUCKETS
 				if newbucket~=curbucket then		-- Is this test necessary? Will the for loop screw up if we delete and reinsert or not?
-					hash[curbucket][timer] = nil
-					hash[newbucket][timer] = newtime
+					curbuckettable[timer] = nil
+					curbuckettable[timer] = newtime
 				end
 			end
 		end
@@ -81,7 +83,7 @@ local OnUpdate()
 end
 
 function AceTimer:ScheduleRepeatingTimer(method,delay,arg)
-	local timer = { object=self, method=method, delay=delay }
+	local timer = { object=self, method=method, delay=delay, arg=arg }
 	hash[ floor((now+delay)*HZ) % BUCKETS ][timer] = now + delay
 	return timer
 end
