@@ -36,11 +36,11 @@ end
 --
 -- send the bucket to the callback function and schedule the next FireBucket in interval seconds
 local function FireBucket(bucket)
-	local callback = bucket.callback
 	local received = bucket.received
-	local empty = not next(received)
 	
-	if not empty then
+	-- we dont want to fire empty buckets
+	if next(received) then
+		local callback = bucket.callback
 		if type(callback) == "string" then
 			safecall(bucket.object[callback], bucket.object, received)
 		else
