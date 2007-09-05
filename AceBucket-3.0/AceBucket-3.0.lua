@@ -21,12 +21,13 @@ elseif not oldminor then
 	-- NEW variables must be added AFTER this if clause!
 end
 
+-- the libraries will be lazyly bound later, to avoid errors due to loading order issues
 local AceEvent, AceTimer
 
 local bucketCache = setmetatable({}, {__mode='k'})
 
-local function safecall( func, ... )
-	local success, err = pcall(func,...)
+local function safecall(func, ...)
+	local success, err = pcall(func, ...)
 	if success then return err end
 	if not err:find("%.lua:%d+:") then err = (debugstack():match("\n(.-: )in.-\n") or "") .. err end 
 	geterrorhandler()(err)
@@ -173,12 +174,12 @@ local mixins = {
 --
 -- Embeds AceBucket into the target object making the functions from the mixins list available on target:..
 function AceBucket:Embed( target )
-	for k, v in pairs( mixins ) do
+	for _, v in pairs( mixins ) do
 		target[v] = self[v]
 	end
 	self.embeds[target] = true
 end
 
-for addon,_ in pairs(AceTimer.embeds) do
+for addon in pairs(AceTimer.embeds) do
 	AceTimer:Embed(addon)
 end
