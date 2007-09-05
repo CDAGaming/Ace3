@@ -32,6 +32,11 @@ elseif not oldminor then
 	AceTimer.frame = CreateFrame("Frame", "AceTimer30Frame")
 end
 
+local pcall = pcall
+local floor = floor
+local pairs = pairs
+local tostring = tostring
+
 -- simple timer cache
 local timerCache = setmetatable({}, {__mode='k'})
 
