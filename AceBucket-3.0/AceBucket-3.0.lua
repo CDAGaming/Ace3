@@ -96,7 +96,7 @@ local function RegisterBucket(self, event, interval, callback, isMessage)
 	if type(event) ~= "string" and type(event) ~= "table" then error("Bad argument #2 to RegisterBucket. (string or table expected)", 3) end
 	if not tonumber(interval) then error("Bad argument #3 to RegisterBucket. (number expected)", 3) end
 	if type(callback) ~= "string" and type(callback) ~= "function" then error("Bad argument #3 to RegisterBucket. (string or function expected).", 3) end
-	if type callback) == "string" and type(self[callback]) ~= "function" then error("Bad argument #3 to RegisterBucket. Method not found on target object.", 3) end
+	if type(callback) == "string" and type(self[callback]) ~= "function" then error("Bad argument #3 to RegisterBucket. Method not found on target object.", 3) end
 	
 	local bucket = next(bucketCache)
 	if bucket then
@@ -180,6 +180,6 @@ function AceBucket:Embed( target )
 	self.embeds[target] = true
 end
 
-for addon in pairs(AceTimer.embeds) do
-	AceTimer:Embed(addon)
+for addon in pairs(AceBucket.embeds) do
+	AceBucket:Embed(addon)
 end
