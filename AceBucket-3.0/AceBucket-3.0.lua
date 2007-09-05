@@ -46,17 +46,29 @@ local function FireBucket(bucket)
 		safecall(callback, received)
 	end
 	
+	local empty = not next(received)
 	for k in pairs(received) do
 		received[k] = nil
 	end
 	
-	bucket.timer = nil
+	-- if the bucket was not empty, schedule another FireBucket in interval seconds
+	if not empty then
+		bucket.timer = AceTimer.ScheduleTimer(bucket, FireBucket, bucket.interval, bucket)
+	else -- if it was empty, clear the timer and wait for the next event
+		bucket.timer = nil
+	end
 end
 
 local function BucketHandler(self, event, arg1)
-	self.received[arg1] = true
+	if arg1 == nil then
+		arg1 = "nil"
+	end
+	
+	self.received[arg1] = (self.received[arg1] or 0) + 1
+	
+	-- if we are not scheduled yet, fire the last event, which will automatically schedule the bucket again
 	if not self.timer then
-		self.timer = AceTimer.ScheduleTimer(self, FireBucket, self.interval, self)
+		FireBucket(self)
 	end
 end
 
@@ -75,10 +87,10 @@ local function RegisterBucket(self, event, interval, callback, isMessage)
 end
 
 
-function AceBucket:RegisterBucketEvent(event, delay, method)
-	return RegisterBucket(self, event, delay, method, false)
+function AceBucket:RegisterBucketEvent(event, interval, callback)
+	return RegisterBucket(self, event, interval, callback, false)
 end
 
-function AceBucket:RegisterBucketMessage(message, delay, method)
-	return RegisterBucket(self, message, delay, method, true)
+function AceBucket:RegisterBucketMessage(message, interval, callback)
+	return RegisterBucket(self, message, interval, callback, true)
 end
