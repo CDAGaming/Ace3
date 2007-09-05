@@ -12,9 +12,6 @@
 local MAJOR, MINOR = "AceBucket-3.0", 0
 local AceBucket, oldminor = LibStub:NewLibrary(MAJOR, MINOR)
 
-local AceEvent = LibStub:GetLibrary("AceEvent-3.0")
-local AceTimer = LibStub:GetLibrary("AceTimer-3.0")
-
 if not AceBucket then
 	return
 elseif not oldminor then
@@ -22,6 +19,8 @@ elseif not oldminor then
 	AceBucket.buckets = {}
 	AceBucket.embeds = {}
 end
+
+local AceEvent, AceTimer
 
 local bucketCache = setmetatable({}, {__mode='k'})
 
@@ -82,6 +81,15 @@ end
 -- callback(func or string) - function pointer, or method name of the object, that gets called when the bucket is cleared
 -- isMessage(boolean) - register AceEvent Messages instead of game events
 local function RegisterBucket(self, event, interval, callback, isMessage)
+	-- try to fetch the librarys
+	if not AceEvent or not AceTimer then 
+		AceEvent = LibStub:GetLibrary("AceEvent-3.0", true)
+		AceTimer = LibStub:GetLibrary("AceTimer-3.0", true)
+		if not AceEvent or not AceTimer then
+			error(MAJOR .. " requires AceEvent-3.0 and AceTimer-3.0", 3)
+		end
+	end
+	
 	if self == AceBucket then error("Cannot register buckets on the AceBucket library object.", 3) end
 	if type(event) ~= "string" and type(event) ~= "table" then error("Bad argument #2 to RegisterBucket. (string or table expected)", 3) end
 	if not tonumber(interval) then error("Bad argument #3 to RegisterBucket. (number expected)", 3) end
