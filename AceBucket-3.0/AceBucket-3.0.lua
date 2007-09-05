@@ -61,7 +61,7 @@ end
 -- BucketHandler ( event, arg1 )
 -- 
 -- callback func for AceEvent
--- stores arg1 in the received table, and fires/schedules buckets
+-- stores arg1 in the received table, and schedules the bucket if necessary
 local function BucketHandler(self, event, arg1)
 	if arg1 == nil then
 		arg1 = "nil"
@@ -69,7 +69,7 @@ local function BucketHandler(self, event, arg1)
 	
 	self.received[arg1] = (self.received[arg1] or 0) + 1
 	
-	-- if we are not scheduled yet, fire the last event, which will automatically schedule the bucket again
+	-- if we are not scheduled yet, start a timer on the interval for our bucket to be cleared
 	if not self.timer then
 		bucket.timer = AceTimer.ScheduleTimer(bucket, FireBucket, bucket.interval, bucket)
 	end
@@ -94,8 +94,8 @@ local function RegisterBucket(self, event, interval, callback, isMessage)
 	if self == AceBucket then error("Cannot register buckets on the AceBucket library object.", 3) end
 	if type(event) ~= "string" and type(event) ~= "table" then error("Bad argument #2 to RegisterBucket. (string or table expected)", 3) end
 	if not tonumber(interval) then error("Bad argument #3 to RegisterBucket. (number expected)", 3) end
-	if type( callback ) ~= "string" and type( callback ) ~= "function" then error( "Bad argument #3 to RegisterBucket. (string or function expected).", 3) end
-	if type( callback ) == "string" and type( self[callback] ) ~= "function" then error( "Bad argument #3 to RegisterBucket. Method not found on target object.", 3) end
+	if type(callback) ~= "string" and type(callback) ~= "function" then error("Bad argument #3 to RegisterBucket. (string or function expected).", 3) end
+	if type callback) == "string" and type(self[callback]) ~= "function" then error("Bad argument #3 to RegisterBucket. Method not found on target object.", 3) end
 	
 	local bucket = next(bucketCache)
 	if bucket then
