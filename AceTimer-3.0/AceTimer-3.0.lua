@@ -37,7 +37,7 @@ end
 	If this is ever LOWERED, all existing timers need to be enforced to have a delay >= 1/HZ on lib upgrade.
 	If this number is ever changed, all entries need to be rehashed on lib upgrade.
 	]]
-local HZ = 11
+local HZ = 26
 
 --[[
 	Prime for good distribution
@@ -106,6 +106,7 @@ local function OnUpdate()
 						newtime = now + delay
 					end
 					
+					-- add next timer execution to the correct bucket
 					local newbucket = floor(newtime * HZ) % BUCKETS
 					hash[newbucket][timer] = newtime
 				end
@@ -132,7 +133,7 @@ local function Reg(self, method, delay, arg, repeating)
 		"ScheduleTimer: 'method': Expected function reference or self[\"method\"] call")
 	
 	if delay < (1 / (HZ - 1)) then
-		delay = 1 / (HZ-1)
+		delay = 1 / (HZ - 1)
 	end
 	
 	-- Create and stuff timer in the correct hash bucket
@@ -141,7 +142,7 @@ local function Reg(self, method, delay, arg, repeating)
 	hash[ floor((now+delay)*HZ) % BUCKETS ][timer] = now + delay
 	
 	-- Insert timer in our self->handle->timer registry
-	local handle=tostring(timer)
+	local handle = tostring(timer)
 	
 	local selftimers = AceTimer.selfs[self]
 	if not selftimers then
