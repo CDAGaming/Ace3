@@ -19,10 +19,10 @@ local mixins = {
 	"RegisterBucketMessage", 
 } 
 
--- AceEvent:Embed( target )
--- target (object) - target object to embed AceEvent in
+-- AceBucket:Embed( target )
+-- target (object) - target object to embed AceBucket in
 --
--- Embeds AceEevent into the target object making the functions from the mixins list available on target:..
+-- Embeds AceBucket into the target object making the functions from the mixins list available on target:..
 function AceBucket:Embed( target )
 	for k, v in pairs( mixins ) do
 		target[v] = self[v]
@@ -37,6 +37,9 @@ local function safecall( func, ... )
 	geterrorhandler()(err)
 end
 
+-- FireBucket ( bucket )
+--
+-- send the bucket to the callback function and schedule the next FireBucket in interval seconds
 local function FireBucket(bucket)
 	local callback = bucket.callback
 	local received = bucket.received
@@ -59,6 +62,10 @@ local function FireBucket(bucket)
 	end
 end
 
+-- BucketHandler ( event, arg1 )
+-- 
+-- callback func for AceEvent
+-- stores arg1 in the received table, and fires/schedules buckets
 local function BucketHandler(self, event, arg1)
 	if arg1 == nil then
 		arg1 = "nil"
@@ -72,12 +79,28 @@ local function BucketHandler(self, event, arg1)
 	end
 end
 
+-- RegisterBucket( event, interval, callback, isMessage )
+--
+-- event(string or table) - the event, or a table with the events, that this bucket listens to
+-- interval(int) - time between bucket fireings
+-- callback(func or string) - function pointer, or method name of the object, that gets called when the bucket is cleared
+-- isMessage(boolean) - register AceEvent Messages instead of game events
 local function RegisterBucket(self, event, interval, callback, isMessage)
 	local bucket = { object = self, handler = BucketHandler, callback = callback, interval = interval, received = {} }
-	if not isMessage then
-		AceEvent.RegisterEvent(bucket, event, "handler")
+	
+	local regFunc
+	if isMessage then
+		regFunc = AceEvent.RegisterMessage
 	else
-		AceEvent.RegisterMessage(bucket, event, "handler")
+		regFunc = AceEvent.RegisterEvent
+	end
+	
+	if type(event) == "table" then
+		for _,e in pairs(event) do
+			regFunc(bucket, e, "handler")
+		end
+	else
+		regFunc(bucket, event, "handler")
 	end
 	
 	local handle = tostring(bucket)
@@ -86,7 +109,12 @@ local function RegisterBucket(self, event, interval, callback, isMessage)
 	return handle
 end
 
-
+-- AceEvent:RegisterBucketEvent(event, interval, callback)
+-- AceEvent:RegisterBucketMessage(message, interval, callback)
+--
+-- event/message(string or table) -  the event, or a table with the events, that this bucket listens to
+-- interval(int) - time between bucket fireings
+-- callback(func or string) - function pointer, or method name of the object, that gets called when the bucket is cleared
 function AceBucket:RegisterBucketEvent(event, interval, callback)
 	return RegisterBucket(self, event, interval, callback, false)
 end
