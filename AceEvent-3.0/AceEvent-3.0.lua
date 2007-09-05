@@ -5,8 +5,8 @@ local AceEvent, oldminor = LibStub:NewLibrary(ACEEVENT_MAJOR, ACEEVENT_MINOR)
 if not AceEvent then 
 	return
 elseif not oldminor then  -- This is the first version
-	AceEvent.events = {} -- Blizzard events
-	AceEvent.messages = {} -- Own messages
+	AceEvent.events = setmetatable({}, {__index = function(tbl, key) tbl[key] = {} return tbl[key] end }) -- Blizzard events
+	AceEvent.messages = setmetatable({}, {__index = function(tbl, key) tbl[key] = {} return tbl[key] end }) -- Own messages
 	AceEvent.frame = CreateFrame("Frame", "AceEvent30Frame") -- our event frame
 	AceEvent.embeds = {} -- what objects embed this lib
 	-- ANY new members must be added AFTER the if clause!
@@ -16,8 +16,7 @@ end
 -- upgrading of embeds is done at the bottom of the file
 
 -- local upvalues
-local events = AceEvent.events
-local messages = AceEvent.messages
+local events, messages = AceEvent.events, AceEvent.messages
 
 local function safecall( func, ... )
 	local success, err = pcall(func,...)
@@ -29,38 +28,27 @@ end
 -- generic event and message firing function
 -- fires the event/message into the given registry
 local function Fire(registry, event, ...)
-	local slot = registry[event]
-	if not slot then return end
-	
-	for obj, method in pairs( slot ) do
+	for obj, method in pairs( registry[event] ) do
 		if type(method) == "string" then
-			safecall( obj[method], obj, ... )
+			safecall( obj[method], obj, event, ... ) 
 		else
-			safecall( method, ... )
+			safecall( method, event, ... )
 		end
 	end
+	
+	-- I've added event to the args passed in, in anticipation of our decision in jira.  
+	-- TODO: If its reversed reverse this change
 end
 
 -- Generic registration and unregisration for messages and events
 local function RegOrUnreg(self, unregister, registry, event, method )
-	assert( self ~= AceEvent )
-	assert( type(event) == "string" )
-	local slot = registry[event]
-	
-	if not slot then
-		slot = {} -- purposefully created even on unregister to reduce logic here AND in :UnlistenEvent(). The chance that it didn't already exist is VERY slim either way.
-		registry[event] = slot
-	end
+	assert( self ~= AceEvent and type(event) == "string" )
 	
 	if unregister then -- unregister
-		slot[self] = nil
+		registry[event][self] = nil
 	else -- overwrite any old registration
-		assert( type( method ) == "string" or type(method) == "nil" or type(method) == "function" )
-		if not method then
-			assert( self[event] )
-			method = event
-		end
-		slot[self] = method
+		assert( type( method ) == "string" or type(method) == "nil" or type(method) == "function" or self[event] )
+		registry[event][self] = method or event
 	end
 end
 
@@ -147,7 +135,7 @@ end
 function AceEvent:UnregisterAllEvents()
 	for event, slot in pairs( events ) do
 		if slot[self] then
-			self:UnregisterEvent( event) -- call unregisterevent instead of regunreg here to make sure the frame gets unregistered if needed
+			self:UnregisterEvent(event) -- call unregisterevent instead of regunreg here to make sure the frame gets unregistered if needed
 		end
 	end
 end
