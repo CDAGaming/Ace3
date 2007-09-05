@@ -51,7 +51,7 @@ local function FireBucket(bucket)
 		for k in pairs(received) do
 			received[k] = nil
 		end
-	
+		
 		-- if the bucket was not empty, schedule another FireBucket in interval seconds
 		bucket.timer = AceTimer.ScheduleTimer(bucket, FireBucket, bucket.interval, bucket)
 	else -- if it was empty, clear the timer and wait for the next event
@@ -72,7 +72,7 @@ local function BucketHandler(self, event, arg1)
 	
 	-- if we are not scheduled yet, start a timer on the interval for our bucket to be cleared
 	if not self.timer then
-		bucket.timer = AceTimer.ScheduleTimer(bucket, FireBucket, bucket.interval, bucket)
+		self.timer = AceTimer.ScheduleTimer(self, FireBucket, self.interval, self)
 	end
 end
 
