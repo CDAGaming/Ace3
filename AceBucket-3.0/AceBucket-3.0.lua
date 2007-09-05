@@ -18,6 +18,7 @@ elseif not oldminor then
 	-- initial setup
 	AceBucket.buckets = {}
 	AceBucket.embeds = {}
+	-- NEW variables must be added AFTER this if clause!
 end
 
 local AceEvent, AceTimer
