@@ -71,14 +71,19 @@ end
 -- callback(func or string) - function pointer, or method name of the object, that gets called when the bucket is cleared
 -- isMessage(boolean) - register AceEvent Messages instead of game events
 local function RegisterBucket(self, event, interval, callback, isMessage)
-	-- todo: bucket pool
+	if self == AceBucket then error("Cannot register buckets on the AceBucket library object.", 3) end
+	if type(event) ~= "string" and type(event) ~= "table" then error("Bad argument #2 to RegisterBucket. (string or table expected)", 3) end
+	if not tonumber(interval) then error("Bad argument #3 to RegisterBucket. (number expected)", 3) end
+	if type( callback ) ~= "string" and type( callback ) ~= "function" then error( "Bad argument #3 to RegisterBucket. (string or function expected).", 3) end
+	if type( callback ) == "string" and type( self[callback] ) ~= "function" then error( "Bad argument #3 to RegisterBucket. Method not found on target object.", 3) end
+	
 	local bucket = next(bucketCache)
 	if bucket then
 		bucketCache[bucket] = nil
 	else
 		bucket = { handler = BucketHandler, received = {} }
 	end
-	bucket.object, bucket.callback, bucket.interval = self, callback, interval
+	bucket.object, bucket.callback, bucket.interval = self, callback, tonumber(interval)
 	
 	local regFunc = isMessage and AceEvent.RegisterMessage or AceEvent.RegisterEvent
 	
@@ -116,21 +121,23 @@ end
 -- will unregister any events and messages from the bucket and clear any remaining data
 function AceBucket:UnregisterBucket(handle)
 	local bucket = AceBucket.buckets[handle]
-	AceEvent.UnregisterAllEvents(bucket)
-	AceEvent.UnregisterAllMessages(bucket)
-	
-	-- clear any remaining data in the bucket
-	for k in pairs(bucket.received) do
-		bucket.received[k] = nil
+	if bucket then
+		AceEvent.UnregisterAllEvents(bucket)
+		AceEvent.UnregisterAllMessages(bucket)
+		
+		-- clear any remaining data in the bucket
+		for k in pairs(bucket.received) do
+			bucket.received[k] = nil
+		end
+		
+		if bucket.timer then
+			AceTimer.CancelTimer(bucket, bucket.timer)
+		end
+		
+		AceBucket.buckts[handle] = nil
+		-- store our bucket in the cache
+		bucketCache[bucket] = true
 	end
-	
-	if bucket.timer then
-		AceTimer.CancelTimer(bucket, bucket.timer)
-	end
-	
-	AceBucket.buckts[handle] = nil
-	-- store our bucket in the cache
-	bucketCache[bucket] = true
 end
 
 --- embedding and embed handling
