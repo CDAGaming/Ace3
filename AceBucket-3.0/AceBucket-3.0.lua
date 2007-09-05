@@ -3,8 +3,8 @@
 --[[
 	This Bucket implementation works as follows:
 	-- Initially, no schedule is running, and its waiting for the first event to happen.
-	-- The first event is then directly passed through to our callback, and the scheduler is started, 
-		collecting all events in the given interval. When that interval is reached, the bucket is pushed to the 
+	-- The first event will start the bucket, and get the scheduler running, which will collect all
+		events in the given interval. When that interval is reached, the bucket is pushed to the 
 		callback and a new schedule is started. When a bucket is empty after its interval, the scheduler is 
 		stopped, and the bucket is only listening for the next event to happen, basicly back in initial state.
 ]]
@@ -71,7 +71,7 @@ local function BucketHandler(self, event, arg1)
 	
 	-- if we are not scheduled yet, fire the last event, which will automatically schedule the bucket again
 	if not self.timer then
-		FireBucket(self)
+		bucket.timer = AceTimer.ScheduleTimer(bucket, FireBucket, bucket.interval, bucket)
 	end
 end
 
