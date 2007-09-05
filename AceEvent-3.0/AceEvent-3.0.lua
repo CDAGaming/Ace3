@@ -42,15 +42,15 @@ end
 
 -- Generic registration and unregisration for messages and events
 local function RegOrUnreg(self, unregister, registry, event, method )
-	if self == AceEvent then error( "Can not register events on the AceEvent library object.", 2 ) end
-	if type(event) ~= "string" then error( "Bad argument #2 to (Un)registerEvent. (string expected)", 2 ) end
+	if self == AceEvent then error( "Can not register events on the AceEvent library object.", 3) end
+	if type(event) ~= "string" then error( "Bad argument #2 to (Un)registerEvent. (string expected)", 3) end
 	
 	if unregister then -- unregister
 		registry[event][self] = nil
 	else -- overwrite any old registration
 		if not method then method = event end
-		if type( method ) ~= "string" and type( method ) ~= "function" then error( "Bad argument #3 to RegisterEvent. (string or function expected).", 2 ) end
-		if type( method ) == "string" and type( self[method] ) ~= "function" then error( "Bad argument #3 to RegisterEvent. Method not found on target object.", 2 ) end
+		if type( method ) ~= "string" and type( method ) ~= "function" then error( "Bad argument #3 to RegisterEvent. (string or function expected).", 3) end
+		if type( method ) == "string" and type( self[method] ) ~= "function" then error( "Bad argument #3 to RegisterEvent. Method not found on target object.", 3) end
 		registry[event][self] = method
 	end
 end
