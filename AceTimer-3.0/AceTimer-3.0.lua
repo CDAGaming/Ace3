@@ -34,6 +34,7 @@ end
 
 local pcall = pcall
 local floor = floor
+local max = max
 local pairs = pairs
 local tostring = tostring
 
@@ -78,16 +79,11 @@ local function OnUpdate()
 	-- Have we passed into a new hash bucket?
 	if nowint == lastint then return end
 	
-	if lastint <= nowint-BUCKETS then
-		-- Happens on e.g. instance loads, but COULD happen on high local load situations also
-		lastint = nowint - BUCKETS + 1
-	else
-		lastint = lastint + 1
-	end
-	
 	local soon = now + 1 -- +1 is safe as long as 1 < HZ < BUCKETS/2
 	
-	for curint = lastint, nowint do -- loop until we catch up with "now", usually only 1 iteration
+	-- Pass through each bucket at most once
+	-- Happens on e.g. instance loads, but COULD happen on high local load situations also
+	for curint = (max(lastint, nowint - BUCKETS) + 1), nowint do -- loop until we catch up with "now", usually only 1 iteration
 		local curbucket = curint % BUCKETS
 		local curbuckettable = hash[curbucket]
 		
