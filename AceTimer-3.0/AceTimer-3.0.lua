@@ -1,4 +1,4 @@
---[[ $Id ]]
+--[[ $Id$ ]]
 --[[
 	Basic assumptions:
 	* In a typical system, we do more re-scheduling per second than there are timer pulses per second
@@ -257,4 +257,3 @@ AceTimer.frame:SetScript("OnUpdate", OnUpdate)
 -- In theory, we should hide&show the frame based on there being timers or not.
 -- However, this job is fairly expensive, and the chance that there will 
 -- actually be zero timers running is diminuitive to say the lest.
-

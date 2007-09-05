@@ -1,4 +1,14 @@
 --[[ $Id$ ]]
+
+--[[
+	This Bucket implementation works as follows:
+	-- Initially, no schedule is running, and its waiting for the first event to happen.
+	-- The first event is then directly passed through to our callback, and the scheduler is started, 
+		collecting all events in the given interval. When that interval is reached, the bucket is pushed to the 
+		callback and a new schedule is started. When a bucket is empty after its interval, the scheduler is 
+		stopped, and the bucket is only listening for the next event to happen, basicly back in initial state.
+]]
+
 local MAJOR, MINOR = "AceBucket-3.0", 0
 local AceBucket, oldminor = LibStub:NewLibrary(MAJOR, MINOR)
 
