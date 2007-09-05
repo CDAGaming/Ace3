@@ -49,7 +49,7 @@ local function RegOrUnreg(self, unregister, registry, event, method )
 		registry[event][self] = nil
 	else -- overwrite any old registration
 		if not method then method = event end
-		if type( method ) ~= "string" or type( method ) ~= "function" then error( "Bad argument #3 to RegisterEvent. (string or function expected).", 2 ) end
+		if type( method ) ~= "string" and type( method ) ~= "function" then error( "Bad argument #3 to RegisterEvent. (string or function expected).", 2 ) end
 		if type( method ) == "string" and type( self[method] ) ~= "function" then error( "Bad argument #3 to RegisterEvent. Method not found on target object.", 2 ) end
 		registry[event][self] = method
 	end
