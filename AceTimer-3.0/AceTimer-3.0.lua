@@ -40,7 +40,7 @@ local timerCache = setmetatable({}, {__mode='k'})
 	If this is ever LOWERED, all existing timers need to be enforced to have a delay >= 1/HZ on lib upgrade.
 	If this number is ever changed, all entries need to be rehashed on lib upgrade.
 	]]
-local HZ = 26
+local HZ = 11
 
 --[[
 	Prime for good distribution
@@ -247,6 +247,13 @@ for addon,_ in pairs(AceTimer.embeds) do
 	AceTimer:Embed(addon)
 end
 
+
 -----------------------------------------------------------------------
 -- Finishing touchups
+
 AceTimer.frame:SetScript("OnUpdate", OnUpdate)
+
+-- In theory, we should hide&show the frame based on there being timers or not.
+-- However, this job is fairly expensive, and the chance that there will 
+-- actually be zero timers running is diminuitive to say the lest.
+
