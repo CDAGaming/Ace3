@@ -1,4 +1,4 @@
---[[ $Id: AceHook-3.0.lua 47953 2007-09-02 13:02:45Z nevcairiel $ ]]
+--[[ $Id$ ]]
 local ACEHOOK_MAJOR, ACEHOOK_MINOR = "AceHook-3.0", 0
 local AceHook, oldminor = LibStub:NewLibrary(ACEHOOK_MAJOR, ACEHOOK_MINOR)
 

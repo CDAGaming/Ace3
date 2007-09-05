@@ -1,3 +1,4 @@
+--[[ $Id$ ]]
 local MAJOR, MINOR = "AceBucket-3.0", 0
 local AceBucket, oldminor = LibStub:NewLibrary(MAJOR, MINOR)
 
