@@ -91,6 +91,8 @@ local function OnUpdate()
 				else
 					safecall(timer.method, timer.arg)
 				end
+				-- remove from current bucket
+				curbuckettable[timer] = nil
 				
 				local delay = timer.delay
 				if not delay then
@@ -103,9 +105,8 @@ local function OnUpdate()
 					if newtime < now then -- Keep lag from making us firing a timer unnecessarily. (Note that this still won't catch too-short-delay timers though.)
 						newtime = now + delay
 					end
-					local newbucket = floor(newtime * HZ) % BUCKETS
 					
-					curbuckettable[timer] = nil
+					local newbucket = floor(newtime * HZ) % BUCKETS
 					hash[newbucket][timer] = newtime
 				end
 			end -- if when<soon
