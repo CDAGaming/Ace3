@@ -18,10 +18,18 @@
 		CAUTION: The BUCKETS constant constrains how many timers can be efficiently handled. With too many hash collisions, performance will decrease.
 ]]
 
+-- TODO: Strip full documentation onto a wiki page, and remove it from here imho
+
 local MAJOR, MINOR = "AceTimer-3.0", 0
 
-local AceTimer = LibStub:NewLibrary(MAJOR, MINOR)
-if not AceTimer then return end
+local AceTimer, oldminor = LibStub:NewLibrary(MAJOR, MINOR)
+if not AceTimer then 
+	return 
+elseif not oldminor then
+	AceTimer.hash = {}			-- Array of [0..BUCKET-1]={[timerobj]=time, [timerobj2]=time2, ...}
+	AceTimer.selfs = {}		-- Array of [self]={[handle]=timerobj, [handle2]=timerobj2, ...}
+	AceTimer.frame = CreateFrame("Frame", "AceTimer30Frame")
+end
 
 --[[
 	Timers will not be fired more often than HZ-1 times per second. 
@@ -29,38 +37,34 @@ if not AceTimer then return end
 	If this is ever LOWERED, all existing timers need to be enforced to have a delay >= 1/HZ on lib upgrade.
 	If this number is ever changed, all entries need to be rehashed on lib upgrade.
 	]]
-local HZ=11
+local HZ = 11
 
 --[[
 	Prime for good distribution
 	If this number is ever changed, all entries need to be rehashed on lib upgrade.
 ]]
-local BUCKETS=131
-
-AceTimer.hash = AceTimer.hash or {}			-- Array of [0..BUCKET-1]={[timerobj]=time, [timerobj2]=time2, ...}
-AceTimer.selfs = AceTimer.selfs or {}		-- Array of [self]={[handle]=timerobj, [handle2]=timerobj2, ...}
-AceTimer.frame = AceTimer.frame or CreateFrame("Frame", "AceTimer30Frame")
+local BUCKETS = 131
 
 local hash = AceTimer.hash
 for i=0,BUCKETS-1 do
 	hash[i] = hash[i] or {}
 end
 
-local function safecall( func, ... )
-	local success, err = pcall(func,...)
+local function safecall(func, ... )
+	local success, err = pcall(func, ...)
 	if success then return err end
 	if not err:find("%.lua:%d+:") then err = (debugstack():match("\n(.-: )in.-\n") or "") .. err end 
 	geterrorhandler()(err)
 end
 
-local lastint = floor(GetTime()*HZ)
+local lastint = floor(GetTime() * HZ)
 ----------------------------------------------------------------------
 -- OnUpdate handler
 --
 -- traverse buckets, always chasing "now", and fire timers that have expired
 local function OnUpdate()
 	local now = GetTime()
-	local nowint = floor(now*HZ)
+	local nowint = floor(now * HZ)
 	
 	-- Have we passed into a new hash bucket?
 	if nowint == lastint then return end
@@ -72,15 +76,14 @@ local function OnUpdate()
 		lastint = lastint + 1
 	end
 	
-	local soon = now+1	-- +1 is safe as long as 1 < HZ < BUCKETS/2
+	local soon = now + 1 -- +1 is safe as long as 1 < HZ < BUCKETS/2
 	
 	for curint = lastint, nowint do -- loop until we catch up with "now", usually only 1 iteration
 		local curbucket = curint % BUCKETS
 		local curbuckettable = hash[curbucket]
 		
-		for timer,when in pairs(curbuckettable) do -- all timers in the current bucket
+		for timer, when in pairs(curbuckettable) do -- all timers in the current bucket
 			if when < soon then
-				
 				-- Call the timer func, either as a method on given object, or a straight function ref
 				local method = timer.object[timer.method]
 				if method then
@@ -96,15 +99,14 @@ local function OnUpdate()
 					AceTimer.selfs[timer.object][tostring(timer)] = nil
 				else
 					-- repeating timer
-					local newtime = when+delay
-					if newtime<now then -- Keep lag from making us firing a timer unnecessarily. (Note that this still won't catch too-short-delay timers though.)
-						newtime = now+delay
+					local newtime = when + delay
+					if newtime < now then -- Keep lag from making us firing a timer unnecessarily. (Note that this still won't catch too-short-delay timers though.)
+						newtime = now + delay
 					end
-					local newbucket = floor(newtime*HZ) % BUCKETS
-					if newbucket ~= curbucket then -- Is this test necessary? Will the for loop screw up if we delete and reinsert or not?
-						curbuckettable[timer] = nil
-						curbuckettable[timer] = newtime
-					end
+					local newbucket = floor(newtime * HZ) % BUCKETS
+					
+					curbuckettable[timer] = nil
+					hash[newbucket][timer] = newtime
 				end
 			end -- if when<soon
 		end -- for timer,when in pairs(curbuckettable)
@@ -161,11 +163,11 @@ end
 --
 -- returns a handle to the timer, which is used for cancelling it
 function AceTimer:ScheduleTimer(method,delay,arg)
-	return Reg(self,method,delay,arg)
+	return Reg(self, method, delay, arg)
 end
 
 function AceTimer:ScheduleRepeatingTimer(method,delay,arg)
-	return Reg(self,method,delay,arg,true)
+	return Reg(self, method, delay, arg, true)
 end
 
 
@@ -176,7 +178,7 @@ end
 --
 -- Cancels a timer with the given handle, registered by the same 'self' as given here
 function AceTimer:CancelTimer(handle)
-	local selftimers = AceTimer.timers[self]
+	local selftimers = AceTimer.selfs[self]
 	local timer = selftimers and selftimers[handle]
 	if timer then
 		selftimers[handle] = nil
@@ -201,7 +203,7 @@ function AceTimer:CancelAllTimers()
 	local selftimers = AceTimer.selfs[self]
 	if selftimers then
 		for handle,_ in pairs(selftimers) do
-			AceTimer.CancelTimer(self,handle)
+			AceTimer.CancelTimer(self, handle)
 		end
 	end
 end
