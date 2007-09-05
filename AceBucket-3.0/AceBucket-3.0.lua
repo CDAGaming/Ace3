@@ -12,23 +12,7 @@ elseif not oldminor then
 	AceBucket.embeds = {}
 end
 
---- embedding and embed handling
-
-local mixins = {
-	"RegisterBucketEvent",
-	"RegisterBucketMessage", 
-} 
-
--- AceBucket:Embed( target )
--- target (object) - target object to embed AceBucket in
---
--- Embeds AceBucket into the target object making the functions from the mixins list available on target:..
-function AceBucket:Embed( target )
-	for k, v in pairs( mixins ) do
-		target[v] = self[v]
-	end
-	self.embeds[target] = true
-end
+local bucketCache = setmetatable({}, {__mode='k'})
 
 local function safecall( func, ... )
 	local success, err = pcall(func,...)
@@ -43,19 +27,20 @@ end
 local function FireBucket(bucket)
 	local callback = bucket.callback
 	local received = bucket.received
-	if type(callback) == "string" then
-		safecall(bucket.object[callback], bucket.object, received)
-	else
-		safecall(callback, received)
-	end
-	
 	local empty = not next(received)
-	for k in pairs(received) do
-		received[k] = nil
-	end
 	
-	-- if the bucket was not empty, schedule another FireBucket in interval seconds
 	if not empty then
+		if type(callback) == "string" then
+			safecall(bucket.object[callback], bucket.object, received)
+		else
+			safecall(callback, received)
+		end
+		
+		for k in pairs(received) do
+			received[k] = nil
+		end
+	
+		-- if the bucket was not empty, schedule another FireBucket in interval seconds
 		bucket.timer = AceTimer.ScheduleTimer(bucket, FireBucket, bucket.interval, bucket)
 	else -- if it was empty, clear the timer and wait for the next event
 		bucket.timer = nil
@@ -86,14 +71,16 @@ end
 -- callback(func or string) - function pointer, or method name of the object, that gets called when the bucket is cleared
 -- isMessage(boolean) - register AceEvent Messages instead of game events
 local function RegisterBucket(self, event, interval, callback, isMessage)
-	local bucket = { object = self, handler = BucketHandler, callback = callback, interval = interval, received = {} }
-	
-	local regFunc
-	if isMessage then
-		regFunc = AceEvent.RegisterMessage
+	-- todo: bucket pool
+	local bucket = next(bucketCache)
+	if bucket then
+		bucketCache[bucket] = nil
 	else
-		regFunc = AceEvent.RegisterEvent
+		bucket = { handler = BucketHandler, received = {} }
 	end
+	bucket.object, bucket.callback, bucket.interval = self, callback, interval
+	
+	local regFunc = isMessage and AceEvent.RegisterMessage or AceEvent.RegisterEvent
 	
 	if type(event) == "table" then
 		for _,e in pairs(event) do
@@ -109,8 +96,8 @@ local function RegisterBucket(self, event, interval, callback, isMessage)
 	return handle
 end
 
--- AceEvent:RegisterBucketEvent(event, interval, callback)
--- AceEvent:RegisterBucketMessage(message, interval, callback)
+-- AceBucket:RegisterBucketEvent(event, interval, callback)
+-- AceBucket:RegisterBucketMessage(message, interval, callback)
 --
 -- event/message(string or table) -  the event, or a table with the events, that this bucket listens to
 -- interval(int) - time between bucket fireings
@@ -121,4 +108,50 @@ end
 
 function AceBucket:RegisterBucketMessage(message, interval, callback)
 	return RegisterBucket(self, message, interval, callback, true)
+end
+
+-- AceBucket:UnregisterBucket ( handle )
+-- handle - the handle of the bucket as returned by RegisterBucket*
+--
+-- will unregister any events and messages from the bucket and clear any remaining data
+function AceBucket:UnregisterBucket(handle)
+	local bucket = AceBucket.buckets[handle]
+	AceEvent.UnregisterAllEvents(bucket)
+	AceEvent.UnregisterAllMessages(bucket)
+	
+	-- clear any remaining data in the bucket
+	for k in pairs(bucket.received) do
+		bucket.received[k] = nil
+	end
+	
+	if bucket.timer then
+		AceTimer.CancelTimer(bucket, bucket.timer)
+	end
+	
+	AceBucket.buckts[handle] = nil
+	-- store our bucket in the cache
+	bucketCache[bucket] = true
+end
+
+--- embedding and embed handling
+
+local mixins = {
+	"RegisterBucketEvent",
+	"RegisterBucketMessage", 
+	"UnregisterBucket",
+} 
+
+-- AceBucket:Embed( target )
+-- target (object) - target object to embed AceBucket in
+--
+-- Embeds AceBucket into the target object making the functions from the mixins list available on target:..
+function AceBucket:Embed( target )
+	for k, v in pairs( mixins ) do
+		target[v] = self[v]
+	end
+	self.embeds[target] = true
+end
+
+for addon,_ in pairs(AceTimer.embeds) do
+	AceTimer:Embed(addon)
 end
