@@ -31,6 +31,9 @@ elseif not oldminor then
 	AceTimer.frame = CreateFrame("Frame", "AceTimer30Frame")
 end
 
+-- simple timer cache
+local timerCache = setmetatable({}, {__mode='k'})
+
 --[[
 	Timers will not be fired more often than HZ-1 times per second. 
 	Keep at intended speed PLUS ONE or we get bitten by floating point rounding errors (n.5 + 0.1 can be n.599999)
@@ -99,6 +102,7 @@ local function OnUpdate()
 					-- single-shot timer
 					curbuckettable[timer] = nil
 					AceTimer.selfs[timer.object][tostring(timer)] = nil
+					timerCache[timer] = true
 				else
 					-- repeating timer
 					local newtime = when + delay
@@ -138,8 +142,16 @@ local function Reg(self, method, delay, arg, repeating)
 	
 	-- Create and stuff timer in the correct hash bucket
 	local now = GetTime()
-	local timer = { object=self, method=method, delay=(repeating and delay), arg=arg }
-	hash[ floor((now+delay)*HZ) % BUCKETS ][timer] = now + delay
+	
+	local timer = next(timerCache)
+	if timer then
+		timerCache[timer] = nil
+	else
+		timer = {}
+	end
+	timer.object, timer.method, timer.delay, timer.arg = self, method, (repeating and delay), arg
+	
+	hash[floor((now+delay)*HZ) % BUCKETS][timer] = now + delay
 	
 	-- Insert timer in our self->handle->timer registry
 	local handle = tostring(timer)
