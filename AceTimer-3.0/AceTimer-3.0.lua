@@ -143,6 +143,7 @@ local function Reg(self, method, delay, arg, repeating)
 	-- Create and stuff timer in the correct hash bucket
 	local now = GetTime()
 	
+	-- check our timer cache for timers
 	local timer = next(timerCache)
 	if timer then
 		timerCache[timer] = nil
@@ -203,6 +204,8 @@ function AceTimer:CancelTimer(handle)
 				v[timer] = nil
 			end
 		end
+		-- return the timer to the cache
+		timerCache[timer] = true
 	end
 end
 
