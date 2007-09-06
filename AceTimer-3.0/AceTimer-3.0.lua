@@ -90,11 +90,11 @@ local function OnUpdate()
 		for timer, when in pairs(curbuckettable) do -- all timers in the current bucket
 			if when < soon then
 				-- Call the timer func, either as a method on given object, or a straight function ref
-				local method = timer.object[timer.method]
-				if method then
-					safecall(method, timer.object, timer.arg)
+				local callback = timer.object[timer.callback]
+				if callback then
+					safecall(callback, timer.object, timer.arg)
 				else
-					safecall(timer.method, timer.arg)
+					safecall(timer.callback, timer.arg)
 				end
 				-- remove from current bucket
 				curbuckettable[timer] = nil
@@ -124,19 +124,23 @@ local function OnUpdate()
 end
 
 -----------------------------------------------------------------------
--- Reg( method, delay, arg, repeating )
+-- Reg( callback, delay, arg, repeating )
 --
--- method( function or string ) - direct function ref or method name in our object for the callback
+-- callback( function or string ) - direct function ref or method name in our object for the callback
 -- delay(int) - delay for the timer
 -- arg(variant) - any argument to be passed to the callback function
 -- repeating(boolean) - repeating timer, or oneshot
 --
 -- returns the handle of the timer for later processing (canceling etc)
-local function Reg(self, method, delay, arg, repeating)
-	assert(self ~= AceTimer, "ScheduleTimer: error: called using AceTimer as 'self'")
-	
-	assert(type(method)=="function" or (self ~= AceTimer and type(method) == "string" and type(self[method]) == "function"),
-		"ScheduleTimer: 'method': Expected function reference or self[\"method\"] call")
+local function Reg(self, callback, delay, arg, repeating)
+	if type(callback) ~= "string" and type(callback) ~= "function" then 
+		local error_origin = repeating and "ScheduleRepeatingTimer" or "ScheduleTimer"
+		error("Usage: " .. error_origin .. "(callback, delay, arg): 'callback' - string or function expected.", 3)
+	end
+	if type(callback) == "string" and type(self[callback]) ~= "function" then 
+		local error_origin = repeating and "ScheduleRepeatingTimer" or "ScheduleTimer"
+		error("Usage: " .. error_origin .. "(callback, delay, arg): 'callback' - method not found on target object.", 3)
+	end
 	
 	if delay < (1 / (HZ - 1)) then
 		delay = 1 / (HZ - 1)
@@ -152,7 +156,7 @@ local function Reg(self, method, delay, arg, repeating)
 	else
 		timer = {}
 	end
-	timer.object, timer.method, timer.delay, timer.arg = self, method, (repeating and delay), arg
+	timer.object, timer.callback, timer.delay, timer.arg = self, callback, (repeating and delay), arg
 	
 	hash[floor((now+delay)*HZ) % BUCKETS][timer] = now + delay
 	
@@ -171,20 +175,20 @@ end
 
 
 -----------------------------------------------------------------------
--- AceTimer:ScheduleTimer( method, delay, arg )
--- AceTimer:ScheduleRepeatingTimer( method, delay, arg )
+-- AceTimer:ScheduleTimer( callback, delay, arg )
+-- AceTimer:ScheduleRepeatingTimer( callback, delay, arg )
 --
--- method( function or string ) - direct function ref or method name in our object for the callback
+-- callback( function or string ) - direct function ref or method name in our object for the callback
 -- delay(int) - delay for the timer
 -- arg(variant) - any argument to be passed to the callback function
 --
 -- returns a handle to the timer, which is used for cancelling it
-function AceTimer:ScheduleTimer(method,delay,arg)
-	return Reg(self, method, delay, arg)
+function AceTimer:ScheduleTimer(callback, delay, arg)
+	return Reg(self, callback, delay, arg)
 end
 
-function AceTimer:ScheduleRepeatingTimer(method,delay,arg)
-	return Reg(self, method, delay, arg, true)
+function AceTimer:ScheduleRepeatingTimer(callback, delay, arg)
+	return Reg(self, callback, delay, arg, true)
 end
 
 

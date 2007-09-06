@@ -92,11 +92,10 @@ local function RegisterBucket(self, event, interval, callback, isMessage)
 		end
 	end
 	
-	if self == AceBucket then error("Cannot register buckets on the AceBucket library object.", 3) end
-	if type(event) ~= "string" and type(event) ~= "table" then error("Bad argument #2 to RegisterBucket. (string or table expected)", 3) end
-	if not tonumber(interval) then error("Bad argument #3 to RegisterBucket. (number expected)", 3) end
-	if type(callback) ~= "string" and type(callback) ~= "function" then error("Bad argument #3 to RegisterBucket. (string or function expected).", 3) end
-	if type(callback) == "string" and type(self[callback]) ~= "function" then error("Bad argument #3 to RegisterBucket. Method not found on target object.", 3) end
+	if type(event) ~= "string" and type(event) ~= "table" then error("Usage: RegisterBucket(event, interval, callback): 'event' - string or table expected.", 3) end
+	if not tonumber(interval) then error("Usage: RegisterBucket(Event|Message)(event, interval, callback): 'interval' - number expected.", 3) end
+	if type(callback) ~= "string" and type(callback) ~= "function" then error("Usage: RegisterBucket(event, interval, callback): 'callback' - string or function expected.", 3) end
+	if type(callback) == "string" and type(self[callback]) ~= "function" then error("Usage: RegisterBucket(event, interval, callback): 'callback' - method not found on target object.", 3) end
 	
 	local bucket = next(bucketCache)
 	if bucket then
