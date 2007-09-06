@@ -33,11 +33,9 @@ end
 --
 -- returns the addon object when succesful
 function AceAddon:NewAddon(name, ...)
-	assert(type(name) == "string", "Bad argument #2 to 'NewAddon' (string expected)")
+	if type(name) ~= "string" then error(("Usage: NewAddon(name, [lib, lib, lib, ...]): 'name' - string expected got '%s'."):format(type(name)),2) end
 
-	if self.addons[name] then
-		error(("AceAddon '%s' already exists."):format(name), 2)
-	end
+	if self.addons[name] then error(("Usage: NewAddon(name, [lib, lib, lib, ...]): 'name' - Addon '%s' already exists."):format(name), 2) end
 
 	local addon = {name = name}
 	self.addons[name] = addon
@@ -59,7 +57,7 @@ end
 -- returns the addon object if found
 function AceAddon:GetAddon(name, silent)
 	if not silent and not self.addons[name] then
-		error(("Cannot find an AceAddon with name '%s'."):format(name), 2)
+		error(("Usage: GetAddon(name): 'name' - Cannot find an AceAddon '%s'."):format(tostring(name)), 2)
 	end
 	return self.addons[name]
 end
@@ -83,13 +81,13 @@ function AceAddon:EmbedLibrary(addon, libname, silent, offset)
 	-- TODO: load on demand?
 	local lib = LibStub:GetLibrary(libname, true)
 	if not lib and not silent then
-		error(("Cannot find a library instance of %q."):format(tostring(libname)), offset or 2)
+		error(("Usage: EmbedLibrary(addon, libname, silent, offset): 'libname' - Cannot find a library instance of %q."):format(tostring(libname)), offset or 2)
 	elseif lib and type(lib.Embed) == "function" then
 		lib:Embed(addon)
 		table.insert(self.embeds[addon], libname)
 		return true
 	elseif lib then
-		error(("Library '%s' is not Embed capable"):format(libname), offset or 2)
+		error(("USage: EmbedLibrary(addon, libname, silent, offset): 'libname' - Library '%s' is not Embed capable"):format(libname), offset or 2)
 	end
 end
 
@@ -101,7 +99,7 @@ end
 -- returns the module object if found
 function AceAddon:GetModule(name, silent)
 	if not self.modules[name] and not silent then
-		error(("Cannot find a module named '%s'."):format(name), 2)
+		error(("Usage: GetModule(name, silent): 'name' - Cannot find module '%s'.):format(tostring(name)), 2)
 	end
 	return self.modules[name]
 end
@@ -113,12 +111,10 @@ end
 --
 -- returns the addon object when succesful
 function AceAddon:NewModule(name, prototype, ...)
-	assert(type(name) == "string", "Bad argument #2 to 'NewModule' (string expected)")
-	assert(type(prototype) == "string" or type(prototype) == "table" or type(prototype) == "nil", "Bad argument #3 to 'NewModule' (string, table or nil expected)")
+	if type(name) ~= "string" then error(("Usage: NewModule(name, [prototype, [lib, lib, lib, ...]): 'name' - string expected got '%s'."):format(type(name)),2) end
+	if type(prototype) ~= "string" and type(prototype) ~= "table" and type(prototype) ~= "nil" then error(("Usage: NewModule(name, [prototype, [lib, lib, lib, ...]): 'prototype' - table (prototype), string (lib) or nil expected got '%s'."):format(type(prototype)),2) end
 	
-	if self.modules[name] then
-		error(("Module '%s' already exists."):format(name), 2)
-	end
+	if self.modules[name] then error(("Usage: NewModule(name, [prototype, [lib, lib, lib, ...]): 'name' - Module '%s' already exists."):format(name), 2) end
 	
 	-- modules are basically addons. We treat them as such. They will be added to the initializequeue properly as well.
 	-- NewModule can only be called after the parent addon is present thus the modules will be initialized after their parent is.
