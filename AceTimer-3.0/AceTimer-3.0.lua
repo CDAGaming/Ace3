@@ -33,10 +33,10 @@ elseif not oldminor then
 end
 
 local pcall = pcall
-local floor = floor
-local max = max
 local pairs = pairs
 local tostring = tostring
+local floor = floor
+local max = max
 
 -- simple timer cache
 local timerCache = setmetatable({}, {__mode='k'})
@@ -60,7 +60,7 @@ for i=0,BUCKETS-1 do
 	hash[i] = hash[i] or {}
 end
 
-local function safecall(func, ... )
+local function safecall(func, ...)
 	local success, err = pcall(func, ...)
 	if success then return err end
 	if not err:find("%.lua:%d+:") then err = (debugstack():match("\n(.-: )in.-\n") or "") .. err end 
@@ -201,7 +201,7 @@ function AceTimer:CancelTimer(handle)
 		selftimers[handle] = nil
 		
 		-- This is fairly expensive, but it is better to take the hit here rather than having an extra if-else in the OnUpdate
-		for k,v in pairs(hash) do
+		for _,v in pairs(hash) do
 			if v[timer] then
 				v[timer] = nil
 			end
@@ -221,7 +221,7 @@ function AceTimer:CancelAllTimers()
 	
 	local selftimers = AceTimer.selfs[self]
 	if selftimers then
-		for handle,_ in pairs(selftimers) do
+		for handle in pairs(selftimers) do
 			AceTimer.CancelTimer(self, handle)
 		end
 	end
@@ -240,12 +240,12 @@ local mixins = {
 
 function AceTimer:Embed(object)
 	AceTimer.embeds[object] = true
-	for k,v in pairs(mixins) do
+	for _,v in pairs(mixins) do
 		object[v] = AceTimer[v]
 	end
 end
 
-for addon,_ in pairs(AceTimer.embeds) do
+for addon in pairs(AceTimer.embeds) do
 	AceTimer:Embed(addon)
 end
 
