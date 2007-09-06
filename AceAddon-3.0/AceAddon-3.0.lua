@@ -87,7 +87,7 @@ function AceAddon:EmbedLibrary(addon, libname, silent, offset)
 		table.insert(self.embeds[addon], libname)
 		return true
 	elseif lib then
-		error(("USage: EmbedLibrary(addon, libname, silent, offset): 'libname' - Library '%s' is not Embed capable"):format(libname), offset or 2)
+		error(("Usage: EmbedLibrary(addon, libname, silent, offset): 'libname' - Library '%s' is not Embed capable"):format(libname), offset or 2)
 	end
 end
 
@@ -99,7 +99,7 @@ end
 -- returns the module object if found
 function AceAddon:GetModule(name, silent)
 	if not self.modules[name] and not silent then
-		error(("Usage: GetModule(name, silent): 'name' - Cannot find module '%s'.):format(tostring(name)), 2)
+		error(("Usage: GetModule(name, silent): 'name' - Cannot find module '%s'."):format(tostring(name)), 2)
 	end
 	return self.modules[name]
 end
