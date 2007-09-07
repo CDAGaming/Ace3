@@ -42,7 +42,7 @@ local mixins = {
 	"HookScript", "SecureHookScript",
 	"Unhook", "UnhookAll",
 	"IsHooked",
-} 
+}
 
 -- AceHook:Embed( target )
 -- target (object) - target object to embed AceHook in
