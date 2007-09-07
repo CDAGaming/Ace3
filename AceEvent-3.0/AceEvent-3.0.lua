@@ -4,13 +4,14 @@ local AceEvent, oldminor = LibStub:NewLibrary(ACEEVENT_MAJOR, ACEEVENT_MINOR)
 
 if not AceEvent then 
 	return
-elseif not oldminor then  -- This is the first version
-	AceEvent.events = setmetatable({}, {__index = function(tbl, key) tbl[key] = {} return tbl[key] end }) -- Blizzard events
-	AceEvent.messages = setmetatable({}, {__index = function(tbl, key) tbl[key] = {} return tbl[key] end }) -- Own messages
-	AceEvent.frame = CreateFrame("Frame", "AceEvent30Frame") -- our event frame
-	AceEvent.embeds = {} -- what objects embed this lib
-	-- ANY new members must be added AFTER the if clause!
 end
+
+local event_mt = {__index = function(tbl, key) tbl[key] = {} return tbl[key] end}
+
+AceEvent.events = AceEvent.events or setmetatable({}, event_mt) -- Blizzard events
+AceEvent.messages = AceEvent.messages or setmetatable({}, event_mt) -- Own messages
+AceEvent.frame = AceEvent.frame or CreateFrame("Frame", "AceEvent30Frame") -- our event frame
+AceEvent.embeds = AceEvent.embeds or {} -- what objects embed this lib
 
 local type = type
 local pcall = pcall

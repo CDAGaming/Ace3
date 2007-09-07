@@ -4,15 +4,14 @@ local AceAddon, oldminor = LibStub:NewLibrary(MAJOR, MINOR)
 
 if not AceAddon then
 	return -- No Upgrade needed.
-elseif not oldminor then -- This is the first version
-	-- ANY NEW MEMBERS OF ACEADDON SHOULD BE ADDED _AFTER_ THE IF CLAUSE
-	AceAddon.frame = CreateFrame("Frame", "AceAddon30Frame") -- Our very own frame
-	AceAddon.addons = {} -- addons in general
-	AceAddon.statuses = {} -- statuses of addon.
-	AceAddon.initializequeue = {} -- addons that are new and not initialized
-	AceAddon.enablequeue = {} -- addons that are initialized and waiting to be enabled
-	AceAddon.embeds = setmetatable({}, {__index = function(tbl, key) tbl[key] = {} return tbl[key] end }) -- contains a list of libraries embedded in an addon
 end
+
+AceAddon.frame = AceAddon.frame or CreateFrame("Frame", "AceAddon30Frame") -- Our very own frame
+AceAddon.addons = AceAddon.addons or {} -- addons in general
+AceAddon.statuses = AceAddon.statues or {} -- statuses of addon.
+AceAddon.initializequeue = AceAddon.initializequeue or {} -- addons that are new and not initialized
+AceAddon.enablequeue = AceAddon.enablequeue or {} -- addons that are initialized and waiting to be enabled
+AceAddon.embeds = AceAddon.embeds or setmetatable({}, {__index = function(tbl, key) tbl[key] = {} return tbl[key] end }) -- contains a list of libraries embedded in an addon
 
 local function safecall(func, ...)
 	-- we check to see if the func is passed is actually a function here and don't error when it isn't
@@ -21,7 +20,7 @@ local function safecall(func, ...)
 	if type(func) == "function" then
 		local success, err = pcall(func, ...)
 		if success then return err end
-
+		
 		if not err:find("%.lua:%d+:") then err = (debugstack():match("\n(.-: )in.-\n") or "") .. err end
 		geterrorhandler()(err)
 	end
@@ -34,16 +33,16 @@ end
 -- returns the addon object when succesful
 function AceAddon:NewAddon(name, ...)
 	if type(name) ~= "string" then error(("Usage: NewAddon(name, [lib, lib, lib, ...]): 'name' - string expected got '%s'."):format(type(name)),2) end
-
+	
 	if self.addons[name] then error(("Usage: NewAddon(name, [lib, lib, lib, ...]): 'name' - Addon '%s' already exists."):format(name), 2) end
-
+	
 	local addon = {name = name}
 	self.addons[name] = addon
 	addon.modules = {}
 	addon.defaultModuleLibraries = {}
 	self:Embed(addon) -- embed NewModule, GetModule methods
 	self:EmbedLibraries(addon, ...)
-
+	
 	-- add to queue of addons to be initialized upon ADDON_LOADED
 	table.insert(self.initializequeue, addon)
 	return addon
@@ -220,7 +219,7 @@ function AceAddon:EnableAddon(addon)
 	for name, module in pairs(addon.modules) do
 		self:EnableAddon(module)
 	end
-
+	
 	return true
 end
 
@@ -237,12 +236,12 @@ function AceAddon:DisableAddon(addon)
 		if lib then safecall(lib.OnEmbedDisable, lib, addon) end
 	end
 	self.statuses[addon.name] = nil
-
+	
 	-- disable possible modules.
 	for name, module in pairs(addon.modules) do
 		self:DisableAddon(module)
 	end
-
+	
 	return true
 end
 

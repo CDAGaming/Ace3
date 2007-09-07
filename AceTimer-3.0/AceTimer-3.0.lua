@@ -26,11 +26,11 @@ local MAJOR, MINOR = "AceTimer-3.0", 0
 local AceTimer, oldminor = LibStub:NewLibrary(MAJOR, MINOR)
 if not AceTimer then 
 	return 
-elseif not oldminor then
-	AceTimer.hash = {}			-- Array of [0..BUCKET-1]={[timerobj]=time, [timerobj2]=time2, ...}
-	AceTimer.selfs = {}		-- Array of [self]={[handle]=timerobj, [handle2]=timerobj2, ...}
-	AceTimer.frame = CreateFrame("Frame", "AceTimer30Frame")
 end
+
+AceTimer.hash = AceTimer.hash or {}			-- Array of [0..BUCKET-1]={[timerobj]=time, [timerobj2]=time2, ...}
+AceTimer.selfs = AceTimer.selfs or {}		-- Array of [self]={[handle]=timerobj, [handle2]=timerobj2, ...}
+AceTimer.frame = AceTimer.frame or CreateFrame("Frame", "AceTimer30Frame")
 
 local pcall = pcall
 local pairs = pairs

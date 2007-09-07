@@ -14,12 +14,10 @@ local AceBucket, oldminor = LibStub:NewLibrary(MAJOR, MINOR)
 
 if not AceBucket then
 	return
-elseif not oldminor then
-	-- initial setup
-	AceBucket.buckets = {}
-	AceBucket.embeds = {}
-	-- NEW variables must be added AFTER this if clause!
 end
+
+AceBucket.buckets = AceBucket.buckets or {}
+AceBucket.embeds = AceBucket.embeds or {}
 
 -- the libraries will be lazyly bound later, to avoid errors due to loading order issues
 local AceEvent, AceTimer
