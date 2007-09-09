@@ -102,7 +102,6 @@ local function OnUpdate()
 				local delay = timer.delay
 				if not delay then
 					-- single-shot timer
-					curbuckettable[timer] = nil
 					AceTimer.selfs[timer.object][tostring(timer)] = nil
 					timerCache[timer] = true
 				else
