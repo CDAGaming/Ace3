@@ -44,24 +44,45 @@ local function Fire(registry, event, ...)
 	-- TODO: If its reversed reverse this change
 end
 
--- Generic registration and unregisration for messages and events
-local function RegOrUnreg(self, unregister, registry, event, method)
+-- Generic registration for messages and events
+local function Register(self, registry, event, method)
 	if type(event) ~= "string" then 
-		if unregister then
-			error("Usage: UnregisterEvent(event): 'event' - string expected.", 3)
-		else
+		if registry == events then
 			error("Usage: RegisterEvent(event, method): 'event' - string expected.", 3)
+		elseif registry == messages then
+			error("Usage: RegisterMessage(message, method): 'message' - string expected.", 3)
 		end
 	end
 	
-	if unregister then -- unregister
-		registry[event][self] = nil
-	else -- overwrite any old registration
-		if not method then method = event end
-		if type(method) ~= "string" and type(method) ~= "function" then error("Usage: RegisterEvent(event, method): 'method' - string or function expected.", 3) end
-		if type(method) == "string" and type(self[method]) ~= "function" then error("Usage: RegisterEvent(event, method): 'method' - method not found on target object.", 3) end
-		registry[event][self] = method
+	if not method then method = event end
+	if type(method) ~= "string" and type(method) ~= "function" then
+		if registry == events then
+			error("Usage: RegisterEvent(event, method): 'method' - string or function expected.", 3)
+		elseif registry == messages then
+			error("Usage: RegisterMessage(message, method): 'method' - string or function expected.", 3)
+		end
 	end
+	if type(method) == "string" and type(self[method]) ~= "function" then
+		if registry == events then
+			error("Usage: RegisterEvent(event, method): 'method' - method not found on target object.", 3)
+		elseif registry == messages then
+			error("Usage: RegisterMessage(message, method): 'method' - method not found on target object.", 3)
+		end
+	end
+	registry[event][self] = method -- overwrite any old registration
+end
+
+-- Generic unregisration for messages and events
+local function Unregister(self, registry, event, method)
+	if type(event) ~= "string" then 
+		if registry == events then
+			error("Usage: UnregisterEvent(event): 'event' - string expected.", 3)
+		elseif registry == messages then
+			error("Usage: UnregisterMessage(message): 'message' - string expected.", 3)
+		end
+	end
+	
+	registry[event][self] = nil
 end
 
 --- embedding and embed handling
@@ -100,7 +121,7 @@ end
 --
 -- Registers a blizzard event and binds it to the given method
 function AceEvent:RegisterEvent(event, method)
-	RegOrUnreg(self, false, events, event, method)
+	Register(self, events, event, method)
 	AceEvent.frame:RegisterEvent(event)
 end
 
@@ -109,7 +130,7 @@ end
 --
 -- Unregisters a blizzard event
 function AceEvent:UnregisterEvent(event)
-	RegOrUnreg(self, true, events, event)
+	Unregister(self, events, event)
 	if not next(events[event]) then
 		AceEvent.frame:UnregisterEvent(event)
 	end
@@ -121,7 +142,7 @@ end
 --
 -- Registers an inter addon message and binds it to the given method
 function AceEvent:RegisterMessage(message, method)
-	RegOrUnreg(self, false, messages, message, method)
+	Register(self, messages, message, method)
 end
 
 -- AceEvent:UnregisterMessage( message )
@@ -129,7 +150,7 @@ end
 --
 -- Unregisters an interaddon message
 function AceEvent:UnregisterMessage(message)
-	RegOrUnreg(self, true, messages, message)
+	Unregister(self, messages, message)
 end
 
 -- AceEvent:SendMessage( message, ... )
@@ -158,7 +179,7 @@ end
 function AceEvent:UnregisterAllMessages()
 	for message, slot in pairs(messages) do
 		if slot[self] then
-			RegOrUnreg(self, true, messages, message)
+			Unregister(self, messages, message)
 		end
 	end
 end
