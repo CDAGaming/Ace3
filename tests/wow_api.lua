@@ -2,45 +2,52 @@ local _G = getfenv(0)
 
 local donothing = function() end
 
-local frames = {} -- Stores globally created frames.
-local scriptHandlers = {} -- Stores frame handlers.
-local registeredEvents = {} -- Stores frame event registration.
+local frames = {} -- Stores globally created frames, and their internal properties.
 
-local frameClass = {} -- A class for creating frames.
-function frameClass:SetScript(script,handler)
-	if not scriptHandlers[self] then
-		scriptHandlers[self] = {}
+local FrameClass = {} -- A class for creating frames.
+FrameClass.methods = { "SetScript", "RegisterEvent", "UnregisterEvent", "UnregisterAllEvents", "OnShow", "OnHide" }
+function FrameClass:New()
+	local frame = {}
+	for i,method in ipairs(self.methods) do
+		frame[method] = self[method]
 	end
-	scriptHandlers[self][script] = handler
+	local frameProps = {
+		events = {},
+		scripts = {},
+		timer = 0,
+		isShow = true
+	}
+	return frame, frameProps
 end
-function frameClass:RegisterEvent(event)
-	if not registeredEvents[self] then
-		registeredEvents[self] = {}
+function FrameClass:SetScript(script,handler)
+	frames[self].scripts[script] = handler
+end
+function FrameClass:RegisterEvent(event)
+	frames[self].events[event] = true
+end
+function FrameClass:UnregisterEvent(event)
+	frames[self].events[event] = nil
+end
+function FrameClass:UnregisterAllEvents(frame)
+	for event in pairs(frames[self].events) do
+		frames[self].events[event] = nil
 	end
-	registeredEvents[self][event] = true
 end
-function frameClass:UnregisterEvent(event)
-	if registeredEvents[self][event] then
-		registeredEvents[self][event] = nil
-	end
+function FrameClass:Show()
+	frames[self].isShow = true
 end
-function frameClass:UnregisterAllEvents(frame)
-	if registeredEvents[self] then
-		for k in pairs(registeredEvents[self]) do
-			registeredEvents[self][k] = nil
-		end
-	end
+function FrameClass:Hide()
+	frames[self].isShow = false
 end
-frameClass.Show = donothing
-frameClass.Hide = donothing
+function FrameClass:IsShown()
+	return frames[self].isShow
+end
+
 
 
 function CreateFrame(kind, name, parent)
-	local frame = {}
-	for k,v in pairs(frameClass) do
-		frame[k] = v
-	end
-	table.insert(frames,frame)
+	local frame,internal = FrameClass:New()
+	frames[frame] = internal
 	if name then
 		_G[name] = frame
 	end
@@ -164,18 +171,23 @@ GREEN_FONT_COLOR_CODE = ""
 
 StaticPopupDialogs = {}
 
-
 function WoWAPI_FireEvent(event,...)
-	for i, frame in ipairs(frames) do
-		if registeredEvents[frame] and registeredEvents[frame][event] then
-			if scriptHandlers[frame] and scriptHandlers[frame]["OnEvent"] then
-				scriptHandlers[frame]["OnEvent"](frame,event,...)
+	for frame, props in pairs(frames) do
+		if props.events[event] then
+			if props.scripts["OnEvent"] then
+				props.scripts["OnEvent"](frame,event,...)
 			end
 		end
 	end
 end
 
-
-
+function WoWAPI_FireUpdate()
+	for frame,props in pairs(frames) do
+		if props.isShow and props.scripts.OnUpdate then
+			props.scripts.OnUpdate(frame,os.clock()-props.timer)
+			props.timer = os.clock()
+		end
+	end
+end
 
 
