@@ -42,35 +42,35 @@ local function copyDefaults(dest, src, force)
 					__cache = {},
 					-- This handles the lookup and creation of new ["*"] subtables
 					__index = function(t,k)
-								  local mt = getmetatable(dest)
-								  local cache = rawget(mt, "__cache")
-								  local tbl = rawget(cache, k)
-								  if not tbl then
-									  local parent = t
-									  local parentkey = k
-									  -- v here is the value part of ["*"]
-									  tbl = copyTable(v)
-									  rawset(cache, k, tbl)
-									  -- This metatable will handle altering of
-									  -- an existing table that's been created
-									  -- by the __index metamethod.
-									  local alter_mt = getmetatable(tbl)
-									  if not alter_mt then
-										  alter_mt = {}
-										  setmetatable(tbl, alter_mt)
-									  end
-									  -- When a new key is added to a table
-									  -- that was created with ["*"] magic, it 
-									  -- will become a real value in the table
-									  -- rather than just part of the metatable
-									  local newindex = function(t,k,v)
-														   rawset(parent, parentkey, t)
-														   rawset(t, k, v)
-													   end
-									  rawset(alter_mt, "__newindex", newindex)
-								  end
-								  return tbl
-							  end,
+							local mt = getmetatable(dest)
+							local cache = rawget(mt, "__cache")
+							local tbl = rawget(cache, k)
+							if not tbl then
+								local parent = t
+								local parentkey = k
+								-- v here is the value part of ["*"]
+								tbl = copyTable(v)
+								rawset(cache, k, tbl)
+								-- This metatable will handle altering of
+								-- an existing table that's been created
+								-- by the __index metamethod.
+								local alter_mt = getmetatable(tbl)
+								if not alter_mt then
+									alter_mt = {}
+									setmetatable(tbl, alter_mt)
+								end
+								-- When a new key is added to a table
+								-- that was created with ["*"] magic, it 
+								-- will become a real value in the table
+								-- rather than just part of the metatable
+								local newindex = function(t,k,v)
+									rawset(parent, parentkey, t)
+									rawset(t, k, v)
+								end
+								rawset(alter_mt, "__newindex", newindex)
+							end
+							return tbl
+						end,
 				}
 				setmetatable(dest, mt)
 			else
@@ -149,37 +149,37 @@ end
 -- Metatable to handle the dynamic creation of sections and copying of sections.
 local dbmt = {
 	__index = function(t, section)
-				  local keys = rawget(t, "keys")
-				  local key = keys[section]
-				  if key then
-					  local defaultTbl = rawget(t, "defaults")
-					  local defaults = defaultTbl and defaultTbl[section]
-
-					  if section == "profile" then
-						  local new = initSection(t, section, "profiles", key, defaults)
-						  if new then
-							  -- TODO: Handle callback here.  How do we want to manage 
-							  -- this, i.e. at what level do we want callbacks.
-							  -- CALLBACK: New Profile Created
-						  end
-					  elseif section == "profiles" then
-						  local sv = rawget(t, "sv")
-						  if not sv.profiles then sv.profiles = {} end
-						  rawset(t, "profiles", sv.profiles)
-					  elseif section == "global" then
-						  local sv = rawget(t, "sv")
-						  if not sv.global then sv.global = {} end
-						  if defaults then
-							  copyDefaults(sv.global, defaults)
-						  end
-						  rawset(t, section, sv.global)
-					  else
-						  initSection(t, section, section, key, defaults)
-					  end
-				  end
-
-				  return rawget(t, section)
-			  end
+			local keys = rawget(t, "keys")
+			local key = keys[section]
+			if key then
+				local defaultTbl = rawget(t, "defaults")
+				local defaults = defaultTbl and defaultTbl[section]
+				
+				if section == "profile" then
+					local new = initSection(t, section, "profiles", key, defaults)
+					if new then
+						-- TODO: Handle callback here.  How do we want to manage 
+						-- this, i.e. at what level do we want callbacks.
+						-- CALLBACK: New Profile Created
+					end
+				elseif section == "profiles" then
+					local sv = rawget(t, "sv")
+					if not sv.profiles then sv.profiles = {} end
+					rawset(t, "profiles", sv.profiles)
+				elseif section == "global" then
+					local sv = rawget(t, "sv")
+					if not sv.global then sv.global = {} end
+					if defaults then
+						copyDefaults(sv.global, defaults)
+					end
+					rawset(t, section, sv.global)
+				else
+					initSection(t, section, section, key, defaults)
+				end
+			end
+			
+			return rawget(t, section)
+		end
 }
 
 -- Actual database initialization function
@@ -191,14 +191,14 @@ local function initdb(sv, defaults, defaultProfile, olddb)
 	local raceKey = select(2, UnitRace("player"))
 	local factionKey = UnitFactionGroup("player")
 	local factionrealmKey = string.format("%s - %s", factionKey, realmKey)
-
+	
 	-- Make a container for profile keys
 	if not sv.profileKeys then sv.profileKeys = {} end
-
+	
 	-- Try to get the profile selected from the char db
 	local profileKey = sv.profileKeys[charKey] or defaultProfile or charKey
 	sv.profileKeys[charKey] = profileKey
-
+	
 	-- This table contains keys that enable the dynamic creation 
 	-- of each section of the table.  The 'global' and 'profiles'
 	-- have a key of true, since they are handled in a special case
@@ -213,28 +213,28 @@ local function initdb(sv, defaults, defaultProfile, olddb)
 		["global"] = true,
 		["profiles"] = true,
 	}
-
+	
 	-- This allows us to use this function to reset an entire database
 	-- Clear out the old database
 	if olddb then
 		for k,v in pairs(olddb) do olddb[k] = nil end
 	end
-
+	
 	-- Give this database the metatable so it initializes dynamically
 	local db = setmetatable(olddb or {}, dbmt)
-
+	
 	-- Copy methods locally into the database object, to avoid hitting
 	-- the metatable when calling methods
-
+	
 	-- TODO: Copy the database methods into the database table
-
+	
 	-- Set some properties in the database object
 	db.profiles = sv.profiles
 	db.keys = keyTbl
 	db.sv = sv
 	db.sv_name = name
 	db.defaults = defaults
-
+	
 	return db
 end
 
@@ -255,7 +255,7 @@ function DBObjectLib:RegisterDefaults(defaults)
 	if defaults and type(defaults) ~= "table" then
 		error("Usage: AceDBObject:RegisterDefaults(defaults): 'defaults' - table or nil expected.", 3)
 	end
-
+	
 	-- Remove any currently set defaults
 	for section,key in pairs(self.keys) do
 		if self.defaults[section] and rawget(self, section) then
@@ -283,7 +283,7 @@ function DBObjectLib:SetProfile(name)
 	if type(name) ~= "string" then
 		error("Usage: AceDBObject:SetProfile(name): 'name' - string expected.", 3)
 	end
-
+	
 	local oldProfile = self.profile
 	local defaults = self.defaults and self.defaults.profile
 	
@@ -291,10 +291,10 @@ function DBObjectLib:SetProfile(name)
 		-- Remove the defaults from the old profile
 		removeDefaults(oldProfile, defaults)
 	end
-
+	
 	self.profile = nil
 	self.keys["profile"] = name
-
+	
 	-- TODO: Write callback to indicate the profile has changed
 end
 
@@ -307,7 +307,7 @@ function DBObjectLib:GetProfiles(tbl)
 	if tbl and type(tbl) ~= "table" then
 		error("Usage: AceDBObject:GetProfiles(tbl): 'tbl' - table expected.", 3)
 	end
-
+	
 	if tbl then
 		for k,v in pairs(tbl) do tbl[k] = nil end
 	else
@@ -319,7 +319,7 @@ function DBObjectLib:GetProfiles(tbl)
 		i = i + 1
 		tbl[i] = profileKey
 	end
-
+	
 	return tbl, i
 end
 
@@ -338,11 +338,11 @@ function DBObjectLib:DeleteProfile(name)
 	if type(name) ~= "string" then
 		error("Usage: AceDBObject:DeleteProfile(name): 'name' - string expected.", 3)
 	end
-
+	
 	if self.keys.profile == name then
 		error("Cannot delete the active profile in an AceDBObject.", 3)
 	end
-
+	
 	self.sv.profiles[name] = nil
 	-- TODO: Send a deleted profile callback
 end
@@ -356,14 +356,14 @@ function DBObjectLib:CopyProfile(name, force)
 	if type(name) ~= "string" then
 		error("Usage: AceDBObject:CopyProfile(name): 'name' - string expected.", 3)
 	end
-
+	
 	if name == self.keys.profile then
 		error("Cannot have the same source and destination profiles.", 3)
 	end
-
+	
 	local profile = self.profile
 	local source = self.sv.profiles[name]
-
+	
 	copyDefaults(profile, source, force)
 	-- TODO: Send a profile copy callback
 end
@@ -373,16 +373,16 @@ end
 -- Resets the current profile
 function DBObjectLib:ResetProfile()
 	local profile = self.profile
-
+	
 	for k,v in pairs(profile) do
 		profile[k] = nil
 	end
-
+	
 	local defaults = self.defaults and self.defaults.profile
 	if defaults then
 		copyDefaults(profile, defaults)
 	end
-
+	
 	-- TODO: Send a callback for profile reset
 end
 
@@ -395,17 +395,17 @@ function DBObjectLib:ResetDB(defaultProfile)
 	if defaultProfile and type(defaultProfile) == "table" then
 		error("Usage: AceDBObject:ResetDB(defaultProfile): 'defaultProfile' - table or nil expected.", 3)
 	end
-
+	
 	local sv = self.sv
 	for k,v in pairs(sv) do
 		sv[k] = nil
 	end
-
+	
 	local parent = self.parent
-
+	
 	initdb(self.sv_name, self.defaults, defaultProfile, db)
 	-- TODO: Trigger callbacks for database reset and profile changed
-
+	
 	return db
 end
 
@@ -423,18 +423,18 @@ function DBObjectLib:RegisterNamespace(name, defaults)
 	if defaults and type(defaults) == "table" then
 		error("Usage: AceDBObject:RegisterNamespace(name, defaults): 'defaults' - table expected.", 3)
 	end
-
+	
 	local sv = self.sv
 	if not sv.namespaces then sv.namespaces = {} end
 	if not sv.namespaces[name] then
 		sv.namespaces[name] = {}
 	end
-
+	
 	local newDB = initdb(sv.namespaces[name], defaults, self.keys.profile)
 	-- TODO: Make this a cleaner method
 	-- Remove the :SetProfile method from newDB
 	newDB.SetProfile = nil
-
+	
 	if not self.children then self.children = {} end
 	table.insert(self.children, newDB)
 	return newDB
@@ -461,18 +461,18 @@ function AceDB:New(tbl, defaults, defaultProfile)
 			setglobal(name, tbl)
 		end
 	end
-
+	
 	if type(tbl) ~= "table" then
 		error("Usage: AceDB:New(tbl, defaults, defaultProfile): 'tbl' - table expected.", 3)
 	end
-
+	
 	if defaults and type(defaults) ~= "table" then
 		error("Usage: AceDB:New(tbl, defaults, defaultProfile): 'defaults' - table expected.", 3)
 	end
-
+	
 	if defaultProfile and type(defaultProfile) ~= "string" then
 		error("Usage: AceDB:New(tbl, defaults, defaultProfile): 'defaultProfile' - string expected.", 3)
 	end
-
+	
 	return initdb(tbl, defaults, defaultProfile)
 end
