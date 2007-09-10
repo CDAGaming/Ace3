@@ -34,7 +34,7 @@ end
 -- become part of the saved table, when they are first altered.
 local function copyDefaults(dest, src, force)
 	for k,v in pairs(src) do
-		if k == "*" then
+		if k == "*" or k == "**" then
 			if type(v) == "table" then
 				-- This is a metatable used for table defaults
 				local mt = {
@@ -85,6 +85,9 @@ local function copyDefaults(dest, src, force)
 		elseif type(v) == "table" then
 			if not dest[k] then dest[k] = {} end
 			copyDefaults(dest[k], v, force)
+			if src['**'] then
+				copyDefaults(dest[k], src['**'])
+			end
 		else
 			if (dest[k] == nil) or force then
 				dest[k] = v
