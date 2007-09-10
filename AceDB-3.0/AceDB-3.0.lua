@@ -1,4 +1,4 @@
---[[ $ Id $ ]]
+--[[ $Id$ ]]
 local ACEDB_MAJOR, ACEDB_MINOR = "AceDB-3.0", 1
 local AceDB, oldminor = LibStub:NewLibrary(ACEDB_MAJOR, ACEDB_MINOR)
 
@@ -73,10 +73,6 @@ local function copyDefaults(dest, src, force)
 							  end,
 				}
 				setmetatable(dest, mt)
-				-- Now need to set the metatable on any child tables
-				for dkey,dval in pairs(dest) do
-					copyDefaults(dval, v)
-				end
 			else
 				-- Values are not tables, so this is just a simple return
 				local mt = {__index = function() return v end}
@@ -194,14 +190,14 @@ local function initdb(sv, defaults, defaultProfile, olddb)
 	local classKey = select(2, UnitClass("player"))
 	local raceKey = select(2, UnitRace("player"))
 	local factionKey = UnitFactionGroup("player")
-	local factionrealmKey = string.format("%s - %s", faction, realm)
+	local factionrealmKey = string.format("%s - %s", factionKey, realmKey)
 
 	-- Make a container for profile keys
 	if not sv.profileKeys then sv.profileKeys = {} end
 
 	-- Try to get the profile selected from the char db
-	local profileKey = sv.profileKeys[char] or defaultProfile or char
-	sv.profileKeys[char] = profileKey
+	local profileKey = sv.profileKeys[charKey] or defaultProfile or charKey
+	sv.profileKeys[charKey] = profileKey
 
 	-- This table contains keys that enable the dynamic creation 
 	-- of each section of the table.  The 'global' and 'profiles'
@@ -229,10 +225,8 @@ local function initdb(sv, defaults, defaultProfile, olddb)
 
 	-- Copy methods locally into the database object, to avoid hitting
 	-- the metatable when calling methods
-	for idx,method in pairs(dbMethods) do
-		-- TODO: Copy the database methods into the database table
-		-- db[method] = Dongle[method]
-	end
+
+	-- TODO: Copy the database methods into the database table
 
 	-- Set some properties in the database object
 	db.profiles = sv.profiles
