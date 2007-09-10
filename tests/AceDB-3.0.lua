@@ -1,6 +1,7 @@
 dofile("wow_api.lua")
 dofile("LibStub.lua")
 dofile("../AceDB-3.0/AceDB-3.0.lua")
+dofile("serialize.lua")
 
 -- Test the defaults system
 do
@@ -106,4 +107,3 @@ do
 	assert(rawget(db.char, "randomkey") == nil)
 	assert(type(rawget(db.char, "sibling")) == "table")
 end
-
