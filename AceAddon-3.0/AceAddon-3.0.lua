@@ -126,10 +126,10 @@ function NewModule(self, name, prototype, ...)
 	module:SetEnabledState(self.defaultModuleState)
 
 	if type(prototype) == "table" then
-		module = AceAddon:EmbedLibraries( module, ... )
+		AceAddon:EmbedLibraries(module, ... )
 		setmetatable(module, {__index=prototype})  -- More of a Base class type feel.
 	elseif prototype then
-		module = AceAddon:EmbedLibraries(module, prototype, ...)
+		AceAddon:EmbedLibraries(module, prototype, ...)
 	end
 
 	AceAddon:EmbedLibraries(module, unpack(self.defaultModuleLibraries))
