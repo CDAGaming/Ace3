@@ -1,3 +1,8 @@
+-- TODO:
+-- Test module support of AceAddon-3.0.
+
+
+
 dofile("wow_api.lua")
 dofile("LibStub.lua")
 dofile("../AceAddon-3.0/AceAddon-3.0.lua")
@@ -84,17 +89,26 @@ do -- Test the call to OnInitialize, OnEnable and OnDisable.
 	function addon:OnEnable()
 		enabled = true
 	end
+	
+	function addon:OnDisable()
+		enabled = false
+	end
 
 	-- Testing the call to addon:OnInitialize().
 	WoWAPI_FireEvent("ADDON_LOADED",ADDON_NAME)
-	assert(initialized)
+	assert(initialized and not enabled)
 
-	-- IsLoggedIn() is supposed to return true now?
+	-- IsLoggedIn() is supposed to return true when addon receives PLAYER_LOGIN.
 	function IsLoggedIn() return true end
 
 	-- Testing the call to addon:OnEnable()
 	WoWAPI_FireEvent("PLAYER_LOGIN")
-	assert(enabled)
+	assert(initialized and enabled)
+	
+	-- Testing the call to addon:OnDisable()
+	AceAddon:DisableAddon(addon)
+	assert(initialized and not enabled)
+	
 end
 
 print("Test finished.")
