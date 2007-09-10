@@ -112,8 +112,7 @@ local function OnUpdate()
 					end
 					
 					-- add next timer execution to the correct bucket
-					local newbucket = floor(newtime * HZ) % BUCKETS
-					hash[newbucket][timer] = newtime
+					hash[floor(newtime * HZ) % BUCKETS][timer] = newtime
 				end
 			end -- if when<soon
 		end -- for timer,when in pairs(curbuckettable)
