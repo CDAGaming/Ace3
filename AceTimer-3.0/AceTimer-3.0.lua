@@ -90,11 +90,11 @@ local function OnUpdate()
 		for timer, when in pairs(curbuckettable) do -- all timers in the current bucket
 			if when < soon then
 				-- Call the timer func, either as a method on given object, or a straight function ref
-				local callback = timer.object[timer.callback]
-				if callback then
-					safecall(callback, timer.object, timer.arg)
+				local callback = timer.callback
+				if type(callback) == "string" then
+					safecall(timer.object[callback], timer.object, timer.arg)
 				else
-					safecall(timer.callback, timer.arg)
+					safecall(callback, timer.arg)
 				end
 				-- remove from current bucket
 				curbuckettable[timer] = nil
