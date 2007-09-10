@@ -26,13 +26,21 @@ local function copyTable(src)
 end
 
 -- Called to add defaults to a section of the database
+--
+-- There is some heavy metatable magic here to compensate for when you INDEX a part
+-- of the database that has a ["*"] default that is a table.  If we didn't have
+-- this magic, then when new keys are indexed, they would be added to the table
+-- and stored, even if no defaults changed.  This allows them to exist, and only
+-- become part of the saved table, when they are first altered.
 local function copyDefaults(dest, src, force)
 	for k,v in pairs(src) do
 		if k == "*" then
 			if type(v) == "table" then
-				-- Values are tables, need some magic here
+				-- This is a metatable used for table defaults
 				local mt = {
+					-- A cache table for storing ["*"] subtables until altered
 					__cache = {},
+					-- This handles the lookup and creation of new ["*"] subtables
 					__index = function(t,k)
 								  local mt = getmetatable(dest)
 								  local cache = rawget(mt, "__cache")
@@ -40,18 +48,26 @@ local function copyDefaults(dest, src, force)
 								  if not tbl then
 									  local parent = t
 									  local parentkey = k
+									  -- v here is the value part of ["*"]
 									  tbl = copyTable(v)
 									  rawset(cache, k, tbl)
-									  local mt = getmetatable(tbl)
-									  if not mt then
-										  mt = {}
-										  setmetatable(tbl, mt)
+									  -- This metatable will handle altering of
+									  -- an existing table that's been created
+									  -- by the __index metamethod.
+									  local alter_mt = getmetatable(tbl)
+									  if not alter_mt then
+										  alter_mt = {}
+										  setmetatable(tbl, alter_mt)
 									  end
+									  -- When a new key is added to a table
+									  -- that was created with ["*"] magic, it 
+									  -- will become a real value in the table
+									  -- rather than just part of the metatable
 									  local newindex = function(t,k,v)
 														   rawset(parent, parentkey, t)
 														   rawset(t, k, v)
 													   end
-									  rawset(mt, "__newindex", newindex)
+									  rawset(alter_mt, "__newindex", newindex)
 								  end
 								  return tbl
 							  end,
