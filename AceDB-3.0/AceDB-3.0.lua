@@ -305,7 +305,7 @@ end
 -- You can optionally supply a table to re-use for this purpose.
 function DBObjectLib:GetProfiles(tbl)
 	if tbl and type(tbl) ~= "table" then
-		error("Usage: AceDBObject:GetProfiles(tbl): 'tbl' - table expected.", 3)
+		error("Usage: AceDBObject:GetProfiles(tbl): 'tbl' - table or nil expected.", 3)
 	end
 	
 	if tbl then
@@ -392,8 +392,8 @@ end
 -- Resets the entire database, using the string defaultProfile as the default
 -- profile.
 function DBObjectLib:ResetDB(defaultProfile)
-	if defaultProfile and type(defaultProfile) == "table" then
-		error("Usage: AceDBObject:ResetDB(defaultProfile): 'defaultProfile' - table or nil expected.", 3)
+	if defaultProfile and type(defaultProfile) ~= "string" then
+		error("Usage: AceDBObject:ResetDB(defaultProfile): 'defaultProfile' - string or nil expected.", 3)
 	end
 	
 	local sv = self.sv
@@ -420,8 +420,8 @@ function DBObjectLib:RegisterNamespace(name, defaults)
 	if type(name) ~= "string" then
 		error("Usage: AceDBObject:RegisterNamespace(name, defaults): 'name' - string expected.", 3)
 	end
-	if defaults and type(defaults) == "table" then
-		error("Usage: AceDBObject:RegisterNamespace(name, defaults): 'defaults' - table expected.", 3)
+	if defaults and type(defaults) ~= "table" then
+		error("Usage: AceDBObject:RegisterNamespace(name, defaults): 'defaults' - table or nil expected.", 3)
 	end
 	
 	local sv = self.sv
