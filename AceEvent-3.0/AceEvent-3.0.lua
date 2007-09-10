@@ -58,8 +58,8 @@ local function RegOrUnreg(self, unregister, registry, event, method)
 		registry[event][self] = nil
 	else -- overwrite any old registration
 		if not method then method = event end
-		if type(method) ~= "string" and type(method) ~= "function" then error("Usage: RegisterEvent(event, method): 'method' - string or function expected.", 3)
-		if type(method) == "string" and type(self[method]) ~= "function" then error("Usage: RegisterEvent(event, method): 'method' - method not found on target object.", 3)
+		if type(method) ~= "string" and type(method) ~= "function" then error("Usage: RegisterEvent(event, method): 'method' - string or function expected.", 3) end
+		if type(method) == "string" and type(self[method]) ~= "function" then error("Usage: RegisterEvent(event, method): 'method' - method not found on target object.", 3) end
 		registry[event][self] = method
 	end
 end
