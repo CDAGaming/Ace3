@@ -460,7 +460,12 @@ end
 -- and profiles.
 function AceDB:New(tbl, defaults, defaultProfile)
 	if type(tbl) == "string" then
-		tbl = getglobal(tbl)
+		local name = tbl
+		tbl = getglobal(name)
+		if not tbl then
+			tbl = {}
+			setglobal(name, tbl)
+		end
 	end
 
 	if type(tbl) ~= "table" then
