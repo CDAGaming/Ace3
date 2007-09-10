@@ -2,38 +2,108 @@ dofile("wow_api.lua")
 dofile("LibStub.lua")
 dofile("../AceDB-3.0/AceDB-3.0.lua")
 
-local defaults = {
-	profile = {
-		singleEntry = "singleEntry",
-		tableEntry = {
-			tableDefault = "tableDefault",
-		},
-		starTest = {
-			["*"] = {
-				starDefault = "starDefault",
-			},
-			sibling = {
-				siblingDefault = "siblingDefault",
-			},
-		},
-		doubleStarTest = {
-			["**"] = {
-				doubleStarDefault = "doubleStarDefault",
-			},
-			sibling = {
-				siblingDefault = "siblingDefault",
-			},
-		},
-	},
-}
-	
-local db = LibStub("AceDB-3.0"):New("MyDB", defaults)
+-- Test the defaults system
+do
 
-assert(db.profile.singleEntry == "singleEntry")
-assert(db.profile.tableEntry.tableDefault == "tableDefault")
-assert(db.profile.starTest.randomkey.starDefault == "starDefault")
-assert(db.profile.starTest.sibling.siblingDefault == "siblingDefault")
-assert(db.profile.starTest.sibling.starDefault == nil)
-assert(db.profile.doubleStarTest.randomkey.doubleStarDefault == "doubleStarDefault")
-assert(db.profile.doubleStarTest.sibling.siblingDefault == "siblingDefault")
-assert(db.profile.doubleStarTest.sibling.doubleStarDefault == "doubleStarDefault")
+	local defaults = {
+		profile = {
+			singleEntry = "singleEntry",
+			tableEntry = {
+				tableDefault = "tableDefault",
+			},
+			starTest = {
+				["*"] = {
+					starDefault = "starDefault",
+				},
+				sibling = {
+					siblingDefault = "siblingDefault",
+				},
+			},
+			doubleStarTest = {
+				["**"] = {
+					doubleStarDefault = "doubleStarDefault",
+				},
+				sibling = {
+					siblingDefault = "siblingDefault",
+				},
+			},
+		},
+	}
+
+	local db = LibStub("AceDB-3.0"):New("MyDB", defaults)
+	assert(db.profile.singleEntry == "singleEntry")
+	assert(db.profile.tableEntry.tableDefault == "tableDefault")
+	assert(db.profile.starTest.randomkey.starDefault == "starDefault")
+	assert(db.profile.starTest.sibling.siblingDefault == "siblingDefault")
+	assert(db.profile.starTest.sibling.starDefault == nil)
+	assert(db.profile.doubleStarTest.randomkey.doubleStarDefault == "doubleStarDefault")
+	assert(db.profile.doubleStarTest.sibling.siblingDefault == "siblingDefault")
+	assert(db.profile.doubleStarTest.sibling.doubleStarDefault == "doubleStarDefault")
+end
+
+
+-- Test the dynamic creation of sections
+do
+	local defaults = {
+		char = { alpha = "alpha",},
+		realm = { beta = "beta",},
+		class = { gamma = "gamma",},
+		race = { delta = "delta",},
+		faction = { epsilon = "epsilon",},
+		factionrealm = { zeta = "zeta",},
+		profile = { eta = "eta",},
+		global = { theta = "theta",},
+	}
+
+	local db = LibStub("AceDB-3.0"):New({}, defaults)
+	
+	assert(rawget(db, "char") == nil)
+	assert(rawget(db, "realm") == nil)
+	assert(rawget(db, "class") == nil)
+	assert(rawget(db, "race") == nil)
+	assert(rawget(db, "faction") == nil)
+	assert(rawget(db, "factionrealm") == nil)
+	assert(rawget(db, "profile") == nil)
+	assert(rawget(db, "global") == nil)
+	assert(rawget(db, "profiles") == nil)
+
+	-- Check dynamic default creation
+	assert(db.char.alpha == "alpha")
+	assert(db.realm.beta == "beta")
+	assert(db.class.gamma == "gamma")
+	assert(db.race.delta == "delta")
+	assert(db.faction.epsilon == "epsilon")
+	assert(db.factionrealm.zeta == "zeta")
+	assert(db.profile.eta == "eta")
+	assert(db.global.theta == "theta")
+end
+
+-- Verify that ["*"] and ["**"] tables aren't created until they are changed
+do
+	local defaults = {
+		profile = {
+			["*"] = {
+				alpha = "alpha",
+			}
+		},
+		char = {
+			["**"] = {
+				beta = "beta",
+			},
+			sibling = {
+				gamma = "gamma",
+			},
+		},
+	}
+
+	local db = LibStub("AceDB-3.0"):New({}, defaults)
+
+	-- Access each just to ensure they're created
+	assert(db.profile.randomkey.alpha == "alpha")
+	assert(db.char.randomkey.beta == "beta")
+
+	assert(rawget(db.profile, "randomkey") == nil)
+	assert(rawget(db.char, "randomkey") == nil)
+	assert(type(rawget(db.char, "sibling")) == "table")
+end
+
