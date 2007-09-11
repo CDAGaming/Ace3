@@ -29,8 +29,9 @@ end
 -- local functions that will be implemented further down
 local Embed, NewModule, GetModule, SetDefaultModuleState, SetDefaultModuleLibraries, SetEnabledState
 
--- used for tostring metatable
+-- Addon metatable
 local function addontostring( self ) return self.name end 
+local addon_mt = { _tostring = addontostring }
 
 -- AceAddon:NewAddon( name, [lib, lib, lib, ...] )
 -- name (string) - unique addon object name
@@ -42,7 +43,7 @@ function AceAddon:NewAddon(name, ...)
 	
 	if self.addons[name] then error(("Usage: NewAddon(name, [lib, lib, lib, ...]): 'name' - Addon '%s' already exists."):format(name), 2) end
 	
-	local addon = setmetatable( {name = name}, {__tostring = addontostring} )
+	local addon = setmetatable( {name = name}, addon_mt )
 	self.addons[name] = addon
 	addon.modules = {}
 	addon.defaultModuleLibraries = {}
