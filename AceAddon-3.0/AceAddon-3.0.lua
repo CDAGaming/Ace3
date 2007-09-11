@@ -31,7 +31,7 @@ local Embed, NewModule, GetModule, SetDefaultModuleState, SetDefaultModuleLibrar
 
 -- Addon metatable
 local function addontostring( self ) return self.name end 
-local addon_mt = { _tostring = addontostring }
+local addon_mt = { __tostring = addontostring }
 
 -- AceAddon:NewAddon( name, [lib, lib, lib, ...] )
 -- name (string) - unique addon object name
