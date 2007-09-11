@@ -129,7 +129,9 @@ function NewModule(self, name, prototype, ...)
 	
 	if type(prototype) == "table" then
 		AceAddon:EmbedLibraries(module, ...)
-		setmetatable(module, {__index=prototype})  -- More of a Base class type feel.
+		local mt = getmetatable(module)
+		mt.__index = prototype
+		setmetatable(module, mt)  -- More of a Base class type feel.
 	elseif prototype then
 		AceAddon:EmbedLibraries(module, prototype, ...)
 	end
