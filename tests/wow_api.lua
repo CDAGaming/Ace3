@@ -14,7 +14,7 @@ function FrameClass:New()
 	local frameProps = {
 		events = {},
 		scripts = {},
-		timer = 0,
+		timer = GetTime(),
 		isShow = true
 	}
 	return frame, frameProps
@@ -93,9 +93,8 @@ function UnitRace(unit)
 	return "Undead", "Scourge"
 end
 
-function GetTime()
-	return os.clock()
-end
+
+GetTime = os.clock
 
 function IsAddOnLoaded() return nil end
 
@@ -182,10 +181,11 @@ function WoWAPI_FireEvent(event,...)
 end
 
 function WoWAPI_FireUpdate()
+	local now = GetTime()
 	for frame,props in pairs(frames) do
 		if props.isShow and props.scripts.OnUpdate then
-			props.scripts.OnUpdate(frame,os.clock()-props.timer)
-			props.timer = os.clock()
+			props.scripts.OnUpdate(frame,now-props.timer)
+			props.timer = now
 		end
 	end
 end
