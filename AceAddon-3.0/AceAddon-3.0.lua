@@ -35,7 +35,7 @@ local Embed, NewModule, GetModule, SetDefaultModuleState, SetDefaultModuleLibrar
 --
 -- returns the addon object when succesful
 function AceAddon:NewAddon(name, ...)
-	if type(name) ~= "string" then error(("Usage: NewAddon(name, [lib, lib, lib, ...]): 'name' - string expected got '%s'."):format(type(name)),2) end
+	if type(name) ~= "string" then error(("Usage: NewAddon(name, [lib, lib, lib, ...]): 'name' - string expected got '%s'."):format(type(name)), 2) end
 	
 	if self.addons[name] then error(("Usage: NewAddon(name, [lib, lib, lib, ...]): 'name' - Addon '%s' already exists."):format(name), 2) end
 	
@@ -80,7 +80,6 @@ end
 -- [silent] (boolean) - optional, marks an embed to fail silently if the library doesn't exist.
 -- [offset] (number) - will push the error messages back to said offset defaults to 2
 function AceAddon:EmbedLibrary(addon, libname, silent, offset)
-	-- TODO: load on demand?
 	local lib = LibStub:GetLibrary(libname, true)
 	if not lib and not silent then
 		error(("Usage: EmbedLibrary(addon, libname, silent, offset): 'libname' - Cannot find a library instance of %q."):format(tostring(libname)), offset or 2)
@@ -113,30 +112,30 @@ end
 --
 -- returns the addon object when succesful
 function NewModule(self, name, prototype, ...)
-	if type(name) ~= "string" then error(("Usage: NewModule(name, [prototype, [lib, lib, lib, ...]): 'name' - string expected got '%s'."):format(type(name)),2) end
-	if type(prototype) ~= "string" and type(prototype) ~= "table" and type(prototype) ~= "nil" then error(("Usage: NewModule(name, [prototype, [lib, lib, lib, ...]): 'prototype' - table (prototype), string (lib) or nil expected got '%s'."):format(type(prototype)),2) end
+	if type(name) ~= "string" then error(("Usage: NewModule(name, [prototype, [lib, lib, lib, ...]): 'name' - string expected got '%s'."):format(type(name)), 2) end
+	if type(prototype) ~= "string" and type(prototype) ~= "table" and type(prototype) ~= "nil" then error(("Usage: NewModule(name, [prototype, [lib, lib, lib, ...]): 'prototype' - table (prototype), string (lib) or nil expected got '%s'."):format(type(prototype)), 2) end
 	
 	if self.modules[name] then error(("Usage: NewModule(name, [prototype, [lib, lib, lib, ...]): 'name' - Module '%s' already exists."):format(name), 2) end
-
+	
 	-- modules are basically addons. We treat them as such. They will be added to the initializequeue properly as well.
 	-- NewModule can only be called after the parent addon is present thus the modules will be initialized after their parent is.
-	local module = AceAddon:NewAddon( ("%s_%s"):format( self.name or tostring(self), name) )
-
+	local module = AceAddon:NewAddon(("%s_%s"):format(self.name or tostring(self), name))
+	
 	module.IsModule = function(self) return true end -- why recreate the function if it always returns true?
 	module:SetEnabledState(self.defaultModuleState)
-
+	
 	if type(prototype) == "table" then
-		AceAddon:EmbedLibraries(module, ... )
+		AceAddon:EmbedLibraries(module, ...)
 		setmetatable(module, {__index=prototype})  -- More of a Base class type feel.
 	elseif prototype then
 		AceAddon:EmbedLibraries(module, prototype, ...)
 	end
-
+	
 	AceAddon:EmbedLibraries(module, unpack(self.defaultModuleLibraries))
-
+	
 	safecall(self.OnModuleCreated, self, module) -- Was in Ace2 and I think it could be a cool thing to have handy.
 	self.modules[name] = module
-
+	
 	return module
 end
 
@@ -161,7 +160,7 @@ function SetEnabledState(self, state)
 end
 
 
-local function IterateModules( self ) return pairs(self.modules) end
+local function IterateModules(self) return pairs(self.modules) end
 local mixins = {
 	NewModule = NewModule,
 	GetModule = GetModule,
@@ -170,7 +169,7 @@ local mixins = {
 	SetEnabledState = SetEnabledState,
 	IterateModules = IterateModules,
 }
-local function IsModule( self ) return false end
+local function IsModule(self) return false end
 local pmixins = {
 	defaultModuleState = true,
 	enabledState = true,
