@@ -8,6 +8,8 @@ function serialize(o, indent, file)
 		file:write(string.format("%q", o))
 	elseif type(o) == "boolean" then
 		file:write(o and "true" or "false")
+	elseif type(o) == "function" then
+		file:write("nil --[["..tostring(o).."]]")
 	elseif type(o) == "table" then
 		if not indent then indent = "  " else indent = indent .. "  " end
 		local old = recurse

@@ -215,7 +215,7 @@ local function initdb(sv, defaults, defaultProfile, olddb)
 		["global"] = true,
 		["profiles"] = true,
 	}
-	
+
 	-- This allows us to use this function to reset an entire database
 	-- Clear out the old database
 	if olddb then
@@ -310,13 +310,14 @@ function DBObjectLib:GetProfiles(tbl)
 	if tbl and type(tbl) ~= "table" then
 		error("Usage: AceDBObject:GetProfiles(tbl): 'tbl' - table or nil expected.", 3)
 	end
-	
+
+	-- Clear the container table
 	if tbl then
 		for k,v in pairs(tbl) do tbl[k] = nil end
 	else
 		tbl = {}
 	end
-	
+
 	local i = 0
 	for profileKey in pairs(db.sv.profiles) do
 		i = i + 1
