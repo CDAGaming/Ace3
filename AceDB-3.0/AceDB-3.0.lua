@@ -6,6 +6,9 @@ if AceDB and oldminor then
 	-- Handle upgrading here
 end
 
+
+local DBObjectLib = {}
+
 --[[-------------------------------------------------------------------------
 	AceDB Utility Functions
 ---------------------------------------------------------------------------]]
@@ -158,9 +161,8 @@ local dbmt = {
 				if section == "profile" then
 					local new = initSection(t, section, "profiles", key, defaults)
 					if new then
-						-- TODO: Handle callback here.  How do we want to manage 
-						-- this, i.e. at what level do we want callbacks.
-						-- CALLBACK: New Profile Created
+						-- Callback: OnNewProfile, database, newProfileKey
+						t:TriggerCallback("OnNewProfile", t, key)
 					end
 				elseif section == "profiles" then
 					local sv = rawget(t, "sv")
@@ -226,7 +228,9 @@ local function initdb(sv, defaults, defaultProfile, olddb)
 	-- Copy methods locally into the database object, to avoid hitting
 	-- the metatable when calling methods
 	
-	-- TODO: Copy the database methods into the database table
+	for name,func in pairs(DBObjectLib) do
+		db[name] = func
+	end
 	
 	-- Set some properties in the database object
 	db.profiles = sv.profiles
@@ -243,8 +247,6 @@ end
 --[[-------------------------------------------------------------------------
 	AceDB Object Method Definitions
 ---------------------------------------------------------------------------]]
-
-local DBObjectLib = {}
 
 -- DBObject:RegisterDefaults(defaults)
 -- defaults (table) - A table of defaults for this database
@@ -294,8 +296,9 @@ function DBObjectLib:SetProfile(name)
 	
 	self.profile = nil
 	self.keys["profile"] = name
-	
-	-- TODO: Write callback to indicate the profile has changed
+
+	-- Callback: OnProfileChanged, database, newProfileKey
+	self:TriggerCallback("OnProfileChanged", self, name)
 end
 
 -- DBObject:GetProfiles(tbl)
@@ -344,7 +347,8 @@ function DBObjectLib:DeleteProfile(name)
 	end
 	
 	self.sv.profiles[name] = nil
-	-- TODO: Send a deleted profile callback
+	-- Callback: OnProfileDeleted, database, profileKey
+	self:TriggerCallback("OnProfileDeleted", self, name)
 end
 
 -- DBObject:CopyProfile(name, force)
@@ -352,7 +356,7 @@ end
 --
 -- Copies a named profile into the current profile, overwriting any conflicting
 -- settings.
-function DBObjectLib:CopyProfile(name, force)
+function DBObjectLib:CopyProfile(name)
 	if type(name) ~= "string" then
 		error("Usage: AceDBObject:CopyProfile(name): 'name' - string expected.", 3)
 	end
@@ -360,12 +364,17 @@ function DBObjectLib:CopyProfile(name, force)
 	if name == self.keys.profile then
 		error("Cannot have the same source and destination profiles.", 3)
 	end
+
+	-- Reset the profile before copying
+	self:ResetProfile()
 	
 	local profile = self.profile
 	local source = self.sv.profiles[name]
 	
-	copyDefaults(profile, source, force)
-	-- TODO: Send a profile copy callback
+	copyDefaults(profile, source)
+	
+	-- Callback: OnProfileCopied, database, sourceProfileKey
+	self:TriggerCallback("OnProfileCopied", self, name)
 end
 
 -- DBObject:ResetProfile()
@@ -382,8 +391,9 @@ function DBObjectLib:ResetProfile()
 	if defaults then
 		copyDefaults(profile, defaults)
 	end
-	
-	-- TODO: Send a callback for profile reset
+
+	-- Callback: OnProfileReset, database
+	self:TriggerCallback("OnProfileReset", self)
 end
 
 -- DBObject:ResetDB(defaultProfile)
@@ -404,7 +414,11 @@ function DBObjectLib:ResetDB(defaultProfile)
 	local parent = self.parent
 	
 	initdb(self.sv_name, self.defaults, defaultProfile, db)
-	-- TODO: Trigger callbacks for database reset and profile changed
+	
+	-- Callback: OnDatabaseReset, database
+	self:TriggerCallback("OnDatabaseReset", self)
+	-- Callback: OnProfileChanged, database, profileKey
+	self:TriggerCallback("OnProfileChanged", self, self.keys["profile"])
 	
 	return db
 end
@@ -440,6 +454,55 @@ function DBObjectLib:RegisterNamespace(name, defaults)
 	return newDB
 end
 
+--[[-------------------------------------------------------------------------
+	Simple callback system implementation
+---------------------------------------------------------------------------]]
+
+-- DBObject:RegisterCallback(handler)
+-- handler (function) - The handler function to call when a message fires.
+--
+-- Registers a callback function for the given AceDB object. Callbacks are only
+-- called on a per-database level, so developers must register with the specific
+--  database they are concerned with.
+function DBObjectLib:RegisterCallback(handler)
+	if type(handler) ~= "function" then
+		error("Usage: AceDBObject:RegisterCallback(message, handler): 'handler' - function expected.", 3)
+	end
+
+	if not self.callbacks then self.callbacks = {} end
+	self.callbacks[handler] = true
+end
+
+-- DBObject:UnregisterCallback(handler)
+-- handler (function) - The handler function to unregister.
+--
+-- Unregisters a callback handler.
+function DBObjectLib:UnregisterCallback(handler)
+	if type(handler) ~= "function" then
+		error("Usage: AceDBObject:RegisterCallback(message, handler): 'handler' - function expected.", 3)
+	end
+
+	if not self.callbacks then self.callbacks = {} end
+	self.callbacks[handler] = nil
+end
+
+-- DBObject:TriggerCallback(message, ...)
+-- message (string) - The message to send to registered callbacks
+-- ... - Any extra arguments to be sent
+--
+-- For internal use only.  Used to trigger callback messages on database/profile
+-- state changes.
+function DBObjectLib:TriggerCallback(message, ...)
+	if self.callbacks then
+		for handler in pairs(self.callbacks) do
+			-- Safecall this?
+			local succ,err = pcall(handler, message, ...)
+			if not succ then
+				geterrorhandler()(err)
+			end
+		end
+	end
+end
 
 --[[-------------------------------------------------------------------------
 	AceDB Exposed Methods
