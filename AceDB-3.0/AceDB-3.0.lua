@@ -319,9 +319,15 @@ function DBObjectLib:GetProfiles(tbl)
 	end
 
 	local i = 0
-	for profileKey in pairs(db.sv.profiles) do
+	for profileKey in pairs(self.profiles) do
 		i = i + 1
 		tbl[i] = profileKey
+	end
+
+	-- Add the current profile, if it hasn't been created yet
+	if rawget(self, "profile") == nil then
+		i = i + 1
+		tbl[i] = self.keys.profile
 	end
 	
 	return tbl, i

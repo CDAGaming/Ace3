@@ -107,3 +107,44 @@ do
 	assert(rawget(db.char, "randomkey") == nil)
 	assert(type(rawget(db.char, "sibling")) == "table")
 end
+
+-- Test OnProfileChanged
+do
+	local testdb = LibStub("AceDB-3.0"):New({})
+	
+	local triggers = {}
+
+	local function OnProfileChanged(message, db, ...)
+		if message == "OnProfileChanged" and db == testdb then
+			local profile = ...
+			assert(profile == "Healers")
+			triggers[message] = true
+		end
+	end
+
+	testdb:RegisterCallback(OnProfileChanged)
+	testdb:SetProfile("Healers")
+	assert(triggers.OnProfileChanged)
+end
+
+-- Test GetProfiles() fix for ACE-35
+do
+	local db = LibStub("AceDB-3.0"):New({})
+	
+	local profiles = {
+		"Healers",
+		"Tanks",
+		"Hunter",
+	}
+
+	for idx,profile in ipairs(profiles) do
+		db:SetProfile(profile)
+	end
+
+	local profileList = db:GetProfiles()
+	table.sort(profileList)
+	assert(profileList[1] == "Healers")
+	assert(profileList[2] == "Hunter")
+	assert(profileList[3] == "Tanks")
+	assert(profileList[4] == UnitName("player" .. " - " .. GetRealmName()))
+end
