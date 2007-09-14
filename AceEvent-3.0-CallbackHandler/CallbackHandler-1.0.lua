@@ -129,6 +129,7 @@ function lib:New(target, RegisterName, UnregisterName, UnregisterAllName, OnUsed
 						if OnUnused and not next(callbacks) then
 							OnUnused(target, eventname)
 						end
+					end
 				end
 			end
 		end
