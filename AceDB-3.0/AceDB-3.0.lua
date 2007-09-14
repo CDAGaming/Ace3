@@ -30,11 +30,9 @@ end
 
 -- Called to add defaults to a section of the database
 --
--- There is some heavy metatable magic here to compensate for when you INDEX a part
--- of the database that has a ["*"] default that is a table.  If we didn't have
--- this magic, then when new keys are indexed, they would be added to the table
--- and stored, even if no defaults changed.  This allows them to exist, and only
--- become part of the saved table, when they are first altered.
+-- When a ["*"] default section is indexed with a new key, a table is returned
+-- and set in the host table.  These tables must be cleaned up by removeDefaults
+-- in order to ensure we don't write empty default tables.
 local function copyDefaults(dest, src, force)
 	for k,v in pairs(src) do
 		if k == "*" or k == "**" then
@@ -71,6 +69,8 @@ end
 
 -- Called to remove all defaults in the default table from the database
 local function removeDefaults(db, defaults)
+	-- TODO: Change the code to no longer look at __cache, and compare
+	-- the actual values to ensure things work properly.
 	for k,v in pairs(defaults) do
 		if k == "*" and type(v) == "table" then
 			-- check for any defaults that have been changed
