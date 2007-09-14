@@ -89,19 +89,22 @@ local function OnUpdate()
 		
 		for timer, when in pairs(curbuckettable) do -- all timers in the current bucket
 			if when < soon then
+				local delay = timer.delay
 				-- Call the timer func, either as a method on given object, or a straight function ref
 				local callback = timer.callback
-				if type(callback) == "string" then
-					safecall(timer.object[callback], timer.object, timer.arg)
-				else
-					safecall(callback, timer.arg)
+				-- if delay is false, then the timer has been canceld and should only be removed, not executed anymore
+				if delay ~= false then
+					if type(callback) == "string" then
+						safecall(timer.object[callback], timer.object, timer.arg)
+					else
+						safecall(callback, timer.arg)
+					end
 				end
 				-- remove from current bucket
 				curbuckettable[timer] = nil
 				
-				local delay = timer.delay
 				if not delay then
-					-- single-shot timer
+					-- single-shot timer or canceled timer, remove and free timer
 					AceTimer.selfs[timer.object][tostring(timer)] = nil
 					timerCache[timer] = true
 				else
@@ -199,18 +202,8 @@ end
 function AceTimer:CancelTimer(handle)
 	local selftimers = AceTimer.selfs[self]
 	local timer = selftimers and selftimers[handle]
-	if timer then
-		selftimers[handle] = nil
-		
-		-- This is fairly expensive, but it is better to take the hit here rather than having an extra if-else in the OnUpdate
-		for _,v in pairs(hash) do
-			if v[timer] then
-				v[timer] = nil
-			end
-		end
-		-- return the timer to the cache
-		timerCache[timer] = true
-	end
+	-- cancel the timer by setting its delay to false, will get deleted in its bucket run
+	timer.delay = false
 end
 
 
