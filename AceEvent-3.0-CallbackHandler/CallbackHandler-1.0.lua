@@ -58,7 +58,7 @@ function lib:New(target, RegisterName, UnregisterName, UnregisterAllName, OnUsed
 			error("Usage: "..RegisterName.."(eventname, method): 'eventname' - string expected.", 2)
 		end
 	
-		method = method or name
+		method = method or eventname
 		
 		local first = rawget(events, eventname) and next(events[eventname])	-- test for empty before. not test for one member after. that one member may have been overwritten.
 		
