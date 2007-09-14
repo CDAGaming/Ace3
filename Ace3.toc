@@ -8,9 +8,9 @@
 ## X-License: To be decided
 ## OptionalDeps: LibStub
 
-AceAddon-3.0\AceAddon-3.0.lua
-AceEvent-3.0\AceEvent-3.0.lua
-AceTimer-3.0\AceTimer-3.0.lua
-AceBucket-3.0\AceBucket-3.0.lua
-AceHook-3.0\AceHook-3.0.lua
-AceDB-3.0\AceDB-3.0.lua
+AceAddon-3.0\AceAddon-3.0.xml
+AceEvent-3.0\AceEvent-3.0.xml
+AceTimer-3.0\AceTimer-3.0.xml
+AceBucket-3.0\AceBucket-3.0.xml
+AceHook-3.0\AceHook-3.0.xml
+AceDB-3.0\AceDB-3.0.xml
