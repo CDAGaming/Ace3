@@ -1,4 +1,4 @@
---[[ $Id: AceEvent-3.0.lua 48571 2007-09-10 20:45:10Z elkano $ ]]
+--[[ $Id$ ]]
 local MAJOR, MINOR = "CallbackHandler-1.0", 1
 local lib = LibStub:NewLibrary(MAJOR, MINOR)
 
