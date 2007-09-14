@@ -116,11 +116,11 @@ function lib:New(target, RegisterName, UnregisterName, UnregisterAllName, OnUsed
 	-- OPTIONAL: Unregister all callbacks for given selfs/addonIds
 	if UnregisterAllName then
 		target[UnregisterAllName] = function(...)
-			if select(#,...)<1 then
+			if select("#",...)<1 then
 				error("Usage: "..UnregisterAllName.."(): missing 'self' or \"addonId\" to unregister events for.")
 			end
 			
-			for i=1,select(#,...) do
+			for i=1,select("#",...) do
 				local self = select(i,...)
 				for eventname, callbacks in events do
 					if callbacks[self] then
