@@ -41,39 +41,13 @@ local function copyDefaults(dest, src, force)
 			if type(v) == "table" then
 				-- This is a metatable used for table defaults
 				local mt = {
-					-- A cache table for storing ["*"] subtables until altered
-					__cache = {},
 					-- This handles the lookup and creation of new ["*"] subtables
 					__index = function(t,k)
-							local mt = getmetatable(dest)
-							local cache = rawget(mt, "__cache")
-							local tbl = rawget(cache, k)
-							if not tbl then
-								local parent = t
-								local parentkey = k
-								-- v here is the value part of ["*"]
-								tbl = copyTable(v)
-								rawset(cache, k, tbl)
-								-- This metatable will handle altering of
-								-- an existing table that's been created
-								-- by the __index metamethod.
-								local alter_mt = getmetatable(tbl)
-								if not alter_mt then
-									alter_mt = {}
-									setmetatable(tbl, alter_mt)
-								end
-								-- When a new key is added to a table
-								-- that was created with ["*"] magic, it 
-								-- will become a real value in the table
-								-- rather than just part of the metatable
-								local newindex = function(t,k,v)
-									rawset(parent, parentkey, t)
-									rawset(t, k, v)
-								end
-								rawset(alter_mt, "__newindex", newindex)
-							end
-							return tbl
-						end,
+								  local tbl = {}
+								  copyDefaults(tbl, v)
+								  rawset(t,k,tbl)
+								  return tbl
+							  end,
 				}
 				setmetatable(dest, mt)
 			else

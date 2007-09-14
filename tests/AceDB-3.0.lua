@@ -42,7 +42,6 @@ do
 	assert(db.profile.doubleStarTest.sibling.doubleStarDefault == "doubleStarDefault")
 end
 
-
 -- Test the dynamic creation of sections
 do
 	local defaults = {
@@ -77,35 +76,6 @@ do
 	assert(db.factionrealm.zeta == "zeta")
 	assert(db.profile.eta == "eta")
 	assert(db.global.theta == "theta")
-end
-
--- Verify that ["*"] and ["**"] tables aren't created until they are changed
-do
-	local defaults = {
-		profile = {
-			["*"] = {
-				alpha = "alpha",
-			}
-		},
-		char = {
-			["**"] = {
-				beta = "beta",
-			},
-			sibling = {
-				gamma = "gamma",
-			},
-		},
-	}
-
-	local db = LibStub("AceDB-3.0"):New({}, defaults)
-
-	-- Access each just to ensure they're created
-	assert(db.profile.randomkey.alpha == "alpha")
-	assert(db.char.randomkey.beta == "beta")
-
-	assert(rawget(db.profile, "randomkey") == nil)
-	assert(rawget(db.char, "randomkey") == nil)
-	assert(type(rawget(db.char, "sibling")) == "table")
 end
 
 -- Test OnProfileChanged
@@ -147,4 +117,74 @@ do
 	assert(profileList[2] == "Hunter")
 	assert(profileList[3] == "Tanks")
 	assert(profileList[4] == UnitName("player" .. " - " .. GetRealmName()))
+end
+
+-- Very simple default test
+do
+	local defaults = {
+		profile = {
+			sub = {
+				["*"] = {
+					sub2 = {},
+					sub3 = {},
+				},
+			},
+		},
+	}
+
+	local db = LibStub("AceDB-3.0"):New({}, defaults)
+	
+	assert(type(db.profile.sub.monkey.sub2) == "table")
+	assert(type(db.profile.sub.apple.sub3) == "table")
+	
+	db.profile.sub.random.sub2.alpha = "alpha"
+end
+
+-- Table insert kills us
+do
+	local defaults = {
+		profile = {
+			["*"] = {},
+		},
+	}
+
+	local db = LibStub("AceDB-3.0"):New({}, defaults)
+	
+	table.insert(db.profile.monkey, "alpha")
+	table.insert(db.profile.random, "beta")
+
+	-- Here, the tables db.profile.monkey should be REAL, not cached
+	assert(rawget(db.profile, "monkey"))
+end
+
+
+-- Test multi-level defaults for hyper
+do
+	local defaults = {
+		profile = {
+			autoSendRules = {
+				['*'] = {
+					include = {
+						['*'] = {},
+					},
+					exclude = {
+						['*'] = {},
+					},
+				},
+			},
+		}
+	}
+
+	local db = LibStub("AceDB-3.0"):New({}, defaults)
+
+	assert(rawget(db.profile.autoSendRules.Cairthas.include, "ptSets") == nil)
+	assert(rawget(db.profile.autoSendRules.Cairthas.include, "items") == nil)
+	table.insert(db.profile.autoSendRules.Cairthas.include.ptSets, "TradeSkill.Mat.ByProfession.Leatherworking")
+	table.insert(db.profile.autoSendRules.Cairthas.include.items, "Light Leather")
+
+	db.profile.autoSendRules.Cairthas.include.ptSets.boo = true
+
+	-- Tables should be real now, not cached.
+	assert(rawget(db.profile.autoSendRules.Cairthas.include, "ptSets"))
+	assert(rawget(db.profile.autoSendRules.Cairthas.include, "items"))
 end
