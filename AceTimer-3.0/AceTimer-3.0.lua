@@ -94,7 +94,7 @@ local function OnUpdate()
 				local callback = timer.callback
 				if type(callback) == "string" then
 					safecall(timer.object[callback], timer.object, timer.arg)
-				elseif type(callback) == "function" then
+				elseif callback then
 					safecall(callback, timer.arg)
 				else
 					-- probably nilled out by CancelTimer
