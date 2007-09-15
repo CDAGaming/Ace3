@@ -63,7 +63,8 @@ end
 local function safecall(func, ...)
 	local success, err = pcall(func, ...)
 	if success then return err end
-	if not err:find("%.lua:%d+:") then err = (debugstack():match("\n(.-: )in.-\n") or "") .. err end 
+	
+	if not err:find("%.lua:%d+:") then err = (debugstack():match("\n(.-: )in.-\n") or "") .. err end
 	geterrorhandler()(err)
 end
 
@@ -89,22 +90,24 @@ local function OnUpdate()
 		
 		for timer, when in pairs(curbuckettable) do -- all timers in the current bucket
 			if when < soon then
-				local delay = timer.delay
 				-- Call the timer func, either as a method on given object, or a straight function ref
 				local callback = timer.callback
-				-- if delay is false, then the timer has been canceld and should only be removed, not executed anymore
-				if delay ~= false then
-					if type(callback) == "string" then
-						safecall(timer.object[callback], timer.object, timer.arg)
-					else
-						safecall(callback, timer.arg)
-					end
+				if type(callback) == "string" then
+					safecall(timer.object[callback], timer.object, timer.arg)
+				elseif type(callback) == "function" then
+					safecall(callback, timer.arg)
+				else
+					-- probably nilled out by CancelTimer
+					timer.delay = nil -- don't reschedule it
 				end
+
 				-- remove from current bucket
 				curbuckettable[timer] = nil
 				
+				local delay=timer.delay	-- NOW make a local copy, can't do it earlier in case the timer cancelled itself in the callback
+				
 				if not delay then
-					-- single-shot timer or canceled timer, remove and free timer
+					-- single-shot timer (or cancelled)
 					AceTimer.selfs[timer.object][tostring(timer)] = nil
 					timerCache[timer] = true
 				else
@@ -199,11 +202,17 @@ end
 -- handle - Opaque object given by ScheduleTimer
 --
 -- Cancels a timer with the given handle, registered by the same 'self' as given here
+--
+-- Returns true if a timer was cancelled
+
 function AceTimer:CancelTimer(handle)
 	local selftimers = AceTimer.selfs[self]
 	local timer = selftimers and selftimers[handle]
-	-- cancel the timer by setting its delay to false, will get deleted in its bucket run
-	timer.delay = false
+	if timer then
+		timer.callback = nil		-- don't run it
+		-- The timer object is removed in the OnUpdate loop
+	end
+	return not not timer
 end
 
 

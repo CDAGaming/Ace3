@@ -75,7 +75,7 @@ FireUpdate(0.99)
 assert(t1s==0 and t2s==0 and t3s==0 and t4s==0 and t5s==0)
 
 FireUpdate(1.00)
-assert(t1s==1 and t2s==0 and t3s==0 and t4s==1 and t5s==0)
+assert(t1s==1 and t2s==0 and t3s==0 and t4s==1 and t5s==0, t1s..t2s..t3s..t4s..t5s)
 
 FireUpdate(1.99)
 assert(t1s==1 and t2s==0 and t3s==0 and t4s==1 and t5s==0)
@@ -124,34 +124,50 @@ t1s, t2s, t3s, t4s, t5s = 0,0,0,0,0
 FireUpdate(6.5)
 assert(t1s==0 and t2s==0 and t3s==0 and t4s==0 and t5s==0 and t6s==0)
 
-FireUpdate(7.01)
+FireUpdate(7.7)
 assert(t1s==1 and t2s==0 and t3s==0 and t4s==0 and t5s==0 and t6s==1)
 
-FireUpdate(8.01)
-assert(t1s==2 and t2s==1 and t3s==0 and t4s==0 and t5s==0 and t6s==1)
+FireUpdate(9.8)
+assert(t1s==2 and t2s==1 and t3s==1 and t4s==0 and t5s==0 and t6s==1)	-- NOTE: t1s will only fire ONCE now, since we had a >1.99s lag!
 
-FireUpdate(9.01)
-assert(t1s==3 and t2s==1 and t3s==1 and t4s==0 and t5s==0 and t6s==1)
 
 
 -----------------------------------------------------------------------
 -- Test cancelling
+-- - test right and wrong 'self'
+-- - test cancelling from within the timer
 
 t1s, t2s, t3s, t4s, t5s, t6s = 0,0,0,0,0,0
 
-obj:CancelTimer(timer1)	-- cancel a single timer
+assert(not AceTimer:CancelTimer(timer1))	-- wrong self, shouldnt cancel anything
+
+assert(obj:CancelTimer(timer1))	-- right self - cancel timer1
 
 FireUpdate(10.01)
-assert(t1s==0, t1s)
-assert(t2s==1, t2s)
 assert(t1s==0 and t2s==1)	-- timer 2 should still work
+
+obj.Timer3 = function() 
+	t3s=t3s+1
+	t3cancelled=true
+	assert(obj:CancelTimer(timer3))
+end
+
+FireUpdate(13.01)
+assert(t1s==0 and t2s==2 and t3s==1)
+assert(t3cancelled)
+
+FireUpdate(16.01)
+assert(t1s==0 and t2s==3 and t3s==1, t1s..t2s..t3s)
+assert(t3cancelled)
 
 
 t1s, t2s, t3s, t4s, t5s = 0,0,0,0,0
 
 obj:CancelAllTimers()
 
-FireUpdate(20.01)	-- long time in the future
+for i=100,120,0.2 do		-- 131 buckets / 11 = 11.9 seconds for a full loop
+	FireUpdate(i) -- long time in the future
+end
 assert(t1s==0 and t2s==0 and t3s==0 and t4s==0 and t5s==0 and t6s==0)	-- nothing should have fired
 
 
