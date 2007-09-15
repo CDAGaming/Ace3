@@ -167,6 +167,7 @@ end
 
 
 local function IterateModules(self) return pairs(self.modules) end
+local function IterateEmbeds(self) return pairs(AceAddon.embeds[self]) end
 local mixins = {
 	NewModule = NewModule,
 	GetModule = GetModule,
@@ -174,6 +175,7 @@ local mixins = {
 	SetDefaultModuleState = SetDefaultModuleState,
 	SetEnabledState = SetEnabledState,
 	IterateModules = IterateModules,
+	IterateEmbeds = IterateEmbeds,
 }
 local function IsModule(self) return false end
 local pmixins = {

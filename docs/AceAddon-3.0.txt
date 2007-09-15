@@ -109,6 +109,8 @@ should only be called before any Enabling actually happend, aka in OnInitialize
 addon:IterateModules()
 Iterates over the modules of the current addon object
 
+addon:IterateEmbeds()
+Iterates over the embedded libraries of the addon object
 
 -- Special optional functions
 
