@@ -1,5 +1,6 @@
 dofile("wow_api.lua")
 dofile("LibStub.lua")
+dofile("../CallbackHandler-1.0/CallbackHandler-1.0.lua")
 dofile("../AceEvent-3.0/AceEvent-3.0.lua")
 
 local AceEvent = LibStub("AceEvent-3.0")
@@ -11,6 +12,8 @@ AceEvent:Embed(addon)
 do -- Tests on events
 	local eventResult
 	function addon:EVENT_TEST(event,arg1)
+		assert(self==addon)
+		--print(event,arg1)
 		eventResult = arg1
 	end
 
@@ -39,4 +42,10 @@ do -- Tests on messages.
 	local messageResult
 	function addon:MESSAGE_TEST(message,...)
 	end
+	-- TODO
 end
+
+
+
+------------------------------------------------
+print "OK"

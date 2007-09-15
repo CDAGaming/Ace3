@@ -48,7 +48,7 @@ function lib:New(target, RegisterName, UnregisterName, UnregisterAllName, OnUsed
 	-- registry:Fire() - fires the given event/message into the registry
 	function registry:Fire(eventname, ...)
 		for _, method in pairs(events[eventname]) do
-			safecall(method, ...)
+			safecall(method, eventname, ...)
 		end
 	end
 
@@ -60,7 +60,7 @@ function lib:New(target, RegisterName, UnregisterName, UnregisterAllName, OnUsed
 	
 		method = method or eventname
 		
-		local first = rawget(events, eventname) and next(events[eventname])	-- test for empty before. not test for one member after. that one member may have been overwritten.
+		local first = not rawget(events, eventname) or not next(events[eventname])	-- test for empty before. not test for one member after. that one member may have been overwritten.
 		
 		if type(method) ~= "string" and type(method) ~= "function" then
 			error("Usage: "..RegisterName.."(eventname, method: 'method' - string or function expected.", 2)

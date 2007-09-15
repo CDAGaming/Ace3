@@ -1,89 +1,37 @@
 --[[ $Id$ ]]
-local ACEEVENT_MAJOR, ACEEVENT_MINOR = "AceEvent-3.0", 1
-local AceEvent, oldminor = LibStub:NewLibrary(ACEEVENT_MAJOR, ACEEVENT_MINOR)
+local MAJOR, MINOR = "AceEvent-3.0", 2
+local AceEvent = LibStub:NewLibrary(MAJOR, MINOR)
 
-if not AceEvent then 
-	return
-end
+if not AceEvent then 	return end
 
-local event_mt = {__index = function(tbl, key) tbl[key] = {} return tbl[key] end}
+local CallbackHandler = LibStub:GetLibrary("CallbackHandler-1.0")
 
-AceEvent.events = AceEvent.events or setmetatable({}, event_mt) -- Blizzard events
-AceEvent.messages = AceEvent.messages or setmetatable({}, event_mt) -- Own messages
+
 AceEvent.frame = AceEvent.frame or CreateFrame("Frame", "AceEvent30Frame") -- our event frame
 AceEvent.embeds = AceEvent.embeds or {} -- what objects embed this lib
 
-local type = type
-local pcall = pcall
-local pairs = pairs
 
--- upgrading of embeds is done at the bottom of the file
+-- APIs and registry for blizzard events, using CallbackHandler lib
+local OnEventUsed, OnEventUnused
 
--- local upvalues
-local events, messages = AceEvent.events, AceEvent.messages
-
-local function safecall(func, ...)
-	local success, err = pcall(func, ...)
-	if success then return err end
-	if not err:find("%.lua:%d+:") then err = (debugstack():match("\n(.-: )in.-\n") or "") .. err end 
-	geterrorhandler()(err)
+if not AceEvent.events then
+	AceEvent.events = CallbackHandler:New(AceEvent, 
+		"RegisterEvent", "UnregisterEvent", "UnregisterAllEvents",
+		--[[OnUsed]]   function(self,eventname) self.frame:RegisterEvent(eventname) end,
+		--[[OnUnused]] function(self,eventname) self.frame:UnregisterEvent(eventname) end
+	)
 end
 
--- generic event and message firing function
--- fires the event/message into the given registry
-local function Fire(registry, event, ...)
-	for obj, method in pairs(registry[event]) do
-		if type(method) == "string" then
-			safecall(obj[method], obj, event, ...) 
-		else
-			safecall(method, event, ...)
-		end
-	end
-	
-	-- I've added event to the args passed in, in anticipation of our decision in jira.  
-	-- TODO: If its reversed reverse this change
+
+-- APIs and registry for IPC messages, using CallbackHandler lib
+if not AceEvent.messages then
+	AceEvent.messages = CallbackHandler:New(AceEvent, 
+		"RegisterMessage", "UnregisterMessage", "UnregisterAllMessages"
+	)
+	AceEvent.SendMessage = AceEvent.messages.Fire
 end
 
--- Generic registration for messages and events
-local function Register(self, registry, event, method)
-	if type(event) ~= "string" then 
-		if registry == events then
-			error("Usage: RegisterEvent(event, method): 'event' - string expected.", 3)
-		elseif registry == messages then
-			error("Usage: RegisterMessage(message, method): 'message' - string expected.", 3)
-		end
-	end
-	
-	if not method then method = event end
-	if type(method) ~= "string" and type(method) ~= "function" then
-		if registry == events then
-			error("Usage: RegisterEvent(event, method): 'method' - string or function expected.", 3)
-		elseif registry == messages then
-			error("Usage: RegisterMessage(message, method): 'method' - string or function expected.", 3)
-		end
-	end
-	if type(method) == "string" and type(self[method]) ~= "function" then
-		if registry == events then
-			error("Usage: RegisterEvent(event, method): 'method' - method not found on target object.", 3)
-		elseif registry == messages then
-			error("Usage: RegisterMessage(message, method): 'method' - method not found on target object.", 3)
-		end
-	end
-	registry[event][self] = method -- overwrite any old registration
-end
 
--- Generic unregisration for messages and events
-local function Unregister(self, registry, event, method)
-	if type(event) ~= "string" then 
-		if registry == events then
-			error("Usage: UnregisterEvent(event): 'event' - string expected.", 3)
-		elseif registry == messages then
-			error("Usage: UnregisterMessage(message): 'message' - string expected.", 3)
-		end
-	end
-	
-	registry[event][self] = nil
-end
 
 --- embedding and embed handling
 
@@ -97,7 +45,7 @@ local mixins = {
 -- AceEvent:Embed( target )
 -- target (object) - target object to embed AceEvent in
 --
--- Embeds AceEevent into the target object making the functions from the mixins list available on target:..
+-- Embeds AceEvent into the target object making the functions from the mixins list available on target:..
 function AceEvent:Embed(target)
 	for k, v in pairs(mixins) do
 		target[v] = self[v]
@@ -115,83 +63,15 @@ function AceEvent:OnEmbedDisable(target)
 	target:UnregisterAllMessages()
 end
 
--- AceEvent:RegisterEvent( event, method )
--- event (string) - Blizzard event to register for
--- method (string or function) - Method to call on self or function to call when event is triggered
---
--- Registers a blizzard event and binds it to the given method
-function AceEvent:RegisterEvent(event, method)
-	Register(self, events, event, method)
-	AceEvent.frame:RegisterEvent(event)
-end
 
--- AceEvent:UnregisterEvent( event )
--- event (string) - Blizzard event to unregister
---
--- Unregisters a blizzard event
-function AceEvent:UnregisterEvent(event)
-	Unregister(self, events, event)
-	if not next(events[event]) then
-		AceEvent.frame:UnregisterEvent(event)
-	end
-end
-
--- AceEvent:RegisterMessage( message, method )
--- message (string) - Inter Addon message to register for
--- method (string or function) - Method to call on self or function to call when message is received
---
--- Registers an inter addon message and binds it to the given method
-function AceEvent:RegisterMessage(message, method)
-	Register(self, messages, message, method)
-end
-
--- AceEvent:UnregisterMessage( message )
--- message (string) - Interaddon message to unregister
---
--- Unregisters an interaddon message
-function AceEvent:UnregisterMessage(message)
-	Unregister(self, messages, message)
-end
-
--- AceEvent:SendMessage( message, ... )
--- message (string) - Message to send
--- ... (tuple) - Arguments to the message
--- 
--- Sends an interaddon message with arguments
-function AceEvent:SendMessage(message, ...)
-	Fire(messages, message, ...)
-end
-
--- AceEvent:UnregisterAllEvents()
--- 
--- Unregisters all events registered by self
-function AceEvent:UnregisterAllEvents()
-	for event, slot in pairs(events) do
-		if slot[self] then
-			self:UnregisterEvent(event) -- call unregisterevent instead of regunreg here to make sure the frame gets unregistered if needed
-		end
-	end
-end
-
--- AceEvent:UnregisterAllMessages()
--- 
--- Unregisters all messages registered by self
-function AceEvent:UnregisterAllMessages()
-	for message, slot in pairs(messages) do
-		if slot[self] then
-			Unregister(self, messages, message)
-		end
-	end
-end
-
--- Last step of upgrading
-
--- Fire blizzard events into the event listeners
+-- Script to fire blizzard events into the event listeners
+local events = AceEvent.events
 AceEvent.frame:SetScript("OnEvent", function(this, event, ...)
-	Fire(events, event, ...)
+	events:Fire(event, ...)
 end)
 
---- Upgrade our old embeds
+
+--- Finally: upgrade our old embeds
 for target, v in pairs(AceEvent.embeds) do
 	AceEvent:Embed(target)
 end

@@ -118,15 +118,20 @@ function __WOW_Input(text)
 	print("No command found:", text)
 end
 
-DEFAULT_CHAT_FRAME = {
+local ChatFrameTemplate = {
 	AddMessage = function(self, text)
 		print((string.gsub(text, "|c%x%x%x%x%x%x%x%x(.-)|r", "%1")))
 	end
 }
 
 for i=1,7 do
-	_G["ChatFrame"..i] = DEFAULT_CHAT_FRAME
+	local f = {}
+	for k,v in pairs(ChatFrameTemplate) do
+		f[k] = v
+	end
+	_G["ChatFrame"..i] = f
 end
+DEFAULT_CHAT_FRAME = ChatFrame1
 
 debugstack = debug.traceback
 date = os.date
@@ -151,8 +156,12 @@ function setglobal(k, v)
 	_G[k] = v
 end
 
+local function _errorhandler(msg)
+	print("--------- geterrorhandler error -------\n"..msg.."\n-----end error-----\n")
+end
+
 function geterrorhandler() 
-	return error
+	return _errorhandler
 end
 
 function InCombatLockdown()
