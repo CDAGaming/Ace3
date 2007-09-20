@@ -11,9 +11,9 @@ lib.apps = lib.apps or {}
 local meta = {
 	__newindex = function(self, key, value)	-- assigning values: replace 'true' with key string
 		if value==true then
-			self[key]=key
+			rawset(self, key, key)
 		else
-			self[key]=value
+			rawset(self, key, value)
 		end
 	end,
 	
@@ -32,8 +32,8 @@ local meta = {
 -- The first call to :RegisterLocale always returns a table - the "default locale"
 
 function lib:RegisterLocale(application, locale)
-	if locale=="enEN" then 
-		locale="enUS" -- treat enEN like enUS
+	if locale=="enGB" then 
+		locale="enUS" -- treat enGB like enUS
 	end
 
 	local app = lib.apps[application]
@@ -46,7 +46,7 @@ function lib:RegisterLocale(application, locale)
 	end
 	
 	local GAME_LOCALE = GAME_LOCALE or GetLocale()
-	if GAME_LOCALE=="enEN" then
+	if GAME_LOCALE=="enGB" then
 		GAME_LOCALE="enUS"
 	end
 	
