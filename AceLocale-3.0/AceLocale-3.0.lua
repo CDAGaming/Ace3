@@ -1,21 +1,41 @@
 
-local MAJOR,MINOR = "AceLocale-3.0", "$Revision: 1"
+local MAJOR,MINOR = "AceLocale-3.0", "$Revision: 1$"
 
-local lib = LibStub:RegisterLibrary(MAJOR, MINOR)
+local lib = LibStub:NewLibrary(MAJOR, MINOR)
 
 if not lib then return end
 
 
 lib.apps = lib.apps or {}
 
-local meta = {
-	__newindex = function(self, key, value)	-- assigning values: replace 'true' with key string
+-- This __newindex is used for most locale tables
+local function __newindex(self,key,value)
+	-- assigning values: replace 'true' with key string
 		if value==true then
 			rawset(self, key, key)
 		else
 			rawset(self, key, value)
 		end
 	end,
+end
+
+-- __newindex_default is used for when the default locale is being registered.
+-- Reason 1: Allows loading locales in any order
+-- Reason 2: If 2 modules have the same string, but only the first one to be 
+--           loaded has a translation for the current locale, the translation
+--           doesn't get overwritten.
+--
+local function __newindex_default(self,key,value)
+	if rawget(self,key) then
+		return	-- don't allow default locale to overwrite current locale stuff
+	end
+	__newindex(self,key,value)
+end
+
+
+-- The metatable used by all locales (yes, same one!)
+local meta = {
+	__newindex = __newindex,
 	
 	__index = function(self, key)	-- requesting unknown values: fire off a nonbreaking error and return key
 		geterrorhandler()("AceLocale-3.0: Missing translation for '"..tostring(key).."'")
@@ -23,38 +43,43 @@ local meta = {
 	end
 }
 
--- AceLocale:RegisterLocale(application, locale)
+
+
+
+-- AceLocale:NewLocale(application, locale, isDefault)
 --
---  application (string) - unique name of addon
---  locale (string) - name of locale to register
+--  application (string)  - unique name of addon
+--  locale (string)       - name of locale to register
+--  isDefault (string)    - if this is the default locale being registered
 --
 -- Returns a table where localizations can be filled out, or nil if the locale is not needed
--- The first call to :RegisterLocale always returns a table - the "default locale"
 
-function lib:RegisterLocale(application, locale)
-	if locale=="enGB" then 
-		locale="enUS" -- treat enGB like enUS
-	end
+function lib:RegisterLocale(application, locale, isDefault)
 
 	local app = lib.apps[application]
 	
-	if not app then		-- Always accept the first locale to be registered; it's the default one
+	if not app then
 		app = setmetatable({}, meta)
 		lib.apps[application] = app
-		
+	end
+	
+	if isDefault then
+		getmetatable(app).__newindex = __newindex_default
 		return app
 	end
+	
 	
 	local GAME_LOCALE = GAME_LOCALE or GetLocale()
 	if GAME_LOCALE=="enGB" then
 		GAME_LOCALE="enUS"
 	end
 	
-	if locale==GAME_LOCALE then
-		return app	-- okay, we're trying to register translations for the current game locale, go ahead
+	if locale~=GAME_LOCALE then
+		return -- nop, we don't need these translations	
 	end
 	
-	return -- nop, we don't need these translations	
+	getmetatable(app).__newindex = __newindex
+	return app	-- okay, we're trying to register translations for the current game locale, go ahead
 end
 
 
@@ -73,4 +98,3 @@ function lib:GetCurrentLocale(application)
 	
 	return app
 end
-
