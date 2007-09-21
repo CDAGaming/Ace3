@@ -6,7 +6,9 @@ local lib = LibStub:NewLibrary(MAJOR, MINOR)
 if not lib then return end
 
 
-lib.apps = lib.apps or {}
+lib.apps = lib.apps or {}	         -- array of ["AppName"]=localetableref
+lib.appnames = lib.appnames or {}  -- array of [localetableref]="AppName"
+
 
 -- This __newindex is used for most locale tables
 local function __newindex(self,key,value)
@@ -37,8 +39,8 @@ end
 local meta = {
 	__newindex = __newindex,
 	
-	__index = function(self, key)	-- requesting unknown values: fire off a nonbreaking error and return key
-		geterrorhandler()("AceLocale-3.0: Missing translation for '"..tostring(key).."'")
+	__index = function(self, key)	-- requesting totally unknown entries: fire off a nonbreaking error and return key
+		geterrorhandler()(MAJOR..": "..tostring(self[0].application)..": Missing entry for '"..tostring(key).."'")
 		return key
 	end
 }
@@ -48,7 +50,7 @@ local meta = {
 
 -- AceLocale:NewLocale(application, locale, isDefault)
 --
---  application (string)  - unique name of addon
+--  application (string)  - unique name of addon / module
 --  locale (string)       - name of locale to register
 --  isDefault (string)    - if this is the default locale being registered
 --
@@ -61,6 +63,7 @@ function lib:RegisterLocale(application, locale, isDefault)
 	if not app then
 		app = setmetatable({}, meta)
 		lib.apps[application] = app
+		lib.appnames[app] = application
 	end
 	
 	if isDefault then
@@ -93,7 +96,7 @@ function lib:GetCurrentLocale(application)
 	local app = lib.apps[application]
 
 	if not app then
-		error("GetCurrentLocale(): No locale registered for '"..tostring(application).."'", 2)
+		error("GetCurrentLocale(): No locales registered for '"..tostring(application).."'", 2)
 	end
 	
 	return app
