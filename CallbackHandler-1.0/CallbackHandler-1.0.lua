@@ -80,7 +80,7 @@ function lib:New(target, RegisterName, UnregisterName, UnregisterAllName, OnUsed
 		else
 			if type(self)=="table" then
 				-- function ref with self=object
-				events[eventname][self] = function(...) method(self,...) end
+				events[eventname][self] = method
 			elseif type(self)~="string" then
 				error("Usage: "..RegisterName.."(\"addonId\", eventname, method): 'addonId': string expected.", 2)
 			else
