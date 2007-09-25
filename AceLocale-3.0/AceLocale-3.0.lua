@@ -11,9 +11,9 @@ AceLocale.apps = AceLocale.apps or {}          -- array of ["AppName"]=localetab
 AceLocale.appnames = AceLocale.appnames or {}  -- array of [localetableref]="AppName"
 
 -- This __newindex is used for most locale tables
-local function __newindex(self,key,value)
+local function __newindex(self, key, value)
 	-- assigning values: replace 'true' with key string
-	if value==true then
+	if value == true then
 		rawset(self, key, key)
 	else
 		rawset(self, key, value)
@@ -26,11 +26,11 @@ end
 --           loaded has a translation for the current locale, the translation
 --           doesn't get overwritten.
 --
-local function __newindex_default(self,key,value)
-	if rawget(self,key) then
+local function __newindex_default(self, key, value)
+	if rawget(self, key) then
 		return	-- don't allow default locale to overwrite current locale stuff
 	end
-	__newindex(self,key,value)
+	__newindex(self, key, value)
 end
 
 
@@ -69,11 +69,11 @@ function AceLocale:NewLocale(application, locale, isDefault)
 	end
 	
 	local GAME_LOCALE = GAME_LOCALE or GetLocale()
-	if GAME_LOCALE=="enGB" then
-		GAME_LOCALE="enUS"
+	if GAME_LOCALE == "enGB" then
+		GAME_LOCALE = "enUS"
 	end
 	
-	if locale~=GAME_LOCALE then
+	if locale ~= GAME_LOCALE then
 		return -- nop, we don't need these translations
 	end
 	
