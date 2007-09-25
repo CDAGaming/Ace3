@@ -7,7 +7,7 @@ if not AceLocale then
 	return -- no upgrade needed
 end
 
-AceLocale.apps = AceLocale.apps or {}	         -- array of ["AppName"]=localetableref
+AceLocale.apps = AceLocale.apps or {}          -- array of ["AppName"]=localetableref
 AceLocale.appnames = AceLocale.appnames or {}  -- array of [localetableref]="AppName"
 
 -- This __newindex is used for most locale tables
@@ -53,8 +53,8 @@ local meta = {
 --
 -- Returns a table where localizations can be filled out, or nil if the locale is not needed
 
-function lib:NewLocale(application, locale, isDefault)
-
+function AceLocale:NewLocale(application, locale, isDefault)
+	
 	local app = AceLocale.apps[application]
 	
 	if not app then
@@ -74,7 +74,7 @@ function lib:NewLocale(application, locale, isDefault)
 	end
 	
 	if locale~=GAME_LOCALE then
-		return -- nop, we don't need these translations	
+		return -- nop, we don't need these translations
 	end
 	
 	getmetatable(app).__newindex = __newindex
@@ -90,7 +90,7 @@ end
 
 function AceLocale:GetLocale(application)
 	local app = AceLocale.apps[application]
-
+	
 	if not app then
 		error("GetLocale(): No locales registered for '"..tostring(application).."'", 2)
 	end
