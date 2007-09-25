@@ -10,6 +10,12 @@ end
 AceLocale.apps = AceLocale.apps or {}          -- array of ["AppName"]=localetableref
 AceLocale.appnames = AceLocale.appnames or {}  -- array of [localetableref]="AppName"
 
+-- local cache of the current locale
+local GAME_LOCALE = GetLocale()
+if GAME_LOCALE == "enGB" then
+	GAME_LOCALE = "enUS"
+end
+
 -- This __newindex is used for most locale tables
 local function __newindex(self, key, value)
 	-- assigning values: replace 'true' with key string
@@ -54,6 +60,9 @@ local meta = {
 -- Returns a table where localizations can be filled out, or nil if the locale is not needed
 
 function AceLocale:NewLocale(application, locale, isDefault)
+	if locale ~= GAME_LOCALE then
+		return -- nop, we don't need these translations
+	end
 	
 	local app = AceLocale.apps[application]
 	
@@ -67,16 +76,7 @@ function AceLocale:NewLocale(application, locale, isDefault)
 		getmetatable(app).__newindex = __newindex_default
 		return app
 	end
-	
-	local GAME_LOCALE = GAME_LOCALE or GetLocale()
-	if GAME_LOCALE == "enGB" then
-		GAME_LOCALE = "enUS"
-	end
-	
-	if locale ~= GAME_LOCALE then
-		return -- nop, we don't need these translations
-	end
-	
+
 	getmetatable(app).__newindex = __newindex
 	return app	-- okay, we're trying to register translations for the current game locale, go ahead
 end
