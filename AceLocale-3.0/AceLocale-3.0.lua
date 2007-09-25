@@ -13,12 +13,11 @@ lib.appnames = lib.appnames or {}  -- array of [localetableref]="AppName"
 -- This __newindex is used for most locale tables
 local function __newindex(self,key,value)
 	-- assigning values: replace 'true' with key string
-		if value==true then
-			rawset(self, key, key)
-		else
-			rawset(self, key, value)
-		end
-	end,
+	if value==true then
+		rawset(self, key, key)
+	else
+		rawset(self, key, value)
+	end
 end
 
 -- __newindex_default is used for when the default locale is being registered.
