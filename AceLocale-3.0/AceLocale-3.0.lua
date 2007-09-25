@@ -84,16 +84,14 @@ end
 
 -- AceLocale:GetLocale(application)
 --
---  application (string) - unique name of addon 
+--  application (string) - unique name of addon
+-- silent (boolean) - if true, the locale is optional, silently return nil if it's not found 
 --
 -- returns appropriate localizations for the current locale, errors if localizations are missing
 
-function AceLocale:GetLocale(application)
-	local app = AceLocale.apps[application]
-	
-	if not app then
-		error("GetLocale(): No locales registered for '"..tostring(application).."'", 2)
+function AceLocale:GetLocale(application, silent)
+	if not silent and not AceLocale.apps[application] then
+		error("Usage: GetLocale(application, silent): 'application' - No locales registered for '"..tostring(application).."'", 2)
 	end
-	
-	return app
+	return AceLocale.apps[application]
 end
