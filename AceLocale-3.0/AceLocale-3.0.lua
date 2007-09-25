@@ -55,7 +55,7 @@ local meta = {
 --
 -- Returns a table where localizations can be filled out, or nil if the locale is not needed
 
-function lib:RegisterLocale(application, locale, isDefault)
+function lib:NewLocale(application, locale, isDefault)
 
 	local app = lib.apps[application]
 	
