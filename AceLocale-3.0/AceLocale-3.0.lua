@@ -10,45 +10,60 @@ end
 AceLocale.apps = AceLocale.apps or {}          -- array of ["AppName"]=localetableref
 AceLocale.appnames = AceLocale.appnames or {}  -- array of [localetableref]="AppName"
 
--- local cache of the current locale
-local GAME_LOCALE = GetLocale()
-if GAME_LOCALE == "enGB" then
-	GAME_LOCALE = "enUS"
-end
 
--- This __newindex is used for most locale tables
-local function __newindex(self, key, value)
-	-- assigning values: replace 'true' with key string
-	if value == true then
-		rawset(self, key, key)
-	else
-		rawset(self, key, value)
+
+
+-- This metatable is used on all tables returned from GetLocale
+local readmeta = {
+	__index = function(self, key)	-- requesting totally unknown entries: fire off a nonbreaking error and return key
+		geterrorhandler()(MAJOR..": "..tostring(AceLocale.appnames[self])..": Missing entry for '"..tostring(key).."'")
+		return key
 	end
-end
+}
 
--- __newindex_default is used for when the default locale is being registered.
+
+-- Remember the locale table being registered right now
+local registering
+
+-- This metatable proxy is used when registering nondefault locales
+local writeproxy = setmetatable({}, {
+	__newindex = function(self, key, value)
+		-- assigning values: replace 'true' with key string
+		if value == true then
+			rawset(registering, key, key)
+		else
+			rawset(registering, key, value)
+		end
+	end,
+	__index = function() assert(false) end
+})
+
+
+
+-- This metatable proxy is used when registering the default locale. 
+-- It refuses to overwrite existing values
 -- Reason 1: Allows loading locales in any order
 -- Reason 2: If 2 modules have the same string, but only the first one to be 
 --           loaded has a translation for the current locale, the translation
 --           doesn't get overwritten.
 --
-local function __newindex_default(self, key, value)
-	if rawget(self, key) then
-		return	-- don't allow default locale to overwrite current locale stuff
-	end
-	__newindex(self, key, value)
-end
+
+local writedefaultproxy = setmetatable({}, {
+	__newindex = function(self, key, value)
+		if rawget(registering, key) then
+			return	-- don't allow default locale to overwrite current locale stuff
+		end
+		if value == true then
+			rawset(registering, key, key)
+		else
+			rawset(registering, key, value)
+		end
+	end,
+	__index = function() assert(false) end
+})
 
 
--- The metatable used by all locales (yes, same one!)
-local meta = {
-	__newindex = __newindex,
-	
-	__index = function(self, key)	-- requesting totally unknown entries: fire off a nonbreaking error and return key
-		geterrorhandler()(MAJOR..": "..tostring(self[0].application)..": Missing entry for '"..tostring(key).."'")
-		return key
-	end
-}
+
 
 
 -- AceLocale:NewLocale(application, locale, isDefault)
@@ -60,38 +75,45 @@ local meta = {
 -- Returns a table where localizations can be filled out, or nil if the locale is not needed
 
 function AceLocale:NewLocale(application, locale, isDefault)
-	if locale ~= GAME_LOCALE and not isDefault then
+	
+	local gameLocale = GAME_LOCALE or GetLocale()
+	if gameLocale == "enGB" then
+		gameLocale = "enUS"
+	end
+	
+	if locale ~= gameLocale and not isDefault then
 		return -- nop, we don't need these translations
 	end
 	
 	local app = AceLocale.apps[application]
 	
 	if not app then
-		app = setmetatable({}, meta)
+		app = setmetatable({}, readmeta)
 		AceLocale.apps[application] = app
 		AceLocale.appnames[app] = application
 	end
+
+	registering = app	-- remember globally for writeproxy and writedefaultproxy
 	
 	if isDefault then
-		getmetatable(app).__newindex = __newindex_default
-		return app
+		return writedefaultproxy
 	end
 
-	getmetatable(app).__newindex = __newindex
-	return app	-- okay, we're trying to register translations for the current game locale, go ahead
+	return writeproxy
 end
 
 
 -- AceLocale:GetLocale(application)
 --
 --  application (string) - unique name of addon
--- silent (boolean) - if true, the locale is optional, silently return nil if it's not found 
+--  silent (boolean)     - if true, the locale is optional, silently return nil if it's not found 
 --
--- returns appropriate localizations for the current locale, errors if localizations are missing
+-- Returns localizations for the current locale or default locale
+-- Errors if nothing is registered (spank developer, not just a missing translation)
 
 function AceLocale:GetLocale(application, silent)
 	if not silent and not AceLocale.apps[application] then
-		error("Usage: GetLocale(application, silent): 'application' - No locales registered for '"..tostring(application).."'", 2)
+		error("Usage: GetLocale(application[, silent]): 'application' - No locales registered for '"..tostring(application).."'", 2)
 	end
 	return AceLocale.apps[application]
 end
