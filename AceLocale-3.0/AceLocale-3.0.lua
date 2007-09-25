@@ -82,17 +82,17 @@ function lib:NewLocale(application, locale, isDefault)
 end
 
 
--- AceLocale:GetCurrentLocale(application)
+-- AceLocale:GetLocale(application)
 --
---  application (string) - unique name of addon
+--  application (string) - unique name of addon 
 --
 -- returns appropriate localizations for the current locale, errors if localizations are missing
 
-function AceLocale:GetCurrentLocale(application)
+function AceLocale:GetLocale(application)
 	local app = AceLocale.apps[application]
 
 	if not app then
-		error("GetCurrentLocale(): No locales registered for '"..tostring(application).."'", 2)
+		error("GetLocale(): No locales registered for '"..tostring(application).."'", 2)
 	end
 	
 	return app
