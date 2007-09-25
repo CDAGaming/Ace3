@@ -8,7 +8,7 @@
 ## X-License: To be decided
 ## OptionalDeps: LibStub
 
-CallbackHandler-1.0\CallbackHandler-1.0.lua
+CallbackHandler-1.0\CallbackHandler-1.0.xml
 AceAddon-3.0\AceAddon-3.0.xml
 AceEvent-3.0\AceEvent-3.0.xml
 AceTimer-3.0\AceTimer-3.0.xml
