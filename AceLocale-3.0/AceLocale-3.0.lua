@@ -60,7 +60,7 @@ local meta = {
 -- Returns a table where localizations can be filled out, or nil if the locale is not needed
 
 function AceLocale:NewLocale(application, locale, isDefault)
-	if locale ~= GAME_LOCALE then
+	if locale ~= GAME_LOCALE and not isDefault then
 		return -- nop, we don't need these translations
 	end
 	
