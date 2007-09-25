@@ -1,4 +1,4 @@
-dofile("utils.lua")
+dofile("AceTimer-3.0-utils.lua")
 
 local MAJOR = "AceTimer-3.0"
 

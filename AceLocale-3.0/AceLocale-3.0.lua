@@ -1,7 +1,7 @@
 --[[ $Id$ ]]
 local MAJOR,MINOR = "AceLocale-3.0", 0
 
-local AceLocale = LibStub:NewLibrary(MAJOR, MINOR)
+local AceLocale, oldminor = LibStub:NewLibrary(MAJOR, MINOR)
 
 if not AceLocale then 
 	return -- no upgrade needed

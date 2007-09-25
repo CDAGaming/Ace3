@@ -1,10 +1,10 @@
 -- Test1: Tests basic functionality and upgrading of AceTimer
 
-dofile("utils.lua")
+dofile("AceTimer-3.0-utils.lua")
 
 local MAJOR = "AceTimer-3.0"
 
-dofile("../"..MAJOR..".lua")
+dofile("../"..MAJOR.."/"..MAJOR..".lua")
 
 local AceTimer,minor = LibStub:GetLibrary(MAJOR)
 

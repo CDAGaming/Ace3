@@ -1,4 +1,4 @@
--- $Id: LibStub.lua 48018 2007-09-03 01:50:17Z mikk $
+-- $Id$
 
 -- LibStub is a simple versioning stub meant for use in Libraries.  http://www.wowace.com/wiki/LibStub for more info
 -- LibStub is hereby placed in the Public Domain
