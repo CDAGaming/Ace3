@@ -14,6 +14,7 @@ AceConsole.commands = AceConsole.commands or {}
 	- OnEmbedDisable -> Unregister chatcommands? or Soft Disable them and Enable them OnEmbedEnable.
 		This means keeping a proper registry of commands and enable/disable them where needed.
 		- Mikk: I say no. How the heck to you re-enable with the command gone?
+		- Ammo: read the 'proper registry' part :p
 --]]
 
 -- AceConsole:Print( [chatframe,] ... )
@@ -26,7 +27,7 @@ function AceConsole:Print(...)
 	end
 
 	local frame = select(1, ...)
-	if not frame.AddMessage then	-- Is first argument something with an .AddMessage member?
+	if not ( type(frame) == "table" and frame.AddMessage ) then	-- Is first argument something with an .AddMessage member?
 		frame=nil
 	end
 	
