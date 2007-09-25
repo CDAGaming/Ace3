@@ -1,14 +1,14 @@
+--[[ $Id$ ]]
+local MAJOR,MINOR = "AceLocale-3.0", 0
 
-local MAJOR,MINOR = "AceLocale-3.0", "$Revision: 1$"
+local AceLocale = LibStub:NewLibrary(MAJOR, MINOR)
 
-local lib = LibStub:NewLibrary(MAJOR, MINOR)
+if not AceLocale then 
+	return -- no upgrade needed
+end
 
-if not lib then return end
-
-
-lib.apps = lib.apps or {}	         -- array of ["AppName"]=localetableref
-lib.appnames = lib.appnames or {}  -- array of [localetableref]="AppName"
-
+AceLocale.apps = AceLocale.apps or {}	         -- array of ["AppName"]=localetableref
+AceLocale.appnames = AceLocale.appnames or {}  -- array of [localetableref]="AppName"
 
 -- This __newindex is used for most locale tables
 local function __newindex(self,key,value)
@@ -45,8 +45,6 @@ local meta = {
 }
 
 
-
-
 -- AceLocale:NewLocale(application, locale, isDefault)
 --
 --  application (string)  - unique name of addon / module
@@ -57,19 +55,18 @@ local meta = {
 
 function lib:NewLocale(application, locale, isDefault)
 
-	local app = lib.apps[application]
+	local app = AceLocale.apps[application]
 	
 	if not app then
 		app = setmetatable({}, meta)
-		lib.apps[application] = app
-		lib.appnames[app] = application
+		AceLocale.apps[application] = app
+		AceLocale.appnames[app] = application
 	end
 	
 	if isDefault then
 		getmetatable(app).__newindex = __newindex_default
 		return app
 	end
-	
 	
 	local GAME_LOCALE = GAME_LOCALE or GetLocale()
 	if GAME_LOCALE=="enGB" then
@@ -85,14 +82,14 @@ function lib:NewLocale(application, locale, isDefault)
 end
 
 
--- AceLocale:RegisterLocale(application, locale)
+-- AceLocale:GetCurrentLocale(application)
 --
 --  application (string) - unique name of addon
 --
 -- returns appropriate localizations for the current locale, errors if localizations are missing
 
-function lib:GetCurrentLocale(application)
-	local app = lib.apps[application]
+function AceLocale:GetCurrentLocale(application)
+	local app = AceLocale.apps[application]
 
 	if not app then
 		error("GetCurrentLocale(): No locales registered for '"..tostring(application).."'", 2)
