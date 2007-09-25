@@ -10,6 +10,13 @@ end
 AceConsole.embeds = AceConsole.embeds or {}
 AceConsole.commands = AceConsole.commands or {}
 
+--[[ TODO
+	- Check first argument of Print function to see if it is a ChatFrame, if so output to that chatframe or maybe even better?
+		Check if .AddMessage exists and call that on first object?
+	- OnEmbedDisable -> Unregister chatcommands? or Soft Disable them and Enable them OnEmbedEnable.
+		This means keeping a proper registry of commands and enable/disable them where needed.
+--]]
+
 -- AceConsole:Print( ... )
 --
 -- Print to ChatFrame
