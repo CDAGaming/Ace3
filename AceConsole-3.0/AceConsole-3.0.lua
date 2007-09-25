@@ -11,25 +11,29 @@ AceConsole.embeds = AceConsole.embeds or {}
 AceConsole.commands = AceConsole.commands or {}
 
 --[[ TODO
-	- Check first argument of Print function to see if it is a ChatFrame, if so output to that chatframe or maybe even better?
-		Check if .AddMessage exists and call that on first object?
 	- OnEmbedDisable -> Unregister chatcommands? or Soft Disable them and Enable them OnEmbedEnable.
 		This means keeping a proper registry of commands and enable/disable them where needed.
+		- Mikk: I say no. How the heck to you re-enable with the command gone?
 --]]
 
--- AceConsole:Print( ... )
+-- AceConsole:Print( [chatframe,] ... )
 --
--- Print to ChatFrame
+-- Print to DEFAULT_CHAT_FRAME or given chatframe (anything with an .AddMessage member)
 function AceConsole:Print(...)
-	local text
+	local text = ""
 	if self ~= AceConsole then
 		text = tostring( self )..": "
 	end
-	for i=1, select("#", ...) do
+
+	local frame = select(1, ...)
+	if not frame.AddMessage then	-- Is first argument something with an .AddMessage member?
+		frame=nil
+	end
+	
+	for i=(frame and 2 or 1), select("#", ...) do
 		text = text .. tostring( select( i, ...) ) .." "
 	end
-	-- TODO: Should check if the first argument is a chatframe and output to there if needed
-	DEFAULT_CHAT_FRAME:AddMessage( text )
+	(frame or DEFAULT_CHAT_FRAME):AddMessage( text )
 end
 
 -- AceConsole:RegisterChatCommand(. command, func )
@@ -38,7 +42,8 @@ end
 function AceConsole:RegisterChatCommand( command, func )
 	local name = "ACECONSOLE_"..command:upper()
 	if SlashCmdList[name] then
-		error( "Chat Command '"..command.."' already exists", 2 )
+		geterrorhandler()(tostring(self) ": Chat Command '"..command.."' already exists, will not overwrite.")
+		return
 	end
 	if type( func ) == "string" then
 		SlashCmdList[name] = function(input)
