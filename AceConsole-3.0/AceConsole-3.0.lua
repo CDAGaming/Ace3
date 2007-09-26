@@ -17,6 +17,8 @@ AceConsole.commands = AceConsole.commands or {}
 		- Ammo: read the 'proper registry' part :p
 --]]
 
+
+
 -- AceConsole:Print( [chatframe,] ... )
 --
 -- Print to DEFAULT_CHAT_FRAME or given chatframe (anything with an .AddMessage member)
@@ -36,6 +38,8 @@ function AceConsole:Print(...)
 	end
 	(frame or DEFAULT_CHAT_FRAME):AddMessage( text )
 end
+
+
 
 -- AceConsole:RegisterChatCommand(. command, func )
 --
@@ -57,6 +61,8 @@ function AceConsole:RegisterChatCommand( command, func )
 	AceConsole.commands[command] = name
 end
 
+
+
 -- AceConsole:UnregisterChatCommand( command )
 -- 
 -- Unregister a chatcommand
@@ -70,12 +76,101 @@ function AceConsole:UnregisterChatCommand( command )
 	end
 end
 
+
+local function nils(n, ...)
+	if n>1 then
+		return nil, nils(n-1, ...)
+	elseif n==1 then
+		return nil, ...
+	else
+		return ...
+	end
+end
+	
+
+-- AceConsole:GetArgs(string, numargs, startpos)
+--
+-- Retreive one or more space-separated arguments from a string. 
+-- Treats quoted strings and itemlinks as non-spaced.
+--
+--   string   - The raw argument string
+--   numargs  - How many arguments to get (default 1)
+--   startpos - Where in the string to start scanning (default  1)
+--
+-- Returns arg1, arg2, ..., stringremainder
+-- Missing arguments will be returned as nils. 'stringremainder' is returned as "" at the end.
+
+function AceConsole:GetArgs(str, numargs, startpos)
+	numargs = numargs or 1
+	startpos = max(startpos or 1, 1)
+	
+	if numargs<1 then
+		return strsub(str, startpos)
+	end
+	
+	local pos=startpos
+
+	-- find start of new arg
+	pos = strfind(str, "[^ ]", pos)
+	if not pos then	-- whoops, end of string
+		return nils(numargs, "")
+	end
+
+	-- quoted or space separated? find out which pattern to use
+	local delim_or_pipe
+	local ch = strsub(str, pos, pos)
+	if ch=='"' then
+		pos = pos + 1
+		delim_or_pipe='([|"])'
+	elseif ch=="'" then
+		pos = pos + 1
+		delim_or_pipe="([|'])"
+	else
+		delim_or_pipe="([| ])"
+	end
+	
+	startpos = pos
+	
+	while true do
+		-- find delimiter or hyperlink
+		local ch,_
+		pos,_,ch = strfind(str, delim_or_pipe, pos)
+		
+		if not pos then break end
+		
+		if ch=="|" then
+			-- some kind of escape
+			
+			if strsub(str,pos,pos+1)=="|H" then
+				-- It's a |H....|hhyper link!|h
+				pos=strfind(str, "|h", pos+2)	-- first |h
+				if not pos then break end
+				
+				pos=strfind(str, "|h", pos+2)	-- second |h
+				if not pos then break end
+			end
+			
+			pos=pos+2 -- skip past this escape (last |h if it was a hyperlink)
+		
+		else
+			-- found delimiter, done with this arg
+			return strsub(str, startpos, pos-1), AceConsole:GetArgs(str, numargs-1, pos+1)
+		end
+		
+	end
+	
+	-- search aborted, we hit end of string. return it all as one argument. (yes, even if it's an unterminated quote or hyperlink)
+	return strsub(str, startpos), nils(numargs-1, "")
+end
+
+
 --- embedding and embed handling
 
 local mixins = {
 	"Print",
 	"RegisterChatCommand", 
 	"UnregisterChatCommand",
+	"GetArgs",
 } 
 
 -- AceConsole:Embed( target )
