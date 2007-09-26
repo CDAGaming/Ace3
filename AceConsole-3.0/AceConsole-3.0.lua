@@ -7,17 +7,9 @@ if not AceConsole then
 	return -- no upgrade needed
 end
 
-AceConsole.embeds = AceConsole.embeds or {}
-AceConsole.commands = AceConsole.commands or {}
-
---[[ TODO
-	- OnEmbedDisable -> Unregister chatcommands? or Soft Disable them and Enable them OnEmbedEnable.
-		This means keeping a proper registry of commands and enable/disable them where needed.
-		- Mikk: I say no. How the heck to you re-enable with the command gone?
-		- Ammo: read the 'proper registry' part :p
---]]
-
-
+AceConsole.embeds = AceConsole.embeds or {} -- table containing objects AceConsole is embedded in.
+AceConsole.commands = AceConsole.commands or {} -- table containing commands registered
+AceConsole.weakcommands = AceConsole.weakcommands or {} -- table containing self, command => func references for weak commands that don't persist through enable/disable
 
 -- AceConsole:Print( [chatframe,] ... )
 --
@@ -40,14 +32,20 @@ function AceConsole:Print(...)
 end
 
 
-
--- AceConsole:RegisterChatCommand(. command, func )
+-- AceConsole:RegisterChatCommand(. command, func, persist )
+--
+-- command (string) - chat command to be registered. does not require / in front
+-- func (string|function) - function to call, if a string is used then the member of self is used as a string.
+-- persist (boolean) - if true is passed the command will not be soft disabled/enabled when aceconsole is used as a mixin
+-- silent (boolean) - don't whine if command already exists, silently fail
 --
 -- Register a simple chat command
-function AceConsole:RegisterChatCommand( command, func )
+function AceConsole:RegisterChatCommand( command, func, persist, silent )
 	local name = "ACECONSOLE_"..command:upper()
 	if SlashCmdList[name] then
-		geterrorhandler()(tostring(self) ": Chat Command '"..command.."' already exists, will not overwrite.")
+		if not silent then
+			geterrorhandler()(tostring(self) ": Chat Command '"..command.."' already exists, will not overwrite.")
+		end
 		return
 	end
 	if type( func ) == "string" then
@@ -59,20 +57,24 @@ function AceConsole:RegisterChatCommand( command, func )
 	end
 	setglobal("SLASH_"..name.."1", "/"..command:lower())
 	AceConsole.commands[command] = name
+	-- non-persisting commands are registered for enabling disabling
+	if not persist then
+		AceConsole.weakcommands[self][command] = func
+	end
 end
-
 
 
 -- AceConsole:UnregisterChatCommand( command )
 -- 
 -- Unregister a chatcommand
 function AceConsole:UnregisterChatCommand( command )
-	local name = AceConsole.commands[command]
-	if name then
+	local cmd = AceConsole.commands[command]
+	if cmd then
+		local name = cmd.name
 		SlashCmdList[name] = nil
 		setglobal("SLASH_"..name.."1", nil)
 		hash_SlashCmdList["/" .. command:upper()] = nil
-		AceConsole.commands[command] = nil
+		AceConsole.commands[command] = nil -- TODO: custom table cache?
 	end
 end
 
@@ -182,6 +184,22 @@ function AceConsole:Embed( target )
 		target[v] = self[v]
 	end
 	self.embeds[target] = true
+end
+
+function AceConsole:OnEmbedEnable( target )
+	if AceConsole.weakcommands[target] then
+		for command, func in pairs( AceConsole.weakcommands[target] ) do
+			target:RegisterChatCommand( command, func, false, true ) -- nonpersisting and silent registry
+		end
+	end
+end
+
+function AceConsole:OnEmbedDisable( target )
+	if AceConsole.weakcommands[target] then
+		for command, func in pairs( AceConsole.weakcommands[target] ) do
+			target:UnregisterChatCommand( command ) -- TODO: this could potentially unregister a command from another application in case of command conflicts. Do we care?
+		end
+	end
 end
 
 for addon in pairs(AceConsole.embeds) do

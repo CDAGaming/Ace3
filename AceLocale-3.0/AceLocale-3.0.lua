@@ -11,8 +11,6 @@ AceLocale.apps = AceLocale.apps or {}          -- array of ["AppName"]=localetab
 AceLocale.appnames = AceLocale.appnames or {}  -- array of [localetableref]="AppName"
 
 
-
-
 -- This metatable is used on all tables returned from GetLocale
 local readmeta = {
 	__index = function(self, key)	-- requesting totally unknown entries: fire off a nonbreaking error and return key
@@ -39,7 +37,6 @@ local writeproxy = setmetatable({}, {
 })
 
 
-
 -- This metatable proxy is used when registering the default locale. 
 -- It refuses to overwrite existing values
 -- Reason 1: Allows loading locales in any order
@@ -61,9 +58,6 @@ local writedefaultproxy = setmetatable({}, {
 	end,
 	__index = function() assert(false) end
 })
-
-
-
 
 
 -- AceLocale:NewLocale(application, locale, isDefault)
@@ -103,7 +97,7 @@ function AceLocale:NewLocale(application, locale, isDefault)
 end
 
 
--- AceLocale:GetLocale(application)
+-- AceLocale:GetLocale(application [, silent])
 --
 --  application (string) - unique name of addon
 --  silent (boolean)     - if true, the locale is optional, silently return nil if it's not found 
