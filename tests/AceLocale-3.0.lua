@@ -17,9 +17,9 @@ local locale_3 = AceLocale:NewLocale("test", "frFR")
 
 local locale_4 = AceLocale:GetLocale("test")
 
-assert(locale_2 == locale_1)
+--[[ no longer true with proxy metatables /mikk   assert(locale_2 == locale_1) ]]
 assert(locale_3 == nil)
-assert(locale_4 == locale_1)
+--[[ no longer true with proxy metatables /mikk   assert(locale_4 == locale_1) ]]
 
 print(locale_4["a"], locale_4["b"], locale_4["c"])
 assert(locale_4["a"] == "A")
