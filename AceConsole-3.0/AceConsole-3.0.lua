@@ -180,7 +180,7 @@ local mixins = {
 --
 -- Embeds AceConsole into the target object making the functions from the mixins list available on target:..
 function AceConsole:Embed( target )
-	for _, v in pairs( mixins ) do
+	for k, v in pairs( mixins ) do
 		target[v] = self[v]
 	end
 	self.embeds[target] = true
