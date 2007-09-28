@@ -20,6 +20,9 @@ do
 				sibling = {
 					siblingDefault = "siblingDefault",
 				},
+				siblingDeriv = {
+					starDefault = "not-so-starDefault",
+				},
 			},
 			doubleStarTest = {
 				["**"] = {
@@ -28,6 +31,9 @@ do
 				sibling = {
 					siblingDefault = "siblingDefault",
 				},
+				siblingDeriv = {
+					doubleStarDefault = "overruledDefault",
+				}
 			},
 		},
 	}
@@ -42,6 +48,8 @@ do
 	assert(db.profile.doubleStarTest.sibling.siblingDefault == "siblingDefault")
 	assert(db.profile.doubleStarTest.sibling.doubleStarDefault == "doubleStarDefault")
 	
+	db.profile.doubleStarTest.siblingDeriv.doubleStarDefault = "doubleStarDefault"
+	
 	db:RegisterDefaults({})
 	
 	assert(db.profile.singleEntry == nil)
@@ -49,4 +57,5 @@ do
 	assert(db.profile.starTest.randomkey.starDefault == nil)
 	assert(db.profile.starTest.sibling == nil)
 	assert(db.profile.doubleStarTest.randomkey.doubleStarDefault == nil)
+	assert(db.profile.doubleStarTest.siblingDeriv.doubleStarDefault == "doubleStarDefault")
 end

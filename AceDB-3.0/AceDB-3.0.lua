@@ -69,28 +69,24 @@ local function copyDefaults(dest, src, force)
 end
 
 -- Called to remove all defaults in the default table from the database
-local function removeDefaults(db, defaults, parentdefaults)
+local function removeDefaults(db, defaults, blocker)
 	for k,v in pairs(defaults) do
 		if k == "*" or k == "**" and type(v) == "table" then
 			-- Loop through all the actual k,v pairs and remove
 			for key, value in pairs(db) do
-				if k == "*" and not defaults[key] then
+				if not defaults[key] then
 					removeDefaults(value, v)
 				elseif k == "**" then
-					removeDefaults(value, v, defaults[k])
+					removeDefaults(value, v, defaults[key])
 				end
 			end
 		elseif type(v) == "table" and db[k] then
-			if parentdefaults and type(parentdefaults) == "table" then
-				removeDefaults(db[k], v, parentdefaults[k])
-			else
-				removeDefaults(db[k], v)
-			end
+			removeDefaults(db[k], v, blocker and blocker[k])
 			if not next(db[k]) then
 				db[k] = nil
 			end
 		else
-			if db[k] == defaults[k] or (parentdefaults and not defaults[k] and db[k] == parentdefaults[k]) then
+			if db[k] == defaults[k] and (not blocker or blocker[k] == nil) then
 				db[k] = nil
 			end
 		end
