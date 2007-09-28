@@ -6,6 +6,7 @@ if AceDB and oldminor then
 	-- Handle upgrading here
 end
 
+local CallbackHandler = LibStub:GetLibrary("CallbackHandler-1.0")
 
 local DBObjectLib = {}
 
@@ -136,7 +137,7 @@ local dbmt = {
 					local new = initSection(t, section, "profiles", key, defaults)
 					if new then
 						-- Callback: OnNewProfile, database, newProfileKey
-						t:TriggerCallback("OnNewProfile", t, key)
+						t.callbacks:Fire("OnNewProfile", t, key)
 					end
 				elseif section == "profiles" then
 					local sv = rawget(t, "sv")
@@ -206,6 +207,8 @@ local function initdb(sv, defaults, defaultProfile, olddb)
 		db[name] = func
 	end
 	
+	db.callbacks = CallbackHandler:New(db)
+	
 	-- Set some properties in the database object
 	db.profiles = sv.profiles
 	db.keys = keyTbl
@@ -272,7 +275,7 @@ function DBObjectLib:SetProfile(name)
 	self.keys["profile"] = name
 
 	-- Callback: OnProfileChanged, database, newProfileKey
-	self:TriggerCallback("OnProfileChanged", self, name)
+	self.callbacks:Fire("OnProfileChanged", self, name)
 end
 
 -- DBObject:GetProfiles(tbl)
@@ -329,7 +332,7 @@ function DBObjectLib:DeleteProfile(name)
 	
 	self.sv.profiles[name] = nil
 	-- Callback: OnProfileDeleted, database, profileKey
-	self:TriggerCallback("OnProfileDeleted", self, name)
+	self.callbacks:Fire("OnProfileDeleted", self, name)
 end
 
 -- DBObject:CopyProfile(name, force)
@@ -355,7 +358,7 @@ function DBObjectLib:CopyProfile(name)
 	copyDefaults(profile, source)
 	
 	-- Callback: OnProfileCopied, database, sourceProfileKey
-	self:TriggerCallback("OnProfileCopied", self, name)
+	self.callbacks:Fire("OnProfileCopied", self, name)
 end
 
 -- DBObject:ResetProfile()
@@ -374,7 +377,7 @@ function DBObjectLib:ResetProfile()
 	end
 
 	-- Callback: OnProfileReset, database
-	self:TriggerCallback("OnProfileReset", self)
+	self.callbacks:Fire("OnProfileReset", self)
 end
 
 -- DBObject:ResetDB(defaultProfile)
@@ -397,9 +400,9 @@ function DBObjectLib:ResetDB(defaultProfile)
 	initdb(self.sv_name, self.defaults, defaultProfile, db)
 	
 	-- Callback: OnDatabaseReset, database
-	self:TriggerCallback("OnDatabaseReset", self)
+	self.callbacks:Fire("OnDatabaseReset", self)
 	-- Callback: OnProfileChanged, database, profileKey
-	self:TriggerCallback("OnProfileChanged", self, self.keys["profile"])
+	self.callbacks:Fire("OnProfileChanged", self, self.keys["profile"])
 	
 	return db
 end
@@ -433,56 +436,6 @@ function DBObjectLib:RegisterNamespace(name, defaults)
 	if not self.children then self.children = {} end
 	table.insert(self.children, newDB)
 	return newDB
-end
-
---[[-------------------------------------------------------------------------
-	Simple callback system implementation
----------------------------------------------------------------------------]]
-
--- DBObject:RegisterCallback(handler)
--- handler (function) - The handler function to call when a message fires.
---
--- Registers a callback function for the given AceDB object. Callbacks are only
--- called on a per-database level, so developers must register with the specific
---  database they are concerned with.
-function DBObjectLib:RegisterCallback(handler)
-	if type(handler) ~= "function" then
-		error("Usage: AceDBObject:RegisterCallback(message, handler): 'handler' - function expected.", 3)
-	end
-
-	if not self.callbacks then self.callbacks = {} end
-	self.callbacks[handler] = true
-end
-
--- DBObject:UnregisterCallback(handler)
--- handler (function) - The handler function to unregister.
---
--- Unregisters a callback handler.
-function DBObjectLib:UnregisterCallback(handler)
-	if type(handler) ~= "function" then
-		error("Usage: AceDBObject:RegisterCallback(message, handler): 'handler' - function expected.", 3)
-	end
-
-	if not self.callbacks then self.callbacks = {} end
-	self.callbacks[handler] = nil
-end
-
--- DBObject:TriggerCallback(message, ...)
--- message (string) - The message to send to registered callbacks
--- ... - Any extra arguments to be sent
---
--- For internal use only.  Used to trigger callback messages on database/profile
--- state changes.
-function DBObjectLib:TriggerCallback(message, ...)
-	if self.callbacks then
-		for handler in pairs(self.callbacks) do
-			-- Safecall this?
-			local succ,err = pcall(handler, message, ...)
-			if not succ then
-				geterrorhandler()(err)
-			end
-		end
-	end
 end
 
 --[[-------------------------------------------------------------------------
