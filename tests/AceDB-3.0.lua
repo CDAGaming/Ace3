@@ -1,5 +1,6 @@
 dofile("wow_api.lua")
 dofile("LibStub.lua")
+dofile("../CallbackHandler-1.0/CallbackHandler-1.0.lua")
 dofile("../AceDB-3.0/AceDB-3.0.lua")
 dofile("serialize.lua")
 
@@ -92,7 +93,7 @@ do
 		end
 	end
 
-	testdb:RegisterCallback(OnProfileChanged)
+	testdb:RegisterCallback("OnProfileChanged", OnProfileChanged)
 	testdb:SetProfile("Healers")
 	assert(triggers.OnProfileChanged)
 end
