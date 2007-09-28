@@ -42,11 +42,11 @@ local function copyDefaults(dest, src, force)
 				local mt = {
 					-- This handles the lookup and creation of new ["*"] subtables
 					__index = function(t,k)
-								  local tbl = {}
-								  copyDefaults(tbl, v)
-								  rawset(t,k,tbl)
-								  return tbl
-							  end,
+							local tbl = {}
+							copyDefaults(tbl, v)
+							rawset(t,k,tbl)
+							return tbl
+						end,
 				}
 				setmetatable(dest, mt)
 			else
@@ -69,37 +69,33 @@ local function copyDefaults(dest, src, force)
 end
 
 -- Called to remove all defaults in the default table from the database
-local function removeDefaults(db, defaults)
-	-- TODO: Change the code to no longer look at __cache, and compare
-	-- the actual values to ensure things work properly.
+local function removeDefaults(db, defaults, parentdefaults)
 	for k,v in pairs(defaults) do
-		if k == "*" and type(v) == "table" then
-			-- check for any defaults that have been changed
-			local mt = getmetatable(db)
-			local cache = rawget(mt, "__cache")
-
-			for cacheKey,cacheValue in pairs(cache) do
-				removeDefaults(cacheValue, v)
-				if next(cacheValue) ~= nil then
-					-- Something's changed
-					rawset(db, cacheKey, cacheValue)
+		if k == "*" or k == "**" and type(v) == "table" then
+			-- Loop through all the actual k,v pairs and remove
+			for key, value in pairs(db) do
+				if k == "*" and not defaults[key] then
+					removeDefaults(value, v)
+				elseif k == "**" then
+					removeDefaults(value, v, defaults[k])
 				end
 			end
-			-- Now loop through all the actual k,v pairs and remove
-			for key,value in pairs(db) do
-				removeDefaults(value, v)
-			end
 		elseif type(v) == "table" and db[k] then
-			removeDefaults(db[k], v)
+			if parentdefaults and type(parentdefaults) == "table" then
+				removeDefaults(db[k], v, parentdefaults[k])
+			else
+				removeDefaults(db[k], v)
+			end
 			if not next(db[k]) then
 				db[k] = nil
 			end
 		else
-			if db[k] == defaults[k] then
+			if db[k] == defaults[k] or (parentdefaults and not defaults[k] and db[k] == parentdefaults[k]) then
 				db[k] = nil
 			end
 		end
 	end
+	setmetatable(db, nil)
 end
 
 -- This is called when a table section is first accessed, to set up the
@@ -249,10 +245,12 @@ function DBObjectLib:RegisterDefaults(defaults)
 	
 	-- Copy in any defaults, only touching those sections already created
 	if defaults then
-		if defaults[section] and rawget(self, section) then
-			copyDefaults(self[section], defaults[section])
+		for section,key in pairs(self.keys) do
+			if defaults[section] and rawget(self, section) then
+				copyDefaults(self[section], defaults[section])
+			end
 		end
-	end	
+	end
 end
 
 -- DBObject:SetProfile(name)
