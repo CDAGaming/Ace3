@@ -2,9 +2,7 @@
 local ACEDB_MAJOR, ACEDB_MINOR = "AceDB-3.0", 1
 local AceDB, oldminor = LibStub:NewLibrary(ACEDB_MAJOR, ACEDB_MINOR)
 
-if AceDB and oldminor then
-	-- Handle upgrading here
-end
+if not AceDB then return end
 
 AceDB.db_registry = setmetatable(AceDB.db_registry or {}, {__mode = "k"})
 AceDB.frame = AceDB.frame or CreateFrame("Frame")
@@ -223,7 +221,7 @@ local function logoutHandler()
 	for db in pairs(AceDB.db_registry) do
 		-- TODO: rename callback to something better
 		db.callbacks:Fire("OnDatabaseShutdown", db)
-		for section,key in pairs(db.keys) do
+		for section, key in pairs(db.keys) do
 			if db.defaults[section] and rawget(db, section) then
 				removeDefaults(db[section], db.defaults[section])
 			end
