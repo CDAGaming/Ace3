@@ -190,10 +190,12 @@ local function initdb(sv, defaults, defaultProfile, olddb)
 		["global"] = true,
 		["profiles"] = true,
 	}
-
+	
 	-- This allows us to use this function to reset an entire database
 	-- Clear out the old database
+	local callbacks
 	if olddb then
+		callbacks = olddb.callbacks
 		for k,v in pairs(olddb) do olddb[k] = nil end
 	end
 	
@@ -207,13 +209,13 @@ local function initdb(sv, defaults, defaultProfile, olddb)
 		db[name] = func
 	end
 	
-	db.callbacks = CallbackHandler:New(db)
+	db.callbacks = callbacks or CallbackHandler:New(db)
 	
 	-- Set some properties in the database object
 	db.profiles = sv.profiles
 	db.keys = keyTbl
 	db.sv = sv
-	db.sv_name = name
+	--db.sv_name = name
 	db.defaults = defaults
 	
 	return db
@@ -397,14 +399,14 @@ function DBObjectLib:ResetDB(defaultProfile)
 	
 	local parent = self.parent
 	
-	initdb(self.sv_name, self.defaults, defaultProfile, db)
+	initdb(sv, self.defaults, defaultProfile, self)
 	
 	-- Callback: OnDatabaseReset, database
 	self.callbacks:Fire("OnDatabaseReset", self)
 	-- Callback: OnProfileChanged, database, profileKey
 	self.callbacks:Fire("OnProfileChanged", self, self.keys["profile"])
 	
-	return db
+	return self
 end
 
 -- DBObject:RegisterNamespace(name [, defaults])
