@@ -6,6 +6,9 @@ if AceDB and oldminor then
 	-- Handle upgrading here
 end
 
+AceDB.db_registry = setmetatable(AceDB.db_registry or {}, {__mode = "k"})
+AceDB.frame = AceDB.frame or CreateFrame("Frame")
+
 local CallbackHandler = LibStub:GetLibrary("CallbackHandler-1.0")
 
 local DBObjectLib = {}
@@ -197,7 +200,7 @@ local function initdb(sv, defaults, defaultProfile, olddb)
 	-- Copy methods locally into the database object, to avoid hitting
 	-- the metatable when calling methods
 	
-	for name,func in pairs(DBObjectLib) do
+	for name, func in pairs(DBObjectLib) do
 		db[name] = func
 	end
 	
@@ -210,10 +213,27 @@ local function initdb(sv, defaults, defaultProfile, olddb)
 	--db.sv_name = name
 	db.defaults = defaults
 	
+	-- store the DB in the registry
+	AceDB.db_registry[db] = true
+	
 	return db
 end
 
---TODO: Code a function to remove all defaults on PLAYER_LOGOUT
+local function logoutHandler()
+	for db in pairs(AceDB.db_registry) do
+		-- TODO: rename callback to something better
+		db.callbacks:Fire("OnDatabaseShutdown", db)
+		for section,key in pairs(db.keys) do
+			if db.defaults[section] and rawget(db, section) then
+				removeDefaults(db[section], db.defaults[section])
+			end
+		end
+	end
+end
+
+AceDB.frame:RegisterEvent("PLAYER_LOGOUT")
+AceDB.frame:SetScript("OnEvent", logoutHandler)
+
 
 --[[-------------------------------------------------------------------------
 	AceDB Object Method Definitions

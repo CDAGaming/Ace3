@@ -50,7 +50,7 @@ do
 	
 	db.profile.doubleStarTest.siblingDeriv.doubleStarDefault = "doubleStarDefault"
 	
-	db:RegisterDefaults({})
+	WoWAPI_FireEvent("PLAYER_LOGOUT")
 	
 	assert(db.profile.singleEntry == nil)
 	assert(db.profile.tableEntry == nil)
