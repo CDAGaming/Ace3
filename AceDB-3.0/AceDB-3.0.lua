@@ -75,23 +75,28 @@ local function removeDefaults(db, defaults, blocker)
 		if k == "*" or k == "**" and type(v) == "table" then
 			-- Loop through all the actual k,v pairs and remove
 			for key, value in pairs(db) do
+				-- if the key was not explicitly specified in the defaults table, just strip everything from * and ** tables
 				if not defaults[key] then
 					removeDefaults(value, v)
-				elseif k == "**" then
+				-- if it was specified, only strip ** content, but block values which were set in the key table
+				elseif k == "**" then 
 					removeDefaults(value, v, defaults[key])
 				end
 			end
 		elseif type(v) == "table" and db[k] then
+			-- if a blocker was set, dive into it, to allow multi-level defaults
 			removeDefaults(db[k], v, blocker and blocker[k])
 			if not next(db[k]) then
 				db[k] = nil
 			end
 		else
+			-- check if the current value matches the default, and that its not blocked by another defaults table
 			if db[k] == defaults[k] and (not blocker or blocker[k] == nil) then
 				db[k] = nil
 			end
 		end
 	end
+	-- remove all metatables from the db
 	setmetatable(db, nil)
 end
 
