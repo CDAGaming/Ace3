@@ -72,15 +72,24 @@ end
 -- Called to remove all defaults in the default table from the database
 local function removeDefaults(db, defaults, blocker)
 	for k,v in pairs(defaults) do
-		if k == "*" or k == "**" and type(v) == "table" then
-			-- Loop through all the actual k,v pairs and remove
-			for key, value in pairs(db) do
-				-- if the key was not explicitly specified in the defaults table, just strip everything from * and ** tables
-				if not defaults[key] then
-					removeDefaults(value, v)
-				-- if it was specified, only strip ** content, but block values which were set in the key table
-				elseif k == "**" then 
-					removeDefaults(value, v, defaults[key])
+		if k == "*" or k == "**" then
+			if type(v) == "table" then
+				-- Loop through all the actual k,v pairs and remove
+				for key, value in pairs(db) do
+					-- if the key was not explicitly specified in the defaults table, just strip everything from * and ** tables
+					if defaults[key] == nil then
+						removeDefaults(value, v)
+					-- if it was specified, only strip ** content, but block values which were set in the key table
+					elseif k == "**" then 
+						removeDefaults(value, v, defaults[key])
+					end
+				end
+			elseif k == "*" then
+				-- check for non-table default
+				for key, value in pairs(db) do
+					if defaults[key] == nil and v == value then
+						db[key] = nil
+					end
 				end
 			end
 		elseif type(v) == "table" and db[k] then

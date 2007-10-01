@@ -35,6 +35,10 @@ do
 					doubleStarDefault = "overruledDefault",
 				}
 			},
+			starTest2 = {
+				["*"] = "fun",
+				sibling = "notfun",
+			}
 		},
 	}
 
@@ -47,8 +51,13 @@ do
 	assert(db.profile.doubleStarTest.randomkey.doubleStarDefault == "doubleStarDefault")
 	assert(db.profile.doubleStarTest.sibling.siblingDefault == "siblingDefault")
 	assert(db.profile.doubleStarTest.sibling.doubleStarDefault == "doubleStarDefault")
+	assert(db.profile.starTest2.randomkey == "fun")
+	assert(db.profile.starTest2.sibling == "notfun")
 	
 	db.profile.doubleStarTest.siblingDeriv.doubleStarDefault = "doubleStarDefault"
+	db.profile.starTest2.randomkey = "notfun"
+	db.profile.starTest2.randomkey2 = "fun" 
+	db.profile.starTest2.sibling = "fun"
 	
 	WoWAPI_FireEvent("PLAYER_LOGOUT")
 	
@@ -58,4 +67,7 @@ do
 	assert(db.profile.starTest.sibling == nil)
 	assert(db.profile.doubleStarTest.randomkey.doubleStarDefault == nil)
 	assert(db.profile.doubleStarTest.siblingDeriv.doubleStarDefault == "doubleStarDefault")
+	assert(db.profile.starTest2.randomkey == "notfun")
+	assert(db.profile.starTest2.randomkey2 == nil)
+	assert(db.profile.starTest2.sibling == "fun")
 end
