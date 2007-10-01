@@ -20,6 +20,10 @@ AceBucket.embeds = AceBucket.embeds or {}
 -- the libraries will be lazyly bound later, to avoid errors due to loading order issues
 local AceEvent, AceTimer
 
+-- local upvalues
+local pcall = pcall
+local pairs = pairs
+
 local bucketCache = setmetatable({}, {__mode='k'})
 
 local function safecall(func, ...)
