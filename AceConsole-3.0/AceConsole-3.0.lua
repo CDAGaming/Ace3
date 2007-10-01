@@ -68,13 +68,12 @@ end
 -- 
 -- Unregister a chatcommand
 function AceConsole:UnregisterChatCommand( command )
-	local cmd = AceConsole.commands[command]
-	if cmd then
-		local name = cmd.name
+	local name = AceConsole.commands[command]
+	if name then
 		SlashCmdList[name] = nil
 		setglobal("SLASH_"..name.."1", nil)
 		hash_SlashCmdList["/" .. command:upper()] = nil
-		AceConsole.commands[command] = nil -- TODO: custom table cache?
+		AceConsole.commands[command] = nil
 	end
 end
 
