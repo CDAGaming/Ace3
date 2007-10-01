@@ -2,7 +2,7 @@
 local ACEDB_MAJOR, ACEDB_MINOR = "AceDB-3.0", 1
 local AceDB, oldminor = LibStub:NewLibrary(ACEDB_MAJOR, ACEDB_MINOR)
 
-if not AceDB then return end
+if not AceDB then return end -- No upgrade needed
 
 AceDB.db_registry = setmetatable(AceDB.db_registry or {}, {__mode = "k"})
 AceDB.frame = AceDB.frame or CreateFrame("Frame")

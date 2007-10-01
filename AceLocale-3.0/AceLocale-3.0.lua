@@ -3,9 +3,7 @@ local MAJOR,MINOR = "AceLocale-3.0", 0
 
 local AceLocale, oldminor = LibStub:NewLibrary(MAJOR, MINOR)
 
-if not AceLocale then 
-	return -- no upgrade needed
-end
+if not AceLocale then return end -- no upgrade needed
 
 AceLocale.apps = AceLocale.apps or {}          -- array of ["AppName"]=localetableref
 AceLocale.appnames = AceLocale.appnames or {}  -- array of [localetableref]="AppName"

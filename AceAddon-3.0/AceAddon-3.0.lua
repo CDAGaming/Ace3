@@ -2,9 +2,7 @@
 local MAJOR, MINOR = "AceAddon-3.0", 0
 local AceAddon, oldminor = LibStub:NewLibrary(MAJOR, MINOR)
 
-if not AceAddon then
-	return -- No Upgrade needed.
-end
+if not AceAddon then return end -- No Upgrade needed.
 
 AceAddon.frame = AceAddon.frame or CreateFrame("Frame", "AceAddon30Frame") -- Our very own frame
 AceAddon.addons = AceAddon.addons or {} -- addons in general

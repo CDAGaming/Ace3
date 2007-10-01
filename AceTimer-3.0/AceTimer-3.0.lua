@@ -24,7 +24,7 @@
 local MAJOR, MINOR = "AceTimer-3.0", 0
 local AceTimer, oldminor = LibStub:NewLibrary(MAJOR, MINOR)
 
-if not AceTimer then return end
+if not AceTimer then return end -- No upgrade needed
 
 AceTimer.hash = AceTimer.hash or {}			-- Array of [0..BUCKET-1]={[timerobj]=time, [timerobj2]=time2, ...}
 AceTimer.selfs = AceTimer.selfs or {}		-- Array of [self]={[handle]=timerobj, [handle2]=timerobj2, ...}

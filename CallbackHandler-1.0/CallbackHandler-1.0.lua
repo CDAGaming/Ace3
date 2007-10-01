@@ -1,8 +1,8 @@
 --[[ $Id$ ]]
 local MAJOR, MINOR = "CallbackHandler-1.0", 1
-local lib = LibStub:NewLibrary(MAJOR, MINOR)
+local CallbackHandler = LibStub:NewLibrary(MAJOR, MINOR)
 
-if not lib then return end
+if not CallbackHandler then return end -- No upgrade needed
 
 local meta = {__index = function(tbl, key) tbl[key] = {} return tbl[key] end}
 
@@ -29,7 +29,7 @@ end
 --   OnUsed            - optional function to be called with params (target, eventname) when the first callback is added to an event
 --   OnUnused          - optional function to be called with params (target, eventname) when the last callback is removed from an event
 
-function lib:New(target, RegisterName, UnregisterName, UnregisterAllName, OnUsed, OnUnused)
+function CallbackHandler:New(target, RegisterName, UnregisterName, UnregisterAllName, OnUsed, OnUnused)
 
 	RegisterName = RegisterName or "RegisterCallback"
 	UnregisterName = UnregisterName or "UnregisterCallback"

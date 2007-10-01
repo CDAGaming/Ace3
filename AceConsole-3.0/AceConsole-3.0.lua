@@ -3,9 +3,7 @@ local MAJOR,MINOR = "AceConsole-3.0", 0
 
 local AceConsole, oldminor = LibStub:NewLibrary(MAJOR, MINOR)
 
-if not AceConsole then 
-	return -- no upgrade needed
-end
+if not AceConsole then return end -- No upgrade needed
 
 AceConsole.embeds = AceConsole.embeds or {} -- table containing objects AceConsole is embedded in.
 AceConsole.commands = AceConsole.commands or {} -- table containing commands registered

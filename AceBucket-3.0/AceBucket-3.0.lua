@@ -12,9 +12,7 @@
 local MAJOR, MINOR = "AceBucket-3.0", 0
 local AceBucket, oldminor = LibStub:NewLibrary(MAJOR, MINOR)
 
-if not AceBucket then
-	return
-end
+if not AceBucket then return end -- No Upgrade needed
 
 AceBucket.buckets = AceBucket.buckets or {}
 AceBucket.embeds = AceBucket.embeds or {}

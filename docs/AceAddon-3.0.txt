@@ -123,3 +123,5 @@ If this function is defined on your addon object it will be called when it is en
 addon:OnDisable()
 If this function is defined on your addon object it will be called when it is disabled.
 
+addon:OnModuleCreated( module )
+If this function is defined on your addon object it will be called whenever a new module is added through NewModule. The module object is passed.
