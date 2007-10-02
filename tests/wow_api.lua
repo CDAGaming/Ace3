@@ -200,3 +200,18 @@ function WoWAPI_FireUpdate()
 end
 
 
+
+
+-- utility function for "dumping" a number of arguments (return a string representation of them)
+function dump(...)
+	local t = {}
+	for i=1,select("#", ...) do
+		local v = select(i, ...)
+		if type(v)=="string" then
+			tinsert(t, '"'..v..'"')
+		else
+			tinsert(t, tostring(v))
+		end
+	end
+	return "<"..table.concat(t, "> <")..">"
+end
