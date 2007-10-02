@@ -28,13 +28,6 @@ local protectedScripts = {
 
 -- upgrading of embeded is done at the bottom of the file
 
-local function safecall( func, ... )
-	local success, err = pcall(func,...)
-	if success then return err end
-	if not err:find("%.lua:%d+:") then err = (debugstack():match("\n(.-: )in.-\n") or "") .. err end 
-	geterrorhandler()(err)
-end
-
 local mixins = {
 	"Hook", "SecureHook",
 	"HookScript", "SecureHookScript",
@@ -360,6 +353,7 @@ end
 
 -- ("function") or (object, "method")
 function AceHook:IsHooked(obj, method)
+	-- we don't check if registry[self] exists, this is done by evil magicks in the metatable
 	if type(obj) == "string" then
 		if registry[self][obj] and actives[registry[self][obj]] then
 			return true, handlers[registry[self][obj]]
