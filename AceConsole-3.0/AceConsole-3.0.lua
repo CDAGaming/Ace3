@@ -112,7 +112,7 @@ function AceConsole:GetArgs(str, numargs, startpos)
 	end
 
 	if numargs<1 then
-		return startpos
+		return pos
 	end
 
 	-- quoted or space separated? find out which pattern to use

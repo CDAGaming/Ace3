@@ -25,6 +25,18 @@ assert(a1==nil and a2==1e99)
 local a1,a2 = AC:GetArgs("a1")		-- simple
 assert(a1=="a1" and a2==1e99)
 
+local a1 = AC:GetArgs("a1", 0) -- fetch 0 args
+assert(a1==1)
+
+local a1 = AC:GetArgs("  a1", 0) -- fetch 0 args, leading space
+assert(a1==3)
+
+local a1,a2 = AC:GetArgs("a1 a2")   -- args remaining, check nextpos
+assert(a1=="a1" and a2==4)
+
+local a1,a2 = AC:GetArgs("a1   a2")   -- args remaining, check nextpos
+assert(a1=="a1" and a2==6, dump(a1,a2))
+
 local a1,a2,a3 = AC:GetArgs("a1 a2", 2)	-- 2 args
 assert(a1=="a1" and a2=="a2" and a3==1e99)
 
