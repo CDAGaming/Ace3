@@ -218,7 +218,7 @@ local PaneBackdrop  = {
 	bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
 	edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
 	tile = true, tileSize = 16, edgeSize = 16,
-	insets = { left = 3, right = 3, top = 3, bottom = 3 }
+	insets = { left = 3, right = 3, top = 5, bottom = 3 }
 }
 
 local ControlBackdrop  = {
@@ -462,6 +462,7 @@ do
 		--Container Support
 		local content = CreateFrame("Frame",nil,frame)
 		self.content = content
+		content.obj = self
 		content:SetPoint("TOPLEFT",frame,"TOPLEFT",17,-27)
 		content:SetPoint("BOTTOMRIGHT",frame,"BOTTOMRIGHT",-17,40)
 		
@@ -473,9 +474,18 @@ do
 end
 
 
+-----------------------
+-- Container Widgets --
+-----------------------
+
 --------------------------
 -- Inline Group		 --
 --------------------------
+--[[
+	This is a simple grouping container, no selection
+	It will resize automatically to the height of the controls added to it
+]]
+
 do
 	local Type = "InlineGroup"
 	
@@ -493,6 +503,11 @@ do
 	end
 
 
+	local function LayoutFinished(self, width, height)
+		self.frame:SetHeight((height or 0) + 40)
+	end
+	
+	
 	local function Constructor()
 		local frame = CreateFrame("Frame",nil,UIParent)
 		local self = {}
@@ -503,6 +518,8 @@ do
 		self.SetTitle = SetTitle
 		self.FrameLevelChanged = FrameLevelChanged
 		self.frame = frame
+		self.LayoutFinished = LayoutFinished
+		
 		frame.obj = self
 		
 		frame:SetHeight(100)
@@ -524,12 +541,13 @@ do
 		border:SetPoint("BOTTOMRIGHT",frame,"BOTTOMRIGHT",-3,3)
 		
 		border:SetBackdrop(PaneBackdrop)
-		border:SetBackdropColor(0.1,0.1,0.1)
+		border:SetBackdropColor(0.1,0.1,0.1,0.5)
 		border:SetBackdropBorderColor(0.4,0.4,0.4)
 		
 		--Container Support
 		local content = CreateFrame("Frame",nil,border)
 		self.content = content
+		content.obj = self
 		content:SetPoint("TOPLEFT",border,"TOPLEFT",10,-10)
 		content:SetPoint("BOTTOMRIGHT",border,"BOTTOMRIGHT",-10,10)
 		
@@ -540,8 +558,14 @@ do
 	AceGUI:RegisterWidgetType(Type,Constructor)
 end
 
+--[[
+	Selection Group controls all have an interface to select a group for thier contents
+	None of them will auto size to thier contents, and should usually be used with a scrollframe
+	unless you know that the controls will fit inside
+]]
+
 --------------------------
--- Select Group		 --
+-- Dropdown Group		--
 --------------------------
 --[[
 	Events :
@@ -549,7 +573,7 @@ end
 
 ]]
 do
-	local Type = "SelectGroup"
+	local Type = "DropdownGroup"
 	
 	local function Aquire(self)
 
@@ -621,12 +645,13 @@ do
 		border:SetPoint("BOTTOMRIGHT",frame,"BOTTOMRIGHT",-3,3)
 		
 		border:SetBackdrop(PaneBackdrop)
-		border:SetBackdropColor(0.1,0.1,0.1)
+		border:SetBackdropColor(0.1,0.1,0.1,0.5)
 		border:SetBackdropBorderColor(0.4,0.4,0.4)
 		
 		--Container Support
 		local content = CreateFrame("Frame",nil,border)
 		self.content = content
+		content.obj = self
 		content:SetPoint("TOPLEFT",border,"TOPLEFT",10,-10)
 		content:SetPoint("BOTTOMRIGHT",border,"BOTTOMRIGHT",-10,10)
 		
@@ -637,6 +662,534 @@ do
 	AceGUI:RegisterWidgetType(Type,Constructor)
 end
 
+
+--------------------------
+-- Tab Group            --
+--------------------------
+do
+	local Type = "TabGroup"
+	
+	local function Aquire(self)
+
+	end
+	
+	local function Release(self)
+		self.frame:ClearAllPoints()
+		self.frame:Hide()
+	end
+	
+	local function Tab_FixWidth(self)
+		self:SetScript("OnUpdate",nil)
+		self:SetWidth(self.text:GetWidth()+20)
+	end
+	
+	local function Tab_SetText(self, text)
+		self.text:SetText(text)
+		self:SetScript("OnUpdate",Tab_FixWidth)
+	end
+	
+	local function Tab_SetSelected(self, selected)
+		self.selected = selected
+		if selected then
+			self.left:SetAlpha(1)
+			self.right:SetAlpha(1)
+			self.middle:SetAlpha(1)
+			self.text:SetTextColor(1,1,1)
+			self:GetHighlightTexture():Hide()
+		else
+			self.left:SetAlpha(0.5)
+			self.right:SetAlpha(0.5)
+			self.middle:SetAlpha(0.5)
+			self.text:SetTextColor(1,0.82,0)
+			self:GetHighlightTexture():Show()
+		end
+	end
+	
+	local function Tab_OnClick(self)
+		if not self.selected then
+			self.obj:SelectTab(self.id)
+		end
+	end
+	
+
+	
+	local function CreateTab(self, id)
+		local tab = CreateFrame("Button",nil,self.border)
+		tab.obj = self
+		tab.id = id
+		tab:SetWidth(64)
+		tab:SetHeight(32)
+		
+		tab:SetScript("OnClick",Tab_OnClick)
+		
+		tab:SetHighlightTexture("Interface\\PaperDollInfoFrame\\UI-Character-Tab-Highlight")
+		tab:GetHighlightTexture():SetBlendMode("ADD")
+		tab:GetHighlightTexture():SetPoint("TOPLEFT",tab,"TOPLEFT",2,-7)
+		tab:GetHighlightTexture():SetPoint("BOTTOMRIGHT",tab,"BOTTOMRIGHT",-2,-3)
+		local left = tab:CreateTexture(nil,"BACKGROUND")
+		local middle = tab:CreateTexture(nil,"BACKGROUND")
+		local right = tab:CreateTexture(nil,"BACKGROUND")
+		local text = tab:CreateFontString(nil,"BACKGROUND","GameFontNormalSmall")
+		
+		tab.text = text
+		tab.left = left
+		tab.right = right
+		tab.middle = middle
+		tab.SetText = Tab_SetText
+		tab.SetSelected = Tab_SetSelected
+		
+		text:SetPoint("LEFT",tab,"LEFT",5,-7)
+		text:SetPoint("RIGHT",tab,"RIGHT",-5,-7)
+		text:SetHeight(18)
+		text:SetText("Test")
+		
+		left:SetTexture("Interface\\ChatFrame\\ChatFrameTab")
+		middle:SetTexture("Interface\\ChatFrame\\ChatFrameTab")
+		right:SetTexture("Interface\\ChatFrame\\ChatFrameTab")
+		
+		left:SetWidth(16)
+		left:SetHeight(32)
+		middle:SetWidth(44)
+		middle:SetHeight(32)
+		right:SetWidth(16)
+		right:SetHeight(32)
+		
+		left:SetTexCoord(0,0.25,0,1)
+		middle:SetTexCoord(0.25,0.75,0,1)
+		right:SetTexCoord(0.75,1,0,1)
+		
+		left:SetPoint("TOPLEFT",tab,"TOPLEFT",0,0)
+		right:SetPoint("TOPRIGHT",tab,"TOPRIGHT",0,0)
+		
+		middle:SetPoint("LEFT",left,"RIGHT",0,0)
+		middle:SetPoint("RIGHT",right,"LEFT",0,0)
+		
+		return tab
+	end
+	
+	local function SetTitle(self, text)
+		self.titletext:SetText(text or "")
+	end
+	
+	local function SelectTab(self, id)
+		for i, v in ipairs(self.tabs) do
+			v:SetSelected(v.id == id)
+		end
+		self:Fire("OnGroupSelected",self.tablist[id])
+	end
+	
+	
+	local function SetTabs(self, tabs, text)
+		self.tablist = tabs
+		self.text = text
+		self:BuildTabs()
+	end
+	
+	local function BuildTabs(self)
+		local tablist = self.tablist
+		local text = self.text
+		local tabs = self.tabs
+		
+		for i, v in ipairs(tablist) do
+			local tab = tabs[i]
+			if not tab then
+				tab = self:CreateTab(i)
+				tabs[i] = tab
+				if i == 1 then
+					tab:SetPoint("BOTTOMLEFT",self.border,"TOPLEFT",0,-3)
+				else
+					tab:SetPoint("LEFT",tabs[i-1],"RIGHT",-3,0)
+				end					
+			end
+			
+			tab:SetText(text[v])
+		end
+		
+		self:SelectTab(1)
+	end
+
+	local function Constructor()
+		local frame = CreateFrame("Frame",nil,UIParent)
+		local self = {}
+		self.type = Type
+
+		self.Release = Release
+		self.Aquire = Aquire
+		self.SetTitle = SetTitle
+		self.CreateTab = CreateTab
+		self.SelectTab = SelectTab
+		self.BuildTabs = BuildTabs
+		self.SetTabs = SetTabs
+		self.frame = frame
+		frame.obj = self
+		
+		frame:SetHeight(100)
+		frame:SetWidth(100)
+		frame:SetFrameStrata("DIALOG")
+		
+		local titletext = frame:CreateFontString(nil,"OVERLAY","GameFontHighlight")
+		titletext:SetPoint("TOPLEFT",frame,"TOPLEFT",14,0)
+		titletext:SetPoint("TOPRIGHT",frame,"TOPRIGHT",-14,0)
+		titletext:SetJustifyH("LEFT")
+		titletext:SetHeight(18)
+		
+		self.titletext = titletext	
+		
+		local border = CreateFrame("Frame",nil,frame)
+		self.border = border
+		border:SetPoint("TOPLEFT",frame,"TOPLEFT",3,-37)
+		border:SetPoint("BOTTOMRIGHT",frame,"BOTTOMRIGHT",-3,3)
+		
+		border:SetBackdrop(PaneBackdrop)
+		border:SetBackdropColor(0.1,0.1,0.1,0.5)
+		border:SetBackdropBorderColor(0.4,0.4,0.4)
+		
+		self.tabs = {}
+		
+		--Container Support
+		local content = CreateFrame("Frame",nil,border)
+		self.content = content
+		content.obj = self
+		content:SetPoint("TOPLEFT",border,"TOPLEFT",10,-10)
+		content:SetPoint("BOTTOMRIGHT",border,"BOTTOMRIGHT",-10,10)
+		
+		AceGUI:RegisterAsContainer(self)
+		return self
+	end
+	
+	AceGUI:RegisterWidgetType(Type,Constructor)
+end
+
+--------------
+-- TreeView --
+--------------
+
+do
+	local Type = "TreeGroup"
+	
+	local function Aquire(self)
+
+	end
+	
+	local function ButtonOnClick(this)
+		local self = this.obj
+		local status = self.status or self.localstatus
+		
+		if this.selected then
+			status[this.value] = not status[this.value]
+		else
+			status[this.value] = true
+			self:SetSelected(this.value)
+			this.selected = true
+			this:LockHighlight()
+		end
+		self:RefreshTree()
+	end
+	
+	local function CreateButton(self)
+		local button = CreateFrame("Button",nil,UIParent)
+		button.obj = self
+		button:SetHeight(20)
+		button:SetWidth(136)
+		button:SetScript("OnClick",ButtonOnClick)
+		local line = button:CreateTexture(nil,"BACKGROUND")
+		line:SetWidth(7)
+		line:SetHeight(20)
+		line:SetPoint("LEFT",button,"LEFT",13,0)
+		line:SetTexCoord(0,0.4375,0,0.625)
+		line:SetTexture("Interface\\AuctionFrame\\UI-AuctionFrame-FilterLines")
+		button.line = line
+
+		button:SetNormalTexture("Interface\\AuctionFrame\\UI-AuctionFrame-FilterBg")
+		button:GetNormalTexture():SetTexCoord(0,0.53125,0,0.625)
+
+		button:SetHighlightTexture("Interface\\PaperDollInfoFrame\\UI-Character-Tab-Highlight")
+		button:GetHighlightTexture():SetBlendMode("ADD")
+
+		local text = button:CreateFontString(nil,"OVERLAY","GameFontNormalSmall")
+		button:SetFontString(text)
+		button.text = text
+		text:SetWidth(115)
+		text:SetHeight(8)
+		text:SetJustifyH("LEFT")
+		text:SetPoint("LEFT",button,"LEFT",4,0)
+
+		button:SetFont("GameFontNormalSmall",8)
+		
+		return button
+	end
+
+	local function UpdateButton(button, level, value, text, selected, last)
+		text = text or ""
+		button.value = value
+		if selected then
+			button:LockHighlight()
+			button.selected = true
+		else
+			button:UnlockHighlight()
+			button.selected = false
+		end
+		local normalText = button.text
+		local normalTexture = button:GetNormalTexture()
+		local line = button.line
+		if ( level == 1 ) then
+			button:SetText(text)
+			normalText:SetPoint("LEFT", button, "LEFT", 4, 0)
+			normalTexture:SetAlpha(1.0)	
+			line:Hide();
+		elseif ( level == 2 ) then
+			button:SetText(HIGHLIGHT_FONT_COLOR_CODE..text..FONT_COLOR_CODE_CLOSE)
+			normalText:SetPoint("LEFT", button, "LEFT", 12, 0)
+			normalTexture:SetAlpha(0.4)
+			line:Hide()
+		elseif ( level >= 3 ) then
+			button:SetText(HIGHLIGHT_FONT_COLOR_CODE..text..FONT_COLOR_CODE_CLOSE)
+			normalText:SetPoint("LEFT", button, "LEFT", 20 + (level-3)*8, 0)
+			line:SetPoint("LEFT",button,"LEFT",13 + (level-3)*8,0)
+			normalTexture:SetAlpha(0.0)
+			if ( last ) then
+				line:SetTexCoord(0.4375, 0.875, 0, 0.625)
+			else
+				line:SetTexCoord(0, 0.4375, 0, 0.625)
+			end
+			line:Show();
+		end
+	end
+
+	local function Release(self)
+		self.frame:ClearAllPoints()
+		self.frame:Hide()
+	end
+	
+	local function OnScrollValueChanged(this, value)
+		if this.obj.noupdate then return end
+		this.obj.scrollvalue = value
+		this.obj:RefreshTree()
+	end
+	
+	-- called to set an external table to store status in
+	local function SetStatusTable(self, status)
+		assert(type(status) == "table")
+		self.status = status
+	end
+
+	--sets the tree to be displayed
+	--[[
+		example tree
+		
+		Alpha
+		Bravo
+		  -Charlie
+		  -Delta
+			-Echo
+		Foxtrot
+		
+		tree = { "A", "B", "F", B = { "C", "D", D = { "E" } } }
+		text = { A = "Alpha", B = "Bravo" ... }
+	]]
+	local function SetTree(self, tree, text)
+		assert(type(tree) == "table" and type(text) == "table")
+		
+		self.tree = tree
+		self.text = text
+		self:RefreshTree()
+	end
+
+	
+	local function BuildLevel(self, tree, level)
+		local lines = self.lines
+		local levels = self.levels
+		local status = self.status or self.localstatus
+		
+		for i, v in ipairs(tree) do
+			lines[#lines+1] = v
+			levels[v] = level
+			if tree[v] and status[v] then
+				self:BuildLevel(tree[v], level+1)
+			end
+		end
+	end
+	
+	--fire an update after one frame to catch the treeframes height
+	local function FirstFrameUpdate(this)
+		local self = this.obj
+		this:SetScript("OnUpdate",nil)
+		self:RefreshTree()
+	end
+	
+	local function ResizeUpdate(this)
+		this.obj:RefreshTree()
+	end
+	
+	local function RefreshTree(self)
+		--Build the list of visible entries from the tree and status tables
+		local status = self.status or self.localstatus
+		local tree = self.tree
+		local lines = self.lines
+		local buttons = self.buttons
+		local levels = self.levels
+		local text = self.text
+		local treeframe = self.treeframe
+		
+		while tremove(lines) do end
+		
+		self:BuildLevel(tree, 1)
+		
+		for i, v in ipairs(buttons) do
+			v:Hide()
+		end
+		
+		local numlines = #lines
+		
+		local maxlines = (math.floor((self.treeframe:GetHeight()or 0) / 20))
+		
+		local first, last
+		
+		if numlines <= maxlines then
+			--the whole tree fits in the frame
+			self.scrollvalue = 0
+			self:ShowScroll(false)
+			first, last = 1, numlines
+		else
+			self:ShowScroll(true)
+			--scrolling will be needed
+			self.noupdate = true
+			self.scrollbar:SetMinMaxValues(0, numlines - maxlines)
+			--check if we are scrolled down too far
+			if numlines - self.scrollvalue < maxlines then
+				self.scrollvalue = numlines - maxlines
+				self.scrollbar:SetValue(self.scrollvalue)
+			end
+			self.noupdate = nil
+			first, last = self.scrollvalue+1, self.scrollvalue + maxlines
+		end
+		
+		local buttonnum = 1
+		for i = first, last do
+			local v = lines[i]
+			local button = buttons[buttonnum]
+			if not button then
+				button = self:CreateButton()
+				if self.showscroll then
+					button:SetWidth(134)
+				else
+					button:SetWidth(150)
+				end
+				buttons[buttonnum] = button
+				button:SetParent(treeframe)
+				button:SetFrameLevel(treeframe:GetFrameLevel()+1)
+				if i == 1 then
+					button:SetPoint("TOPLEFT", self.treeframe,"TOPLEFT",0,0)
+					--button:SetPoint("TOPRIGHT", self.treeframe,"TOPRIGHT",-16,0)
+				else
+					button:SetParent(self.treeframe)
+					button:SetPoint("TOPLEFT", buttons[buttonnum-1], "BOTTOMLEFT",0,0)
+					--button:SetPoint("TOPRIGHT", buttons[buttonnum-1], "BOTTOMRIGHT",0,0)
+				end
+			end
+
+			UpdateButton(button, levels[v], v,  text[v], self.selected == v, (not lines[i+1]) or levels[lines[i+1]] ~= levels[v] )
+			button:Show()
+			buttonnum = buttonnum + 1
+		end
+
+	end
+	
+	local function SetSelected(self, value)
+		if self.selected ~= value then
+			self.selected = value
+			self:Fire("OnGroupSelected", value)
+		end
+	end
+	
+	local function ShowScroll(self, show)
+		self.showscroll = show
+		if show then
+			self.scrollbar:Show()
+			for i, v in ipairs(self.buttons) do
+				v:SetWidth(134)
+			end
+		else
+			self.scrollbar:Hide()
+			for i, v in ipairs(self.buttons) do
+				v:SetWidth(150)
+			end
+		end
+		
+	end
+	
+	local function Constructor()
+		local frame = CreateFrame("Frame",nil,UIParent)
+		local self = {}
+		self.type = Type
+		self.localstatus = {}
+		self.lines = {}
+		self.levels = {}
+		self.buttons = {}
+		
+		
+		frame:SetBackdrop(PaneBackdrop)
+		frame:SetBackdropColor(0.1,0.1,0.1,0.5)
+		frame:SetBackdropBorderColor(0.4,0.4,0.4)
+		
+		
+		local treeframe = CreateFrame("Frame",nil,frame)
+		treeframe.obj = self
+		treeframe:SetPoint("TOPLEFT",frame,"TOPLEFT",10,-12)
+		treeframe:SetPoint("BOTTOMLEFT",frame,"BOTTOMLEFT",10,12)
+		treeframe:SetWidth(150)
+		treeframe:SetScript("OnUpdate",FirstFrameUpdate)
+		treeframe:SetScript("OnSizeChanged",ResizeUpdate)
+		self.treeframe = treeframe
+		self.Release = Release
+		self.Aquire = Aquire
+		
+		self.SetTree = SetTree
+		self.RefreshTree = RefreshTree
+		self.SetStatusTable = SetStatusTable
+		self.BuildLevel = BuildLevel
+		self.CreateButton = CreateButton
+		self.SetSelected = SetSelected
+		self.ShowScroll = ShowScroll
+		
+		self.frame = frame
+		frame.obj = self
+
+		local scrollbar = CreateFrame("Slider",nil,treeframe,"UIPanelScrollBarTemplate")
+		self.scrollbar = scrollbar
+		scrollbar.obj = self
+		self.noupdate = true
+		scrollbar:SetPoint("TOPRIGHT",treeframe,"TOPRIGHT",0,-16)
+		scrollbar:SetPoint("BOTTOMRIGHT",treeframe,"BOTTOMRIGHT",0,16)
+		scrollbar:SetScript("OnValueChanged", OnScrollValueChanged)
+		scrollbar:SetMinMaxValues(0,0)
+		self.scrollvalue = 0
+		scrollbar:SetValueStep(1)
+		scrollbar:SetValue(0)
+		scrollbar:SetWidth(16)
+		self.noupdate = nil
+
+		--Container Support
+		local content = CreateFrame("Frame",nil,frame)
+		self.content = content
+		content.obj = self
+		content:SetPoint("TOPRIGHT",frame,"TOPRIGHT",0,0)
+		content:SetPoint("BOTTOMRIGHT",frame,"BOTTOMRIGHT",0,0)
+		content:SetPoint("LEFT",treeframe,"RIGHT",5,0)
+		
+		AceGUI:RegisterAsContainer(self)
+		--AceGUI:RegisterAsWidget(self)
+		return self
+	end
+	
+	AceGUI:RegisterWidgetType(Type,Constructor)
+end
+
+
+
+--[[
+	Widgets
+]]
 
 --------------------------
 -- Edit box			 --
@@ -784,10 +1337,6 @@ do
 	
 	AceGUI:RegisterWidgetType(Type,Constructor)
 end
-
-
-
-
 
 --------------------------
 -- Check Box			--
@@ -969,8 +1518,6 @@ do
 	
 	AceGUI:RegisterWidgetType(Type,Constructor)
 end
-
-
 
 --------------------------
 -- Dropdown			 --
@@ -1291,331 +1838,8 @@ do
 	AceGUI:RegisterWidgetType(Type,Constructor)
 end
 
-
---------------
--- TreeView --
---------------
-
-do
-	local Type = "TreeView"
-	
-	local function Aquire(self)
-
-	end
-	
-	local function ButtonOnClick(this)
-		local self = this.obj
-		local status = self.status or self.localstatus
-		
-		if this.selected then
-			status[this.value] = not status[this.value]
-		else
-			status[this.value] = true
-			self:SetSelected(this.value)
-			this.selected = true
-			this:LockHighlight()
-		end
-		self:RefreshTree()
-	end
-	
-	local function CreateButton(self)
-		local button = CreateFrame("Button",nil,UIParent)
-		button.obj = self
-		button:SetHeight(20)
-		button:SetWidth(136)
-		button:SetScript("OnClick",ButtonOnClick)
-		local line = button:CreateTexture(nil,"BACKGROUND")
-		line:SetWidth(7)
-		line:SetHeight(20)
-		line:SetPoint("LEFT",button,"LEFT",13,0)
-		line:SetTexCoord(0,0.4375,0,0.625)
-		line:SetTexture("Interface\\AuctionFrame\\UI-AuctionFrame-FilterLines")
-		button.line = line
-
-		button:SetNormalTexture("Interface\\AuctionFrame\\UI-AuctionFrame-FilterBg")
-		button:GetNormalTexture():SetTexCoord(0,0.53125,0,0.625)
-
-		button:SetHighlightTexture("Interface\\PaperDollInfoFrame\\UI-Character-Tab-Highlight")
-		button:GetHighlightTexture():SetBlendMode("ADD")
-
-		local text = button:CreateFontString(nil,"OVERLAY","GameFontNormalSmall")
-		button:SetFontString(text)
-		button.text = text
-		text:SetWidth(115)
-		text:SetHeight(8)
-		text:SetJustifyH("LEFT")
-		text:SetPoint("LEFT",button,"LEFT",4,0)
-
-		button:SetFont("GameFontNormalSmall",8)
-		
-		return button
-	end
-
-	local function UpdateButton(button, level, value, text, selected, last)
-		text = text or ""
-		button.value = value
-		if selected then
-			button:LockHighlight()
-			button.selected = true
-		else
-			button:UnlockHighlight()
-			button.selected = false
-		end
-		local normalText = button.text
-		local normalTexture = button:GetNormalTexture()
-		local line = button.line
-		if ( level == 1 ) then
-			button:SetText(text)
-			normalText:SetPoint("LEFT", button, "LEFT", 4, 0)
-			normalTexture:SetAlpha(1.0)	
-			line:Hide();
-		elseif ( level == 2 ) then
-			button:SetText(HIGHLIGHT_FONT_COLOR_CODE..text..FONT_COLOR_CODE_CLOSE)
-			normalText:SetPoint("LEFT", button, "LEFT", 12, 0)
-			normalTexture:SetAlpha(0.4)
-			line:Hide()
-		elseif ( level >= 3 ) then
-			button:SetText(HIGHLIGHT_FONT_COLOR_CODE..text..FONT_COLOR_CODE_CLOSE)
-			normalText:SetPoint("LEFT", button, "LEFT", 20 + (level-3)*8, 0)
-			line:SetPoint("LEFT",button,"LEFT",13 + (level-3)*8,0)
-			normalTexture:SetAlpha(0.0)
-			if ( last ) then
-				line:SetTexCoord(0.4375, 0.875, 0, 0.625)
-			else
-				line:SetTexCoord(0, 0.4375, 0, 0.625)
-			end
-			line:Show();
-		end
-	end
-
-	local function Release(self)
-		self.frame:ClearAllPoints()
-		self.frame:Hide()
-	end
-	
-	local function OnScrollValueChanged(this, value)
-		if this.obj.noupdate then return end
-		this.obj.scrollvalue = value
-		this.obj:RefreshTree()
-	end
-	
-	-- called to set an external table to store status in
-	local function SetStatusTable(self, status)
-		assert(type(status) == "table")
-		self.status = status
-	end
-
-	--sets the tree to be displayed
-	--[[
-		example tree
-		
-		Alpha
-		Bravo
-		  -Charlie
-		  -Delta
-			-Echo
-		Foxtrot
-		
-		tree = { "A", "B", "F", B = { "C", "D", D = { "E" } } }
-		text = { A = "Alpha", B = "Bravo" ... }
-	]]
-	local function SetTree(self, tree, text)
-		assert(type(tree) == "table" and type(text) == "table")
-		
-		self.tree = tree
-		self.text = text
-		self:RefreshTree()
-	end
-
-	
-	local function BuildLevel(self, tree, level)
-		local lines = self.lines
-		local levels = self.levels
-		local status = self.status or self.localstatus
-		
-		for i, v in ipairs(tree) do
-			lines[#lines+1] = v
-			levels[v] = level
-			if tree[v] and status[v] then
-				self:BuildLevel(tree[v], level+1)
-			end
-		end
-	end
-	
-	--fire an update after one frame to catch the treeframes height
-	local function FirstFrameUpdate(this)
-		local self = this.obj
-		this:SetScript("OnUpdate",nil)
-		self:RefreshTree()
-	end
-	
-	local function ResizeUpdate(this)
-		this.obj:RefreshTree()
-	end
-	
-	local function RefreshTree(self)
-		--Build the list of visible entries from the tree and status tables
-		local status = self.status or self.localstatus
-		local tree = self.tree
-		local lines = self.lines
-		local buttons = self.buttons
-		local levels = self.levels
-		local text = self.text
-		local treeframe = self.treeframe
-		
-		while tremove(lines) do end
-		
-		self:BuildLevel(tree, 1)
-		
-		for i, v in ipairs(buttons) do
-			v:Hide()
-		end
-		
-		local numlines = #lines
-		
-		local maxlines = (math.floor((self.treeframe:GetHeight()or 0) / 20))
-		
-		local first, last
-		
-		if numlines <= maxlines then
-			--the whole tree fits in the frame
-			self.scrollvalue = 0
-			self:ShowScroll(false)
-			first, last = 1, numlines
-		else
-			self:ShowScroll(true)
-			--scrolling will be needed
-			self.noupdate = true
-			self.scrollbar:SetMinMaxValues(0, numlines - maxlines)
-			--check if we are scrolled down too far
-			if numlines - self.scrollvalue < maxlines then
-				self.scrollvalue = numlines - maxlines
-				self.scrollbar:SetValue(self.scrollvalue)
-			end
-			self.noupdate = nil
-			first, last = self.scrollvalue+1, self.scrollvalue + maxlines
-		end
-		
-		local buttonnum = 1
-		for i = first, last do
-			local v = lines[i]
-			local button = buttons[buttonnum]
-			if not button then
-				button = self:CreateButton()
-				if self.showscroll then
-					button:SetWidth(134)
-				else
-					button:SetWidth(150)
-				end
-				buttons[buttonnum] = button
-				button:SetParent(treeframe)
-				button:SetFrameLevel(treeframe:GetFrameLevel()+1)
-				if i == 1 then
-					button:SetPoint("TOPLEFT", self.treeframe,"TOPLEFT",0,0)
-					button:SetPoint("TOPRIGHT", self.treeframe,"TOPRIGHT",-16,0)
-				else
-					button:SetParent(self.treeframe)
-					button:SetPoint("TOPLEFT", buttons[buttonnum-1], "BOTTOMLEFT",0,0)
-					button:SetPoint("TOPRIGHT", buttons[buttonnum-1], "BOTTOMRIGHT",0,0)
-				end
-			end
-
-			UpdateButton(button, levels[v], v,  text[v], self.selected == v, (not lines[i+1]) or levels[lines[i+1]] ~= levels[v] )
-			button:Show()
-			buttonnum = buttonnum + 1
-		end
-
-	end
-	
-	local function SetSelected(self, value)
-		if self.selected ~= value then
-			self.selected = value
-			self:Fire("OnGroupSelected", value)
-		end
-	end
-	
-	local function ShowScroll(self, show)
-		self.showscroll = show
-		if show then
-			self.scrollbar:Show()
-			for i, v in ipairs(self.buttons) do
-				v:SetWidth(134)
-			end
-		else
-			self.scrollbar:Hide()
-			for i, v in ipairs(self.buttons) do
-				v:SetWidth(150)
-			end
-		end
-		
-	end
-	
-	local function Constructor()
-		local frame = CreateFrame("Frame",nil,UIParent)
-		local self = {}
-		self.type = Type
-		self.localstatus = {}
-		self.lines = {}
-		self.levels = {}
-		self.buttons = {}
-		
-		local treeframe = CreateFrame("Frame",nil,frame)
-		treeframe.obj = self
-		treeframe:SetPoint("TOPLEFT",frame,"TOPLEFT",0,0)
-		treeframe:SetPoint("BOTTOMLEFT",frame,"BOTTOMLEFT",0,0)
-		treeframe:SetWidth(150)
-		treeframe:SetScript("OnUpdate",FirstFrameUpdate)
-		treeframe:SetScript("OnSizeChanged",ResizeUpdate)
-		self.treeframe = treeframe
-		self.Release = Release
-		self.Aquire = Aquire
-		
-		self.SetTree = SetTree
-		self.RefreshTree = RefreshTree
-		self.SetStatusTable = SetStatusTable
-		self.BuildLevel = BuildLevel
-		self.CreateButton = CreateButton
-		self.SetSelected = SetSelected
-		self.ShowScroll = ShowScroll
-		
-		self.frame = frame
-		frame.obj = self
-
-		local scrollbar = CreateFrame("Slider",nil,treeframe,"UIPanelScrollBarTemplate")
-		self.scrollbar = scrollbar
-		scrollbar.obj = self
-		self.noupdate = true
-		scrollbar:SetPoint("TOPRIGHT",treeframe,"TOPRIGHT",0,-16)
-		scrollbar:SetPoint("BOTTOMRIGHT",treeframe,"BOTTOMRIGHT",0,16)
-		scrollbar:SetScript("OnValueChanged", OnScrollValueChanged)
-		scrollbar:SetMinMaxValues(0,0)
-		self.scrollvalue = 0
-		scrollbar:SetValueStep(1)
-		scrollbar:SetValue(0)
-		scrollbar:SetWidth(16)
-		self.noupdate = nil
-
-		
-		
-		--Container Support
-		local content = CreateFrame("Frame",nil,frame)
-		self.content = content
-		
-		content:SetPoint("TOPRIGHT",frame,"TOPRIGHT",0,0)
-		content:SetPoint("BOTTOMRIGHT",frame,"BOTTOMRIGHT",0,0)
-		content:SetPoint("LEFT",treeframe,"RIGHT",5,0)
-		
-		AceGUI:RegisterAsContainer(self)
-		--AceGUI:RegisterAsWidget(self)
-		return self
-	end
-	
-	AceGUI:RegisterWidgetType(Type,Constructor)
-end
-
-
 --------------------------
--- Scroll Frame		 --
+-- Scroll Frame		    --
 --------------------------
 do
 	local Type = "ScrollFrame"
@@ -1703,6 +1927,10 @@ do
 		this.obj:FixScroll()
 	end
 	
+	local function LayoutFinished(self,width,height)
+		self.content:SetHeight(height or 0 + 20)
+	end
+	
 
 	local function Constructor()
 		local frame = CreateFrame("Frame",nil,UIParent)
@@ -1715,6 +1943,7 @@ do
 		self.MoveScroll = MoveScroll
 		self.FixScroll = FixScroll
 		self.SetScroll = SetScroll
+		self.LayoutFinished = LayoutFinished
 		
 		self.frame = frame
 		frame.obj = self
@@ -1732,6 +1961,7 @@ do
 		
 		scrollbar.obj = self
 		scrollframe.obj = self
+		content.obj = self
 		
 		scrollframe:SetScrollChild(content)
 		scrollframe:SetPoint("TOPLEFT",frame,"TOPLEFT",8,-12)
@@ -1766,11 +1996,8 @@ do
 end
 
 
-
-
-	
 --------------------------
--- Button		  --
+-- Button		        --
 --------------------------
 do
 	local Type = "Button"
@@ -1844,6 +2071,8 @@ do
 	AceGUI:RegisterWidgetType(Type,Constructor)
 end
 
+
+				
 --[[ Widget Template
 
 --------------------------
@@ -1902,7 +2131,11 @@ end
 -- Very simple Layout, Children are stacked on top of each other down the left side
 AceGUI:RegisterLayout("List",
 	 function(content, children)
+	 
+	 	local height = 0
 		for i, child in ipairs(children) do
+			
+			
 			local frame = child.frame
 			frame:ClearAllPoints()
 			if i == 1 then
@@ -1910,9 +2143,16 @@ AceGUI:RegisterLayout("List",
 			else
 				frame:SetPoint("TOPLEFT",children[i-1].frame,"BOTTOMLEFT",0,0)
 			end
+			height = height + frame:GetHeight()
+			
 			if child.width == "fill" then
 				frame:SetPoint("RIGHT",content,"RIGHT")
 			end
+			
+		end
+		
+		if content.obj.LayoutFinished then
+			content.obj:LayoutFinished(nil, height)
 		end
 	 end
 	)
