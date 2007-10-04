@@ -8,7 +8,7 @@ local function GroupA(content)
 	content:ReleaseChildren()
 	
 	local sf = AceGUI:Create("ScrollFrame")
-	sf:SetLayout("List")
+	sf:SetLayout("Flow")
 	
 	local edit = AceGUI:Create("EditBox")
     edit:SetText("Testing")
@@ -17,13 +17,20 @@ local function GroupA(content)
     edit:SetCallback("OnEnterPressed",function(widget,event,text) widget:SetLabel(text) end )
     edit:SetCallback("OnTextChanged",function(widget,event,text) print(text) end )
     sf:AddChild(edit)
+    
+    local slider = AceGUI:Create("Slider")
+    slider:SetLabel("Group A Slider")
+    slider:SetSliderValues(0,1000,5)
+    slider:SetDisabled(false)
+    sf:AddChild(slider)
+    
 	content:AddChild(sf)
 end
 
 local function GroupB(content)
 	content:ReleaseChildren()
 	local sf = AceGUI:Create("ScrollFrame")
-	sf:SetLayout("List")
+	sf:SetLayout("Flow")
 	
  	local check = AceGUI:Create("CheckBox")
     check:SetLabel("Group B Checkbox")
@@ -44,7 +51,7 @@ local function OtherGroup(content)
 	content:ReleaseChildren()
 	
 	local sf = AceGUI:Create("ScrollFrame")
-	sf:SetLayout("List")
+	sf:SetLayout("Flow")
 	
  	local check = AceGUI:Create("CheckBox")
     check:SetLabel("Test Check")
@@ -53,6 +60,7 @@ local function OtherGroup(content)
     sf:AddChild(check)
     
     local inline = AceGUI:Create("InlineGroup")
+    inline:SetLayout("Flow")
     inline:SetTitle("Inline Group")
 	inline.width = "fill"
 
