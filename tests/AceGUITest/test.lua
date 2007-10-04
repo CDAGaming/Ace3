@@ -24,6 +24,30 @@ local function GroupA(content)
     slider:SetDisabled(false)
     sf:AddChild(slider)
     
+	local heading1 = AceGUI:Create("Heading")
+	heading1:SetText("Heading 1")
+	heading1.width = "fill"
+	sf:AddChild(heading1)
+	
+    for i = 1, 5 do
+	    local radio = AceGUI:Create("CheckBox")
+	    radio:SetLabel("Test Check "..i)
+	    radio:SetCallback("OnValueChanged",function(widget,event,value) print(value and "Check "..i.." Checked" or "Check "..i.." Unchecked") end )
+	    sf:AddChild(radio)
+	end
+	
+	local heading2 = AceGUI:Create("Heading")
+	heading2:SetText("Heading 2")
+	heading2.width = "fill"
+	sf:AddChild(heading2)
+	
+    for i = 1, 5 do
+	    local radio = AceGUI:Create("CheckBox")
+	    radio:SetLabel("Test Check "..i+5)
+	    radio:SetCallback("OnValueChanged",function(widget,event,value) print(value and "Check "..i.." Checked" or "Check "..i.." Unchecked") end )
+	    sf:AddChild(radio)
+	end
+    
 	content:AddChild(sf)
 end
 
@@ -64,6 +88,11 @@ local function OtherGroup(content)
     inline:SetTitle("Inline Group")
 	inline.width = "fill"
 
+	local heading1 = AceGUI:Create("Heading")
+	heading1:SetText("Heading 1")
+	heading1.width = "fill"
+	inline:AddChild(heading1)
+	
     for i = 1, 10 do
 	    local radio = AceGUI:Create("CheckBox")
 	    radio:SetLabel("Test Radio "..i)
@@ -71,6 +100,21 @@ local function OtherGroup(content)
 	    radio:SetType("radio")
 	    inline:AddChild(radio)
 	end
+	
+	local heading2 = AceGUI:Create("Heading")
+	heading2:SetText("Heading 2")
+	heading2.width = "fill"
+	inline:AddChild(heading2)
+	
+    for i = 1, 10 do
+	    local radio = AceGUI:Create("CheckBox")
+	    radio:SetLabel("Test Radio "..i)
+	    radio:SetCallback("OnValueChanged",function(widget,event,value) print(value and "Radio "..i.." Checked" or "Radio "..i.." Unchecked") end )
+	    radio:SetType("radio")
+	    inline:AddChild(radio)
+	end
+	
+	
 	sf:AddChild(inline)
 	content:AddChild(sf)
 end
@@ -125,6 +169,7 @@ function TestFrame()
 	maingroup:SetLayout("Fill")
 	maingroup:SetGroupList({Tab = "Tab Frame", Tree = "Tree Frame"})
 	maingroup:SetGroup("Tab")
+	maingroup:SetTitle("Select Group Type")
 	maingroup:SetCallback("OnGroupSelected", function(widget, event, value)
 		widget:ReleaseChildren()
 		if value == "Tab" then

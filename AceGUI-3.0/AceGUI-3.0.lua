@@ -2310,6 +2310,75 @@ do
 	AceGUI:RegisterWidgetType(Type,Constructor)
 end
 
+--------------------------
+-- Heading 	 			--
+--------------------------
+do
+	local Type = "Heading"
+	
+	local function Aquire(self)
+		self:SetText("")
+	end
+	
+	local function Release(self)
+		self.frame:ClearAllPoints()
+		self.frame:Hide()
+	end
+	
+	local function SetText(self, text)
+		self.label:SetText(text or "")
+	end
+
+	local function Constructor()
+		local frame = CreateFrame("Frame",nil,UIParent)
+		local self = {}
+		self.type = Type
+
+		self.Release = Release
+		self.Aquire = Aquire
+		self.SetText = SetText
+		self.frame = frame
+		frame.obj = self
+
+		frame:SetHeight(18)
+	
+		local label = frame:CreateFontString(nil,"BACKGROUND","GameFontNormal")
+		label:SetPoint("TOP",frame,"TOP",0,0)
+		label:SetPoint("BOTTOM",frame,"BOTTOM",0,0)
+		label:SetJustifyH("CENTER")
+		label:SetHeight(18)
+		self.label = label
+		
+		
+		local left = frame:CreateTexture(nil, "BACKGROUND")
+		self.left = line1
+		left:SetHeight(8)
+		left:SetPoint("LEFT",frame,"LEFT",3,0)
+		left:SetPoint("RIGHT",label,"LEFT",-5,0)
+		left:SetTexture("Interface\\Tooltips\\UI-Tooltip-Border")
+		left:SetTexCoord(0.81, 0.94, 0.5, 1)
+
+		local right = frame:CreateTexture(nil, "BACKGROUND")
+		self.right = right
+		right:SetHeight(8)
+		right:SetPoint("RIGHT",frame,"RIGHT",-3,0)
+		right:SetPoint("LEFT",label,"RIGHT",5,0)
+		right:SetTexture("Interface\\Tooltips\\UI-Tooltip-Border")
+		right:SetTexCoord(0.81, 0.94, 0.5, 1)
+		
+		
+		--Container Support
+		--local content = CreateFrame("Frame",nil,frame)
+		--self.content = content
+		
+		--AceGUI:RegisterAsContainer(self)
+		AceGUI:RegisterAsWidget(self)
+		return self
+	end
+	
+	AceGUI:RegisterWidgetType(Type,Constructor)
+end
+
 				
 --[[ Widget Template
 
@@ -2451,7 +2520,6 @@ AceGUI:RegisterLayout("Flow",
 			if child.width == "fill" then
 				frame:SetPoint("RIGHT",content,"RIGHT")
 				usedwidth = 0
-				colheight = 0
 				colstart = frame
 			end
 		end
