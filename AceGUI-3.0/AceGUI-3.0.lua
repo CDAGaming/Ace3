@@ -124,6 +124,12 @@ do
 		
 	}
 	
+		
+	local function LayoutOnUpdate(this)
+		this:SetScript("OnUpdate",nil)
+		this.obj:DoLayout()
+	end
+	
 	local WidgetContainerBase = {
 		
 		PauseLayout = function(self)
@@ -144,7 +150,7 @@ do
 			tinsert(self.children,child)
 			child:SetParent(self.content)
 			child.frame:Show()
-			self:DoLayout()
+			self.frame:SetScript("OnUpdate",LayoutOnUpdate)
 		end,
 		
 		ReleaseChildren = function(self)
@@ -159,6 +165,13 @@ do
 			self.LayoutFunc = AceGUI:GetLayout(Layout)
 		end,
 	}
+	
+	local function ContentResize(this)
+		if this.lastwidth ~= this:GetWidth() then
+			this.obj:DoLayout()
+		end
+	end
+
 
 	setmetatable(WidgetContainerBase,{__index=WidgetBase})
 
@@ -168,6 +181,7 @@ do
 		widget.userdata = {}
 		widget.events = {}
 		widget.base = WidgetContainerBase
+		widget.content:SetScript("OnSizeChanged",ContentResize)
 		setmetatable(widget,{__index=WidgetContainerBase})
 		widget:SetLayout("List")
 	end
@@ -350,7 +364,7 @@ do
 		frame:SetBackdrop(FrameBackdrop)
 		frame:SetBackdropColor(0,0,0,1)
 		frame:SetScript("OnHide",frameOnClose)
-		frame:SetMinResize(600,200)
+		frame:SetMinResize(400,200)
 		
 		local closebutton = CreateFrame("Button",nil,frame,"UIPanelButtonTemplate")
 		closebutton:SetScript("OnClick", closeOnClick)
@@ -1402,7 +1416,7 @@ do
 			self.text:SetTextColor(0.5,0.5,0.5)
 			SetDesaturation(self.check, true)
 		else
-			self.text:SetTextColor(1,1,1)
+			self.text:SetTextColor(1,.82,0)
 			SetDesaturation(self.check, false)
 		end
 	end
@@ -1471,7 +1485,7 @@ do
 		frame.obj = self
 
 	
-		local text = frame:CreateFontString(nil,"OVERLAY","GameFontNormalSmall")
+		local text = frame:CreateFontString(nil,"OVERLAY","GameFontNormal")
 		self.text = text
 	
 		frame:SetScript("OnEnter",CheckBox_OnEnter)
@@ -1501,11 +1515,10 @@ do
 	
 	
 		text:SetJustifyH("LEFT")
-		text:SetTextColor(1,1,1)
 		frame:SetHeight(24)
 		frame:SetWidth(200)
-		text:SetHeight(24)
-		text:SetPoint("LEFT",check,"RIGHT",0,0)
+		text:SetHeight(18)
+		text:SetPoint("LEFT",check,"RIGHT",0,2)
 	
 		--Container Support
 		--local content = CreateFrame("Frame",nil,frame)
@@ -2072,6 +2085,161 @@ do
 end
 
 
+
+
+--------------------------
+-- Slider  	            --
+--------------------------
+do
+	local Type = "Slider"
+	
+	local function Aquire(self)
+		self:SetDisabled(false)
+		self:SetSliderValues(0,100,1)
+		self:SetValue(0)
+	end
+	
+	local function Release(self)
+		self.frame:ClearAllPoints()
+		self.frame:Hide()
+	end
+	
+	local function Slider_OnValueChanged(this)
+		local self = this.obj
+		if not this.setup then
+			local newvalue
+			newvalue = this:GetValue()
+			if newvalue ~= self.value and not self.disabled then
+				self.value = newvalue
+				self:Fire("OnValueChanged", newvalue)
+			end
+			if self.value then
+				this.obj.valuetext:SetText(math.floor(self.value*10)/10)
+			end
+		end
+	end
+	
+	local function Slider_OnMouseUp(this)
+		local self = this.obj
+
+	end
+	
+	local function SetDisabled(self, disabled)
+		self.disabled = disabled
+		if disabled then
+			self.slider:EnableMouse(false)
+			self.label:SetTextColor(.5,.5,.5)
+			self.hightext:SetTextColor(.5,.5,.5)
+			self.lowtext:SetTextColor(.5,.5,.5)
+			self.valuetext:SetTextColor(.5,.5,.5)
+		else
+			self.slider:EnableMouse(true)
+			self.label:SetTextColor(1,.82,0)
+			self.hightext:SetTextColor(1,1,1)
+			self.lowtext:SetTextColor(1,1,1)
+			self.valuetext:SetTextColor(1,1,1)
+		end
+	end
+	
+	local function SetValue(self, value)
+		self.slider:SetValue(value)
+		self.value = value
+	end
+	
+	local function SetLabel(self, text)
+		self.label:SetText(text)
+	end
+	
+	local function SetSliderValues(self,min, max, step)
+		local frame = self.slider
+		frame.setup = true
+		self.min = min
+		self.max = max
+		self.step = step
+		frame:SetMinMaxValues(min or 0,max or 100)
+		self.lowtext:SetText(min or 0)
+		self.hightext:SetText(max or 100)
+		frame:SetValueStep(step or 1)
+		frame.setup = nil
+	end
+	
+	local SliderBackdrop  = {
+		bgFile = "Interface\\Buttons\\UI-SliderBar-Background",
+		edgeFile = "Interface\\Buttons\\UI-SliderBar-Border",
+		tile = true, tileSize = 8, edgeSize = 8,
+		insets = { left = 3, right = 3, top = 6, bottom = 6 }
+	}
+	
+	local function Constructor()
+		local frame = CreateFrame("Frame",nil,UIParent)
+		local self = {}
+		self.type = Type
+
+		self.Release = Release
+		self.Aquire = Aquire
+		
+		self.frame = frame
+		frame.obj = self
+		
+		self.SetDisabled = SetDisabled
+		self.SetValue = SetValue
+		self.SetSliderValues = SetSliderValues
+		self.SetLabel = SetLabel
+
+		self.slider = CreateFrame("Slider",nil,frame)
+		local slider = self.slider
+		slider:SetScript("OnEnter",Control_OnEnter)
+		slider:SetScript("OnLeave",Control_OnLeave)
+		slider:SetScript("OnMouseUp", Slider_OnMouseUp)
+		slider.obj = self
+		slider:SetOrientation("HORIZONTAL")
+		slider:SetHeight(17)
+		slider:SetHitRectInsets(0,0,-10,-10)
+		slider:SetBackdrop(SliderBackdrop)
+		
+		
+		local label = frame:CreateFontString(nil,"OVERLAY","GameFontNormal")
+		label:SetPoint("TOPLEFT",frame,"TOPLEFT",0,0)
+		label:SetPoint("TOPRIGHT",frame,"TOPRIGHT",0,0)
+		label:SetJustifyH("CENTER")
+		label:SetHeight(18)
+		self.label = label
+	
+		self.lowtext = slider:CreateFontString(nil,"ARTWORK","GameFontHighlightSmall")
+		self.lowtext:SetPoint("TOPLEFT",slider,"BOTTOMLEFT",2,3)
+	
+		self.hightext = slider:CreateFontString(nil,"ARTWORK","GameFontHighlightSmall")
+		self.hightext:SetPoint("TOPRIGHT",slider,"BOTTOMRIGHT",-2,3)
+	
+		self.valuetext = slider:CreateFontString(nil,"ARTWORK","GameFontHighlightSmall")
+		self.valuetext:SetPoint("TOP",slider,"BOTTOM",0,3)
+	
+		slider:SetThumbTexture("Interface\\Buttons\\UI-SliderBar-Button-Horizontal")
+	
+		frame:SetWidth(200)
+		frame:SetHeight(44)
+		slider:SetPoint("TOP",label,"BOTTOM",0,0)
+		slider:SetPoint("LEFT",frame,"LEFT",0,0)
+		slider:SetPoint("RIGHT",frame,"RIGHT",0,0)
+	
+
+		slider:SetValue(self.value or 0)
+		slider:SetScript("OnValueChanged",Slider_OnValueChanged)
+	
+		--Container Support
+		--local content = CreateFrame("Frame",nil,frame)
+		--self.content = content
+		
+		--AceGUI:RegisterAsContainer(self)
+		AceGUI:RegisterAsWidget(self)
+		return self
+	end
+	
+	AceGUI:RegisterWidgetType(Type,Constructor)
+end
+
+
+
 				
 --[[ Widget Template
 
@@ -2162,6 +2330,64 @@ AceGUI:RegisterLayout("Fill",
 	 function(content, children)
 		if children[1] then
 			children[1].frame:SetAllPoints(content)
+			if content.obj.LayoutFinished then
+				content.obj:LayoutFinished(nil, children[1].frame:GetHeight())
+			end
+		end
+	 end
+	)
+	
+AceGUI:RegisterLayout("Flow",
+	 function(content, children)
+	 
+	 	--used height so far
+	 	local height = 0
+	 	--width used in the current row
+	 	local usedwidth = 0
+	 	--height of the current row
+	 	local rowheight = 0
+	 	local width = content:GetWidth() or 0
+	 	--control at the start of the row
+	 	local colstart
+	 	
+		for i, child in ipairs(children) do
+			
+			local frame = child.frame
+			frame:ClearAllPoints()
+			if i == 1 then
+				-- anchor the first control to the top left
+				frame:SetPoint("TOPLEFT",content,"TOPLEFT",0,0)
+				colheight = frame:GetHeight() or 0
+				height = height + colheight
+				colstart = frame
+				usedwidth = frame:GetWidth()
+			else
+				-- if there isn't available width for the control start a new row
+				-- if a control is "fill" it will be on a row of its own full width
+				if usedwidth == 0 or ((frame:GetWidth() or 0) + usedwidth > width) or child.width == "fill" then
+					frame:SetPoint("TOPLEFT",colstart,"TOPLEFT",0,-colheight)
+					colstart = frame
+					colheight = frame:GetHeight() or 0
+					height = height + colheight
+					usedwidth = frame:GetWidth()
+				-- put the control on the current row, adding it to the width and checking if the height needs to be increased
+				else
+					frame:SetPoint("TOPLEFT",children[i-1].frame,"TOPRIGHT",0,0)
+					colheight = math.max(colheight, frame:GetHeight() or 0)
+					usedwidth = frame:GetWidth() + usedwidth
+				end
+			end
+
+			if child.width == "fill" then
+				frame:SetPoint("RIGHT",content,"RIGHT")
+				usedwidth = 0
+				colheight = 0
+				colstart = frame
+			end
+		end
+		
+		if content.obj.LayoutFinished then
+			content.obj:LayoutFinished(nil, height)
 		end
 	 end
 	)
