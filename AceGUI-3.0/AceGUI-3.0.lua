@@ -540,7 +540,7 @@ do
 		frame:SetWidth(100)
 		frame:SetFrameStrata("DIALOG")
 		
-		local titletext = frame:CreateFontString(nil,"OVERLAY","GameFontHighlight")
+		local titletext = frame:CreateFontString(nil,"OVERLAY","GameFontNormal")
 		titletext:SetPoint("TOPLEFT",frame,"TOPLEFT",14,0)
 		titletext:SetPoint("TOPRIGHT",frame,"TOPRIGHT",-14,0)
 		titletext:SetJustifyH("LEFT")
@@ -635,7 +635,7 @@ do
 		frame:SetWidth(100)
 		frame:SetFrameStrata("DIALOG")
 		
-		local titletext = frame:CreateFontString(nil,"OVERLAY","GameFontHighlight")
+		local titletext = frame:CreateFontString(nil,"OVERLAY","GameFontNormal")
 		titletext:SetPoint("TOPLEFT",frame,"TOPLEFT",14,0)
 		titletext:SetPoint("TOPRIGHT",frame,"TOPRIGHT",-14,0)
 		titletext:SetJustifyH("LEFT")
@@ -841,7 +841,7 @@ do
 		frame:SetWidth(100)
 		frame:SetFrameStrata("DIALOG")
 		
-		local titletext = frame:CreateFontString(nil,"OVERLAY","GameFontHighlight")
+		local titletext = frame:CreateFontString(nil,"OVERLAY","GameFontNormal")
 		titletext:SetPoint("TOPLEFT",frame,"TOPLEFT",14,0)
 		titletext:SetPoint("TOPRIGHT",frame,"TOPRIGHT",-14,0)
 		titletext:SetJustifyH("LEFT")
@@ -889,23 +889,36 @@ do
 		local self = this.obj
 		local status = self.status or self.localstatus
 		
-		if this.selected then
-			status[this.value] = not status[this.value]
-		else
-			status[this.value] = true
+		if not this.selected then
 			self:SetSelected(this.value)
 			this.selected = true
 			this:LockHighlight()
+			self:RefreshTree()
 		end
+	end
+	
+	local function ExpandOnClick(this)
+		local button = this.button
+		local self = button.obj
+		local status = self.status or self.localstatus
+		status[button.value] = not status[button.value]
+		self:RefreshTree()
+	end
+	
+	local function ButtonOnDoubleClick(button)
+		local self = button.obj
+		local status = self.status or self.localstatus
+		status[button.value] = not status[button.value]
 		self:RefreshTree()
 	end
 	
 	local function CreateButton(self)
-		local button = CreateFrame("Button",nil,UIParent)
+		local button = CreateFrame("Button",nil,self.treeframe)
 		button.obj = self
 		button:SetHeight(20)
-		button:SetWidth(136)
+
 		button:SetScript("OnClick",ButtonOnClick)
+		button:SetScript("OnDoubleClick", ButtonOnDoubleClick)
 		local line = button:CreateTexture(nil,"BACKGROUND")
 		line:SetWidth(7)
 		line:SetHeight(20)
@@ -920,6 +933,17 @@ do
 		button:SetHighlightTexture("Interface\\PaperDollInfoFrame\\UI-Character-Tab-Highlight")
 		button:GetHighlightTexture():SetBlendMode("ADD")
 
+		local expand = CreateFrame("Button",nil,button)
+		expand.button = button
+		expand:SetNormalTexture("Interface\\Buttons\\UI-PlusButton-Up")
+		expand:SetPushedTexture("Interface\\Buttons\\UI-PlusButton-Down")
+		expand:SetDisabledTexture("Interface\\Buttons\\UI-PlusButton-Disabled")
+		expand:SetHighlightTexture("Interface\\Buttons\\UI-PlusButton-Hilight")
+		expand:SetScript("OnClick",ExpandOnClick)
+		expand:SetWidth(16)
+		expand:SetHeight(16)
+		button.expand = expand
+		
 		local text = button:CreateFontString(nil,"OVERLAY","GameFontNormalSmall")
 		button:SetFontString(text)
 		button.text = text
@@ -933,7 +957,10 @@ do
 		return button
 	end
 
-	local function UpdateButton(button, level, value, text, selected, last)
+	local function UpdateButton(button, level, value, text, selected, last, canExpand, isExpanded, disabled)
+		local self = button.obj
+		local expand = button.expand
+		local frame = self.frame
 		text = text or ""
 		button.value = value
 		if selected then
@@ -946,27 +973,57 @@ do
 		local normalText = button.text
 		local normalTexture = button:GetNormalTexture()
 		local line = button.line
+		button.level = level
 		if ( level == 1 ) then
 			button:SetText(text)
 			normalText:SetPoint("LEFT", button, "LEFT", 4, 0)
-			normalTexture:SetAlpha(1.0)	
+			normalTexture:SetAlpha(1.0)
+			button:SetPoint("LEFT",frame,"LEFT",26,0)
+			expand:SetPoint("RIGHT",button,"LEFT",0,0)
 			line:Hide();
 		elseif ( level == 2 ) then
 			button:SetText(HIGHLIGHT_FONT_COLOR_CODE..text..FONT_COLOR_CODE_CLOSE)
-			normalText:SetPoint("LEFT", button, "LEFT", 12, 0)
+			button:SetPoint("LEFT",frame,"LEFT",34,0)
+			--normalText:SetPoint("LEFT", button, "LEFT", 12, 0)
 			normalTexture:SetAlpha(0.4)
+			expand:SetPoint("RIGHT",button,"LEFT",0,0)
 			line:Hide()
 		elseif ( level >= 3 ) then
 			button:SetText(HIGHLIGHT_FONT_COLOR_CODE..text..FONT_COLOR_CODE_CLOSE)
+			button:SetPoint("LEFT",frame,"LEFT",26,0)
 			normalText:SetPoint("LEFT", button, "LEFT", 20 + (level-3)*8, 0)
 			line:SetPoint("LEFT",button,"LEFT",13 + (level-3)*8,0)
 			normalTexture:SetAlpha(0.0)
+			expand:SetPoint("RIGHT",button,"LEFT",13 + (level-3)*8,0)
 			if ( last ) then
 				line:SetTexCoord(0.4375, 0.875, 0, 0.625)
 			else
 				line:SetTexCoord(0, 0.4375, 0, 0.625)
 			end
 			line:Show();
+		end
+		
+		if canExpand then
+			if isExpanded then
+				expand:SetNormalTexture("Interface\\Buttons\\UI-MinusButton-Up")
+				expand:SetPushedTexture("Interface\\Buttons\\UI-MinusButton-Down")
+				expand:SetDisabledTexture("Interface\\Buttons\\UI-MinusButton-Disabled")
+				expand:Enable()
+			else
+				if disabled then
+					expand:Disable()
+				else
+					expand:Enable()
+				end
+				expand:SetNormalTexture("Interface\\Buttons\\UI-PlusButton-Up")
+				expand:SetPushedTexture("Interface\\Buttons\\UI-PlusButton-Down")
+				expand:SetDisabledTexture("Interface\\Buttons\\UI-PlusButton-Disabled")
+			end
+		else
+			expand:SetNormalTexture(nil)
+			expand:SetPushedTexture(nil)
+			expand:SetDisabledTexture(nil)
+			expand:Disable()
 		end
 	end
 
@@ -1014,10 +1071,16 @@ do
 		local lines = self.lines
 		local levels = self.levels
 		local status = self.status or self.localstatus
+		local hasChildren = self.hasChildren
 		
 		for i, v in ipairs(tree) do
 			lines[#lines+1] = v
 			levels[v] = level
+			if tree[v] then
+				hasChildren[v] = true
+			else
+				hasChildren[v] = nil
+			end
 			if tree[v] and status[v] then
 				self:BuildLevel(tree[v], level+1)
 			end
@@ -1044,6 +1107,7 @@ do
 		local levels = self.levels
 		local text = self.text
 		local treeframe = self.treeframe
+		local hasChildren = self.hasChildren
 		
 		while tremove(lines) do end
 		
@@ -1055,7 +1119,7 @@ do
 		
 		local numlines = #lines
 		
-		local maxlines = (math.floor((self.treeframe:GetHeight()or 0) / 20))
+		local maxlines = (math.floor(((self.treeframe:GetHeight()or 0) - 20 ) / 20))
 		
 		local first, last
 		
@@ -1084,25 +1148,25 @@ do
 			local button = buttons[buttonnum]
 			if not button then
 				button = self:CreateButton()
-				if self.showscroll then
-					button:SetWidth(134)
-				else
-					button:SetWidth(150)
-				end
+
 				buttons[buttonnum] = button
 				button:SetParent(treeframe)
 				button:SetFrameLevel(treeframe:GetFrameLevel()+1)
 				if i == 1 then
-					button:SetPoint("TOPLEFT", self.treeframe,"TOPLEFT",0,0)
+					if self.showscroll then
+						button:SetPoint("TOPRIGHT", self.treeframe,"TOPRIGHT",-26,-10)
+					else
+						button:SetPoint("TOPRIGHT", self.treeframe,"TOPRIGHT",-10,-10)
+					end
 					--button:SetPoint("TOPRIGHT", self.treeframe,"TOPRIGHT",-16,0)
 				else
 					button:SetParent(self.treeframe)
-					button:SetPoint("TOPLEFT", buttons[buttonnum-1], "BOTTOMLEFT",0,0)
+					button:SetPoint("TOPRIGHT", buttons[buttonnum-1], "BOTTOMRIGHT",0,0)
 					--button:SetPoint("TOPRIGHT", buttons[buttonnum-1], "BOTTOMRIGHT",0,0)
 				end
 			end
 
-			UpdateButton(button, levels[v], v,  text[v], self.selected == v, (not lines[i+1]) or levels[lines[i+1]] ~= levels[v] )
+			UpdateButton(button, levels[v], v,  text[v], self.selected == v, (not lines[i+1]) or levels[lines[i+1]] ~= levels[v], hasChildren[v], status[v] )
 			button:Show()
 			buttonnum = buttonnum + 1
 		end
@@ -1120,13 +1184,13 @@ do
 		self.showscroll = show
 		if show then
 			self.scrollbar:Show()
-			for i, v in ipairs(self.buttons) do
-				v:SetWidth(134)
+			if self.buttons[1] then
+				self.buttons[1]:SetPoint("TOPRIGHT", self.treeframe,"TOPRIGHT",-26,-10)
 			end
 		else
 			self.scrollbar:Hide()
-			for i, v in ipairs(self.buttons) do
-				v:SetWidth(150)
+			if self.buttons[1] then
+				self.buttons[1]:SetPoint("TOPRIGHT", self.treeframe,"TOPRIGHT",-10,-10)
 			end
 		end
 		
@@ -1140,20 +1204,21 @@ do
 		self.lines = {}
 		self.levels = {}
 		self.buttons = {}
-		
-		
-		frame:SetBackdrop(PaneBackdrop)
-		frame:SetBackdropColor(0.1,0.1,0.1,0.5)
-		frame:SetBackdropBorderColor(0.4,0.4,0.4)
+		self.hasChildren = {}
 		
 		
 		local treeframe = CreateFrame("Frame",nil,frame)
 		treeframe.obj = self
-		treeframe:SetPoint("TOPLEFT",frame,"TOPLEFT",10,-12)
-		treeframe:SetPoint("BOTTOMLEFT",frame,"BOTTOMLEFT",10,12)
-		treeframe:SetWidth(150)
+		treeframe:SetPoint("TOPLEFT",frame,"TOPLEFT",0,0)
+		treeframe:SetPoint("BOTTOMLEFT",frame,"BOTTOMLEFT",0,0)
+		treeframe:SetWidth(183)
 		treeframe:SetScript("OnUpdate",FirstFrameUpdate)
 		treeframe:SetScript("OnSizeChanged",ResizeUpdate)
+		
+		treeframe:SetBackdrop(PaneBackdrop)
+		treeframe:SetBackdropColor(0.1,0.1,0.1,0.5)
+		treeframe:SetBackdropBorderColor(0.4,0.4,0.4)
+		
 		self.treeframe = treeframe
 		self.Release = Release
 		self.Aquire = Aquire
@@ -1173,8 +1238,8 @@ do
 		self.scrollbar = scrollbar
 		scrollbar.obj = self
 		self.noupdate = true
-		scrollbar:SetPoint("TOPRIGHT",treeframe,"TOPRIGHT",0,-16)
-		scrollbar:SetPoint("BOTTOMRIGHT",treeframe,"BOTTOMRIGHT",0,16)
+		scrollbar:SetPoint("TOPRIGHT",treeframe,"TOPRIGHT",-10,-26)
+		scrollbar:SetPoint("BOTTOMRIGHT",treeframe,"BOTTOMRIGHT",-10,26)
 		scrollbar:SetScript("OnValueChanged", OnScrollValueChanged)
 		scrollbar:SetMinMaxValues(0,0)
 		self.scrollvalue = 0
@@ -1183,14 +1248,181 @@ do
 		scrollbar:SetWidth(16)
 		self.noupdate = nil
 
+		local border = CreateFrame("Frame",nil,frame)
+		self.border = border
+		border:SetPoint("TOPLEFT",frame,"TOPLEFT",179,0)
+		border:SetPoint("BOTTOMRIGHT",frame,"BOTTOMRIGHT",0,0)
+		
+		border:SetBackdrop(PaneBackdrop)
+		border:SetBackdropColor(0.1,0.1,0.1,0.5)
+		border:SetBackdropBorderColor(0.4,0.4,0.4)
+		
 		--Container Support
-		local content = CreateFrame("Frame",nil,frame)
+		local content = CreateFrame("Frame",nil,border)
 		self.content = content
 		content.obj = self
-		content:SetPoint("TOPRIGHT",frame,"TOPRIGHT",0,0)
-		content:SetPoint("BOTTOMRIGHT",frame,"BOTTOMRIGHT",0,0)
-		content:SetPoint("LEFT",treeframe,"RIGHT",5,0)
+		content:SetPoint("TOPLEFT",border,"TOPLEFT",10,-10)
+		content:SetPoint("BOTTOMRIGHT",border,"BOTTOMRIGHT",-10,10)
 		
+		AceGUI:RegisterAsContainer(self)
+		--AceGUI:RegisterAsWidget(self)
+		return self
+	end
+	
+	AceGUI:RegisterWidgetType(Type,Constructor)
+end
+
+--------------------------
+-- Scroll Frame		    --
+--------------------------
+do
+	local Type = "ScrollFrame"
+	
+	local function Aquire(self)
+
+	end
+	
+	local function Release(self)
+		self.frame:ClearAllPoints()
+		self.frame:Hide()
+	end
+	
+	local function SetScroll(self, value)
+		local frame, child = self.scrollframe, self.content
+		local viewheight = frame:GetHeight()
+		local height = child:GetHeight()
+		local offset
+		if viewheight > height then
+			offset = 0
+		else
+			offset = floor((height - viewheight) / 1000.0 * value)
+		end
+		child:ClearAllPoints()
+		child:SetPoint("TOPLEFT",frame,"TOPLEFT",0,offset)
+		child:SetPoint("TOPRIGHT",frame,"TOPRIGHT",0,offset)
+		child.offset = offset
+
+		self.scrollvalue = value
+	end
+	
+	local function MoveScroll(self, value)
+		local frame, child = self.scrollframe, self.content
+		local height, viewheight = frame:GetHeight(), child:GetHeight()
+		if height > viewheight then
+			self.scrollbar:Hide()
+		else
+			self.scrollbar:Show()
+			local diff = height - viewheight
+			local delta = 1
+			if value < 0 then
+				delta = -1
+			end
+			self.scrollbar:SetValue(math.min(math.max(self.scrollvalue + delta*(1000/(diff/45)),0), 1000))
+		end
+	end
+	
+	local function FixScroll(self)
+		if self.noFixScroll then return end
+		local frame, child = self.scrollframe, self.content
+		local height, viewheight = frame:GetHeight(), child:GetHeight()
+		local offset = child.offset
+		if not offset then
+			offset = 0
+		end
+		local curvalue = self.scrollbar:GetValue()
+
+		if viewheight < height then
+			self.scrollbar:Hide()
+			self.scrollbar:SetValue(0)
+			self.scrollframe:SetPoint("BOTTOMRIGHT",self.frame,"BOTTOMRIGHT",0,0)
+		else
+			self.scrollbar:Show()
+			self.scrollframe:SetPoint("BOTTOMRIGHT",self.frame,"BOTTOMRIGHT",-16,0)
+			local value = (offset / (viewheight - height) * 1000)
+			if value > 1000 then value = 1000 end
+			self.scrollbar:SetValue(value)
+			self:SetScroll(value)
+			if value < 1000 then
+				child:ClearAllPoints()
+				child:SetPoint("TOPLEFT",frame,"TOPLEFT",0,offset)
+				child:SetPoint("TOPRIGHT",frame,"TOPRIGHT",0,offset)
+				child.offset = offset
+			end
+		end
+	end
+	
+	local function OnMouseWheel(this,value)
+		this.obj:MoveScroll(value)
+	end
+
+	local function OnScrollValueChanged(this, value)
+		this.obj:SetScroll(value)
+	end
+	
+	local function OnSizeChanged(this)
+		this.obj:FixScroll()
+	end
+	
+	local function LayoutFinished(self,width,height)
+		self.content:SetHeight(height or 0 + 20)
+	end
+	
+
+	local function Constructor()
+		local frame = CreateFrame("Frame",nil,UIParent)
+		local self = {}
+		self.type = Type
+
+		self.Release = Release
+		self.Aquire = Aquire
+		
+		self.MoveScroll = MoveScroll
+		self.FixScroll = FixScroll
+		self.SetScroll = SetScroll
+		self.LayoutFinished = LayoutFinished
+		
+		self.frame = frame
+		frame.obj = self
+
+		
+		
+		
+		--Container Support
+		local scrollframe = CreateFrame("ScrollFrame",nil,frame)
+		local content = CreateFrame("Frame",nil,scrollframe)
+		local scrollbar = CreateFrame("Slider",nil,scrollframe,"UIPanelScrollBarTemplate")
+		self.scrollframe = scrollframe
+		self.content = content
+		self.scrollbar = scrollbar
+		
+		scrollbar.obj = self
+		scrollframe.obj = self
+		content.obj = self
+		
+		scrollframe:SetScrollChild(content)
+		scrollframe:SetPoint("TOPLEFT",frame,"TOPLEFT",0,0)
+		scrollframe:SetPoint("BOTTOMRIGHT",frame,"BOTTOMRIGHT",0,0)
+		scrollframe:EnableMouseWheel(true)
+		scrollframe:SetScript("OnMouseWheel", OnMouseWheel)
+		scrollframe:SetScript("OnSizeChanged", OnSizeChanged)
+		
+		
+		content:SetPoint("TOPLEFT",scrollframe,"TOPLEFT",0,0)
+		content:SetPoint("TOPRIGHT",scrollframe,"TOPRIGHT",0,0)
+		content:SetHeight(400)
+		
+		scrollbar:SetPoint("TOPLEFT",scrollframe,"TOPRIGHT",0,-16)
+		scrollbar:SetPoint("BOTTOMLEFT",scrollframe,"BOTTOMRIGHT",0,16)
+		scrollbar:SetScript("OnValueChanged", OnScrollValueChanged)
+		scrollbar:SetMinMaxValues(0,1000)
+		scrollbar:SetValueStep(1)
+		scrollbar:SetValue(0)
+		scrollbar:SetWidth(16)
+		
+		self.scrollvalue = 0
+		
+
+		self:FixScroll()
 		AceGUI:RegisterAsContainer(self)
 		--AceGUI:RegisterAsWidget(self)
 		return self
@@ -1851,163 +2083,6 @@ do
 	AceGUI:RegisterWidgetType(Type,Constructor)
 end
 
---------------------------
--- Scroll Frame		    --
---------------------------
-do
-	local Type = "ScrollFrame"
-	
-	local function Aquire(self)
-
-	end
-	
-	local function Release(self)
-		self.frame:ClearAllPoints()
-		self.frame:Hide()
-	end
-	
-	local function SetScroll(self, value)
-		local frame, child = self.scrollframe, self.content
-		local viewheight = frame:GetHeight()
-		local height = child:GetHeight()
-		local offset
-		if viewheight > height then
-			offset = 0
-		else
-			offset = floor((height - viewheight) / 1000.0 * value)
-		end
-		child:ClearAllPoints()
-		child:SetPoint("TOPLEFT",frame,"TOPLEFT",0,offset)
-		child:SetPoint("TOPRIGHT",frame,"TOPRIGHT",0,offset)
-		child.offset = offset
-
-		self.scrollvalue = value
-	end
-	
-	local function MoveScroll(self, value)
-		local frame, child = self.scrollframe, self.content
-		local height, viewheight = frame:GetHeight(), child:GetHeight()
-		if height > viewheight then
-			self.scrollbar:Hide()
-		else
-			self.scrollbar:Show()
-			local diff = height - viewheight
-			local delta = 1
-			if value < 0 then
-				delta = -1
-			end
-			self.scrollbar:SetValue(math.min(math.max(self.scrollvalue + delta*(1000/(diff/45)),0), 1000))
-		end
-	end
-	
-	local function FixScroll(self)
-		if self.noFixScroll then return end
-		local frame, child = self.scrollframe, self.content
-		local height, viewheight = frame:GetHeight(), child:GetHeight()
-		local offset = child.offset
-		if not offset then
-			offset = 0
-		end
-		local curvalue = self.scrollbar:GetValue()
-
-		if viewheight < height then
-			self.scrollbar:Hide()
-			self.scrollbar:SetValue(0)
-		else
-			self.scrollbar:Show()
-			local value = (offset / (viewheight - height) * 1000)
-			if value > 1000 then value = 1000 end
-			self.scrollbar:SetValue(value)
-			self:SetScroll(value)
-			if value < 1000 then
-				child:ClearAllPoints()
-				child:SetPoint("TOPLEFT",frame,"TOPLEFT",0,offset)
-				child:SetPoint("TOPRIGHT",frame,"TOPRIGHT",0,offset)
-				child.offset = offset
-			end
-		end
-	end
-	
-	local function OnMouseWheel(this,value)
-		this.obj:MoveScroll(value)
-	end
-
-	local function OnScrollValueChanged(this, value)
-		this.obj:SetScroll(value)
-	end
-	
-	local function OnSizeChanged(this)
-		this.obj:FixScroll()
-	end
-	
-	local function LayoutFinished(self,width,height)
-		self.content:SetHeight(height or 0 + 20)
-	end
-	
-
-	local function Constructor()
-		local frame = CreateFrame("Frame",nil,UIParent)
-		local self = {}
-		self.type = Type
-
-		self.Release = Release
-		self.Aquire = Aquire
-		
-		self.MoveScroll = MoveScroll
-		self.FixScroll = FixScroll
-		self.SetScroll = SetScroll
-		self.LayoutFinished = LayoutFinished
-		
-		self.frame = frame
-		frame.obj = self
-
-		
-		
-		
-		--Container Support
-		local scrollframe = CreateFrame("ScrollFrame",nil,frame)
-		local content = CreateFrame("Frame",nil,scrollframe)
-		local scrollbar = CreateFrame("Slider",nil,scrollframe,"UIPanelScrollBarTemplate")
-		self.scrollframe = scrollframe
-		self.content = content
-		self.scrollbar = scrollbar
-		
-		scrollbar.obj = self
-		scrollframe.obj = self
-		content.obj = self
-		
-		scrollframe:SetScrollChild(content)
-		scrollframe:SetPoint("TOPLEFT",frame,"TOPLEFT",8,-12)
-		scrollframe:SetPoint("BOTTOMRIGHT",frame,"BOTTOMRIGHT",-28,12)
-		scrollframe:EnableMouseWheel(true)
-		scrollframe:SetScript("OnMouseWheel", OnMouseWheel)
-		scrollframe:SetScript("OnSizeChanged", OnSizeChanged)
-		
-		
-		content:SetPoint("TOPLEFT",scrollframe,"TOPLEFT",0,0)
-		content:SetPoint("TOPRIGHT",scrollframe,"TOPRIGHT",0,0)
-		content:SetHeight(400)
-		
-		scrollbar:SetPoint("TOPLEFT",scrollframe,"TOPRIGHT",0,-16)
-		scrollbar:SetPoint("BOTTOMLEFT",scrollframe,"BOTTOMRIGHT",0,16)
-		scrollbar:SetScript("OnValueChanged", OnScrollValueChanged)
-		scrollbar:SetMinMaxValues(0,1000)
-		scrollbar:SetValueStep(1)
-		scrollbar:SetValue(0)
-		scrollbar:SetWidth(16)
-		
-		self.scrollvalue = 0
-		
-
-		self:FixScroll()
-		AceGUI:RegisterAsContainer(self)
-		--AceGUI:RegisterAsWidget(self)
-		return self
-	end
-	
-	AceGUI:RegisterWidgetType(Type,Constructor)
-end
-
 
 --------------------------
 -- Button		        --
@@ -2083,9 +2158,6 @@ do
 	
 	AceGUI:RegisterWidgetType(Type,Constructor)
 end
-
-
-
 
 --------------------------
 -- Slider  	            --
@@ -2237,8 +2309,6 @@ do
 	
 	AceGUI:RegisterWidgetType(Type,Constructor)
 end
-
-
 
 				
 --[[ Widget Template
