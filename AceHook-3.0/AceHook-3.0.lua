@@ -60,10 +60,15 @@ end
 
 function createFunctionHook(self, handler, orig, secure, failsafe)
 	local uid
+	local method = type(handler) == "string"
 	uid = function(...)
 		if actives[uid] then
 			if failsafe then orig(...) end -- failsafe?
-			return handler == "string" and self[handler](self, ...) or handler(...) -- method or func?
+			if method then
+				return self[handler](self, ...)
+			else
+				return handler(...)
+			end
 		elseif not secure then -- backup on non secure
 			return orig(...)
 		end
