@@ -15,6 +15,12 @@ local pcall = pcall
 local select = select
 local pairs = pairs
 local ipairs = ipairs
+local type = type
+local assert = assert
+local tinsert = tinsert
+local tremove = tremove
+local CreateFrame = CreateFrame
+local UIParent = UIParent
 
 local function safecall(func, ...)
 	local success, err = pcall(func, ...)
@@ -45,7 +51,7 @@ do
 		end
 		return newObj
 	end
-	-- Releases an instace to the Pool
+	-- Releases an instance to the Pool
 	function del(obj,type)
 		if not type then
 			type = "table"
@@ -67,12 +73,18 @@ function AceGUI:Create(type)
 	if reg[type] then
 		local widget = new(type,reg[type])
 		widget:Aquire()
+		if widget.ResumeLayout then
+			widget:ResumeLayout()
+		end
 		return widget
 	end
 end
 
 -- Releases a widget Object
 function AceGUI:Release(widget)
+	if widget.PauseLayout then
+		widget:PauseLayout()
+	end
 	if widget.ReleaseChildren then
 		widget:ReleaseChildren()
 	end
@@ -80,9 +92,12 @@ function AceGUI:Release(widget)
 		widget.userdata[k] = nil
 	end
 	for k in pairs(widget.events) do
-		widget.userdata[k] = nil
+		widget.events[k] = nil
 	end
 	widget:Release()
+	--widget.frame:SetParent(nil)
+	widget.frame:ClearAllPoints()
+	widget.frame:Hide()
 	del(widget,widget.type)
 end
 
@@ -155,7 +170,7 @@ do
 		
 		ReleaseChildren = function(self)
 			local children = self.children
-			for i = #children, 1, -1 do
+			for i in ipairs(children) do
 				AceGUI:Release(children[i])
 				children[i] = nil
 			end
@@ -262,11 +277,7 @@ local ControlBackdrop  = {
 		content - frame or derivitive that children will be anchored to
 		
 	The Widget can supply the following Optional Members
-	
-	FrameLevelChanged(level) - Called when the frame level is changed
-		.frame will already be set to the new level
-		.content will be set to level+10 if the control is a container, use level to level+9 for your widgets elements if needed
-		children will be set to .contents level + 1
+
 
 ]]
 
@@ -329,12 +340,11 @@ do
 	end
 	
 	local function Aquire(self)
-
+		self.frame:SetParent(UIParent)
 	end
 	
 	local function Release(self)
-		self.frame:ClearAllPoints()
-		self.frame:Hide()
+
 	end
 	
 
@@ -349,7 +359,6 @@ do
 		self.Release = Release
 		self.Aquire = Aquire
 		self.SetStatusText = SetStatusText
-		self.FrameLevelChanged = FrameLevelChanged
 		
 		self.frame = frame
 		frame.obj = self
@@ -530,7 +539,6 @@ do
 		self.Release = Release
 		self.Aquire = Aquire
 		self.SetTitle = SetTitle
-		self.FrameLevelChanged = FrameLevelChanged
 		self.frame = frame
 		self.LayoutFinished = LayoutFinished
 		
@@ -596,6 +604,7 @@ do
 	local function Release(self)
 		self.frame:ClearAllPoints()
 		self.frame:Hide()
+		self.dropdown.list = nil
 	end
 	
 	local function SetTitle(self,title)
@@ -616,7 +625,7 @@ do
 	end
 	
 	local function Constructor()
-		local frame = CreateFrame("Frame",nil,UIParent)
+		local frame = CreateFrame("Frame")
 		local self = {}
 		self.type = Type
 
@@ -624,7 +633,6 @@ do
 		self.Aquire = Aquire
 		self.SetTitle = SetTitle
 		
-		self.FrameLevelChanged = FrameLevelChanged
 		self.SetGroupList = SetGroupList
 		self.SetGroup = SetGroup
 
@@ -1469,7 +1477,7 @@ do
 	end
 	
 
-	local function UglyScrollLeft()
+	local function UglyScrollLeft(this)
 	  this:HighlightText(0,1);
 	  this:Insert(" "..strsub(this:GetText(),1,1));
 	  this:HighlightText(0,1);
@@ -1535,7 +1543,6 @@ do
 		self.SetDisabled = SetDisabled
 		self.SetText = SetText
 		self.SetWidth = SetWidth
-		self.FrameLevelChanged = FrameLevelChanged
 		self.SetLabel = SetLabel
 		
 		self.frame = frame
@@ -1792,7 +1799,7 @@ do
 	
 	local function SetValue(self, value)
 		if self.list then
-			self.editbox:SetText(self.list[value])
+			self.editbox:SetText(self.list[value] or "")
 		end
 		self.editbox.value = value
 	end
@@ -2001,9 +2008,7 @@ do
 		self.CreateLine = CreateLine
 		self.ClearPullout = ClearPullout
 		self.BuildPullout = BuildPullout
-		self.UpdateLine = UpdateLine
 		self.SetText = SetText
-		self.FrameLevelChanged = FrameLevelChanged
 		self.SetValue = SetValue
 		self.SetList = SetList
 		self.AddItem = AddItem
@@ -2351,7 +2356,7 @@ do
 		
 		
 		local left = frame:CreateTexture(nil, "BACKGROUND")
-		self.left = line1
+		self.left = left
 		left:SetHeight(8)
 		left:SetPoint("LEFT",frame,"LEFT",3,0)
 		left:SetPoint("RIGHT",label,"LEFT",-5,0)
@@ -2487,7 +2492,7 @@ AceGUI:RegisterLayout("Flow",
 	 	local rowheight = 0
 	 	local width = content:GetWidth() or 0
 	 	--control at the start of the row
-	 	local colstart
+	 	local rowstart
 	 	
 		for i, child in ipairs(children) do
 			
@@ -2496,23 +2501,23 @@ AceGUI:RegisterLayout("Flow",
 			if i == 1 then
 				-- anchor the first control to the top left
 				frame:SetPoint("TOPLEFT",content,"TOPLEFT",0,0)
-				colheight = frame:GetHeight() or 0
-				height = height + colheight
-				colstart = frame
+				rowheight = frame:GetHeight() or 0
+				height = height + rowheight
+				rowstart = frame
 				usedwidth = frame:GetWidth()
 			else
 				-- if there isn't available width for the control start a new row
 				-- if a control is "fill" it will be on a row of its own full width
 				if usedwidth == 0 or ((frame:GetWidth() or 0) + usedwidth > width) or child.width == "fill" then
-					frame:SetPoint("TOPLEFT",colstart,"TOPLEFT",0,-colheight)
-					colstart = frame
-					colheight = frame:GetHeight() or 0
-					height = height + colheight
+					frame:SetPoint("TOPLEFT",rowstart,"TOPLEFT",0,-rowheight)
+					rowstart = frame
+					rowheight = frame:GetHeight() or 0
+					height = height + rowheight
 					usedwidth = frame:GetWidth()
 				-- put the control on the current row, adding it to the width and checking if the height needs to be increased
 				else
 					frame:SetPoint("TOPLEFT",children[i-1].frame,"TOPRIGHT",0,0)
-					colheight = math.max(colheight, frame:GetHeight() or 0)
+					rowheight = math.max(rowheight, frame:GetHeight() or 0)
 					usedwidth = frame:GetWidth() + usedwidth
 				end
 			end
@@ -2520,7 +2525,7 @@ AceGUI:RegisterLayout("Flow",
 			if child.width == "fill" then
 				frame:SetPoint("RIGHT",content,"RIGHT")
 				usedwidth = 0
-				colstart = frame
+				rowstart = frame
 			end
 		end
 		
