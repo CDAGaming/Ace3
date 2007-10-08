@@ -51,6 +51,7 @@ do
 	assert(db.profile.doubleStarTest.randomkey.doubleStarDefault == "doubleStarDefault")
 	assert(db.profile.doubleStarTest.sibling.siblingDefault == "siblingDefault")
 	assert(db.profile.doubleStarTest.sibling.doubleStarDefault == "doubleStarDefault")
+	assert(db.profile.doubleStarTest.siblingDeriv.doubleStarDefault == "overruledDefault")
 	assert(db.profile.starTest2.randomkey == "fun")
 	assert(db.profile.starTest2.sibling == "notfun")
 	
