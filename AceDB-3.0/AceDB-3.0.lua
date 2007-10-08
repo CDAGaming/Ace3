@@ -35,7 +35,7 @@ end
 -- When a ["*"] default section is indexed with a new key, a table is returned
 -- and set in the host table.  These tables must be cleaned up by removeDefaults
 -- in order to ensure we don't write empty default tables.
-local function copyDefaults(dest, src, force)
+local function copyDefaults(dest, src)
 	for k,v in pairs(src) do
 		if k == "*" or k == "**" then
 			if type(v) == "table" then
@@ -56,14 +56,14 @@ local function copyDefaults(dest, src, force)
 				setmetatable(dest, mt)
 			end
 		elseif type(v) == "table" then
-			if not dest[k] then dest[k] = {} end
-			copyDefaults(dest[k], v, force)
+			if not rawget(dest, k) then rawset(dest, k, {}) end
+			copyDefaults(dest[k], v)
 			if src['**'] then
 				copyDefaults(dest[k], src['**'])
 			end
 		else
-			if (dest[k] == nil) or force then
-				dest[k] = v
+			if rawget(dest, k) == nil then
+				rawset(dest, k, v)
 			end
 		end
 	end
