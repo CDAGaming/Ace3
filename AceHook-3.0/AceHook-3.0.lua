@@ -277,7 +277,7 @@ function AceHook:Unhook(obj, method)
 	end
 	
 	if not uid or not actives[uid] then
-		error(string.format("%s: Attempting to unhook non existant hook.", usage), 2) -- should we let this fail silently?
+		return false
 	end
 	
 	actives[uid], handlers[uid] = nil, nil
@@ -303,6 +303,7 @@ function AceHook:Unhook(obj, method)
 		self.hooks[method] = nil
 		registry[self][method] = nil
 	end
+	return true
 end
 
 function AceHook:UnhookAll()
