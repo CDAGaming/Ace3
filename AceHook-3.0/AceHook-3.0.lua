@@ -80,7 +80,7 @@ end
 function donothing() end
 
 function hook(self, obj, method, handler, script, secure, raw, forceSecure, usage)
-	if not handler then hander = method end
+	if not handler then handler = method end
 	
 	-- These asserts make sure AceHooks's devs play by the rules.
 	assert(not script or type(script) == "boolean")
