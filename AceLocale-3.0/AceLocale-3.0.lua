@@ -5,6 +5,10 @@ local AceLocale, oldminor = LibStub:NewLibrary(MAJOR, MINOR)
 
 if not AceLocale then return end -- no upgrade needed
 
+local gameLocale = GetLocale()
+if gameLocale == "enGB" then
+	gameLocale = "enUS"
+end
 
 AceLocale.apps = AceLocale.apps or {}          -- array of ["AppName"]=localetableref
 AceLocale.appnames = AceLocale.appnames or {}  -- array of [localetableref]="AppName"
@@ -54,11 +58,8 @@ local writedefaultproxy = setmetatable({}, {
 function AceLocale:NewLocale(application, locale, isDefault)
 
 	-- GAME_LOCALE allows translators to test translations of addons without having that wow client installed
-	-- STOP MOVING THIS CHUNK OUT TO GLOBAL SCOPE GODDAMNIT!!!!!!  /Mikk
-	local gameLocale = GAME_LOCALE or GetLocale()
-	if gameLocale == "enGB" then
-		gameLocale = "enUS"
-	end
+	-- It also allows users to pick which locale to use (provided they have some addon that sets it)
+	local gameLocale = GAME_LOCALE or gameLocale
 
 	if locale ~= gameLocale and not isDefault then
 		return -- nop, we don't need these translations
