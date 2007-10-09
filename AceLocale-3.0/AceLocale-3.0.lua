@@ -5,11 +5,6 @@ local AceLocale, oldminor = LibStub:NewLibrary(MAJOR, MINOR)
 
 if not AceLocale then return end -- no upgrade needed
 
--- Moved out of NewLocale since this should never change... should it?
-local gameLocale = GAME_LOCALE or GetLocale()
-if gameLocale == "enGB" then
-	gameLocale = "enUS"
-end
 
 AceLocale.apps = AceLocale.apps or {}          -- array of ["AppName"]=localetableref
 AceLocale.appnames = AceLocale.appnames or {}  -- array of [localetableref]="AppName"
@@ -28,7 +23,7 @@ local registering
 -- This metatable proxy is used when registering nondefault locales
 local writeproxy = setmetatable({}, {
 	__newindex = function(self, key, value)
-		rawset(registrying, key, value == true and key or value) -- assigning values: replace 'true' with key string
+		rawset(registering, key, value == true and key or value) -- assigning values: replace 'true' with key string
 	end,
 	__index = function() assert(false) end
 })
@@ -57,6 +52,14 @@ local writedefaultproxy = setmetatable({}, {
 --
 -- Returns a table where localizations can be filled out, or nil if the locale is not needed
 function AceLocale:NewLocale(application, locale, isDefault)
+
+	-- GAME_LOCALE allows translators to test translations of addons without having that wow client installed
+	-- STOP MOVING THIS CHUNK OUT TO GLOBAL SCOPE GODDAMNIT!!!!!!  /Mikk
+	local gameLocale = GAME_LOCALE or GetLocale()
+	if gameLocale == "enGB" then
+		gameLocale = "enUS"
+	end
+
 	if locale ~= gameLocale and not isDefault then
 		return -- nop, we don't need these translations
 	end
