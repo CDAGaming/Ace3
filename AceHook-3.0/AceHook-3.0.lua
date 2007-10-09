@@ -139,13 +139,15 @@ function hook(self, obj, method, handler, script, secure, raw, forceSecure, usag
 	
 	if uid then
 		if actives[uid] then
-			error(string.format("Attempting to rehook already active hook %s.", method)) -- should this also fail silently?
+			-- Only two sane choices exist here.  We either a) error 100% of the time or b) always unhook and then hook
+			-- choice b would likely lead to odd debuging conditions or other mysteries so we're going with a.
+			error(string.format("Attempting to rehook already active hook %s.", method))
 		end
 		
-		if handlers[uid] == handler then
+		if handlers[uid] == handler then -- turn on a decative hook, note enclosures break this ability, small memory leak
 			actives[uid] = true
 			return
-		elseif obj then
+		elseif obj then -- is there any reason not to call unhook instead of doing the following several lines?
 			if self.hooks and self.hooks[obj] then
 				self.hooks[obj][method] = nil
 			end
@@ -162,7 +164,7 @@ function hook(self, obj, method, handler, script, secure, raw, forceSecure, usag
 	
 	local orig
 	if script then
-		orig = obj:GetScript(method) or donothing  -- I'm assuming that script hooking returns nil if there is no original function.
+		orig = obj:GetScript(method) or donothing
 	elseif obj then
 		orig = obj[method]
 	else
@@ -170,7 +172,7 @@ function hook(self, obj, method, handler, script, secure, raw, forceSecure, usag
 	end
 	
 	if not orig then
-		error(string.format("%s: Attempting to hook a non existing function", usage), 3)
+		error(string.format("%s: Attempting to hook a non existing target", usage), 3)
 	end
 	
 	uid = createHook(self, handler, orig, secure, not raw)
@@ -277,6 +279,7 @@ function AceHook:Unhook(obj, method)
 	end
 	
 	if not uid or not actives[uid] then
+		-- Declining to error on an unneeded unhook since the end effect is the same and this would just be annoying.
 		return false
 	end
 	
