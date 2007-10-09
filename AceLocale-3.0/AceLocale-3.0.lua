@@ -5,9 +5,14 @@ local AceLocale, oldminor = LibStub:NewLibrary(MAJOR, MINOR)
 
 if not AceLocale then return end -- no upgrade needed
 
+-- Moved out of NewLocale since this should never change... should it?
+local gameLocale = GAME_LOCALE or GetLocale()
+if gameLocale == "enGB" then
+	gameLocale = "enUS"
+end
+
 AceLocale.apps = AceLocale.apps or {}          -- array of ["AppName"]=localetableref
 AceLocale.appnames = AceLocale.appnames or {}  -- array of [localetableref]="AppName"
-
 
 -- This metatable is used on all tables returned from GetLocale
 local readmeta = {
@@ -17,23 +22,16 @@ local readmeta = {
 	end
 }
 
-
 -- Remember the locale table being registered right now
 local registering
 
 -- This metatable proxy is used when registering nondefault locales
 local writeproxy = setmetatable({}, {
 	__newindex = function(self, key, value)
-		-- assigning values: replace 'true' with key string
-		if value == true then
-			rawset(registering, key, key)
-		else
-			rawset(registering, key, value)
-		end
+		rawset(registrying, key, value == true and key or value) -- assigning values: replace 'true' with key string
 	end,
 	__index = function() assert(false) end
 })
-
 
 -- This metatable proxy is used when registering the default locale. 
 -- It refuses to overwrite existing values
@@ -42,21 +40,14 @@ local writeproxy = setmetatable({}, {
 --           loaded has a translation for the current locale, the translation
 --           doesn't get overwritten.
 --
-
 local writedefaultproxy = setmetatable({}, {
 	__newindex = function(self, key, value)
-		if rawget(registering, key) then
-			return	-- don't allow default locale to overwrite current locale stuff
-		end
-		if value == true then
-			rawset(registering, key, key)
-		else
-			rawset(registering, key, value)
+		if not rawget(registering, key) then
+			rawset(registering, key, value == true and key or value)
 		end
 	end,
 	__index = function() assert(false) end
 })
-
 
 -- AceLocale:NewLocale(application, locale, isDefault)
 --
@@ -65,14 +56,7 @@ local writedefaultproxy = setmetatable({}, {
 --  isDefault (string)    - if this is the default locale being registered
 --
 -- Returns a table where localizations can be filled out, or nil if the locale is not needed
-
 function AceLocale:NewLocale(application, locale, isDefault)
-	
-	local gameLocale = GAME_LOCALE or GetLocale()
-	if gameLocale == "enGB" then
-		gameLocale = "enUS"
-	end
-	
 	if locale ~= gameLocale and not isDefault then
 		return -- nop, we don't need these translations
 	end
@@ -94,7 +78,6 @@ function AceLocale:NewLocale(application, locale, isDefault)
 	return writeproxy
 end
 
-
 -- AceLocale:GetLocale(application [, silent])
 --
 --  application (string) - unique name of addon
@@ -102,7 +85,6 @@ end
 --
 -- Returns localizations for the current locale or default locale
 -- Errors if nothing is registered (spank developer, not just a missing translation)
-
 function AceLocale:GetLocale(application, silent)
 	if not silent and not AceLocale.apps[application] then
 		error("Usage: GetLocale(application[, silent]): 'application' - No locales registered for '"..tostring(application).."'", 2)
