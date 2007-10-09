@@ -105,13 +105,13 @@ obj:ScheduleTimer(function() t6s=t6s+1 end, 1)	-- fire up a single oneshot timer
 
 obj.ScheduleTimer = 12345
 
-dofile("../"..MAJOR..".lua")
+dofile("../"..MAJOR.."/"..MAJOR..".lua")
 
 assert(obj.ScheduleTimer == 12345)	-- shouldn't have gotten replaced yet
 
 LibStub.minors[MAJOR] = LibStub.minors[MAJOR] - 1
 
-dofile("../"..MAJOR..".lua")
+dofile("../"..MAJOR.."/"..MAJOR..".lua")
 
 assert(type(obj.ScheduleTimer)=="function")	-- should have been replaced now
 

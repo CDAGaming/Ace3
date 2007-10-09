@@ -2,7 +2,7 @@ dofile("AceTimer-3.0-utils.lua")
 
 local MAJOR = "AceTimer-3.0"
 
-dofile("../"..MAJOR..".lua")
+dofile("../"..MAJOR.."/"..MAJOR..".lua")
 
 local AceTimer,minor = LibStub:GetLibrary(MAJOR)
 
@@ -49,7 +49,7 @@ assert(msg == "Usage: ScheduleRepeatingTimer(callback, delay, arg): 'callback' -
 
 ok,msg = pcall(AceTimer.CancelAllTimers, AceTimer)
 assert(not ok)
-assert(string.match(msg, "^../AceTimer%-3.0.lua:%d*: assertion failed!"), msg)
+assert(string.match(msg, "^../AceTimer%-3.0/AceTimer%-3.0.lua:%d*: assertion failed!"), msg)
 
 
 -------------------------------------------------------------------
