@@ -86,7 +86,7 @@ function hook(self, obj, method, handler, script, secure, raw, forceSecure, usag
 	assert(not script or type(script) == "boolean")
 	assert(not secure or type(secure) == "boolean")
 	assert(not raw or type(raw) == "boolean")
-	assert(not forceSecure or type(forceSecure("boolean")))
+	assert(not forceSecure or type(forceSecure) == "boolean")
 	assert(usage)
 	
 	-- Error checking Battery!
