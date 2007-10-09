@@ -22,7 +22,6 @@ if not AceEvent.events then
 	)
 end
 
-
 -- APIs and registry for IPC messages, using CallbackHandler lib
 if not AceEvent.messages then
 	AceEvent.messages = CallbackHandler:New(AceEvent, 
@@ -31,10 +30,7 @@ if not AceEvent.messages then
 	AceEvent.SendMessage = AceEvent.messages.Fire
 end
 
-
-
 --- embedding and embed handling
-
 local mixins = {
 	"RegisterEvent", "UnregisterEvent",
 	"RegisterMessage", "UnregisterMessage",
@@ -63,13 +59,11 @@ function AceEvent:OnEmbedDisable(target)
 	target:UnregisterAllMessages()
 end
 
-
 -- Script to fire blizzard events into the event listeners
 local events = AceEvent.events
 AceEvent.frame:SetScript("OnEvent", function(this, event, ...)
 	events:Fire(event, ...)
 end)
-
 
 --- Finally: upgrade our old embeds
 for target, v in pairs(AceEvent.embeds) do

@@ -21,7 +21,7 @@ local onceSecure = AceHook.onceSecure
 local _G = _G
 
 -- functions for later definition
-local donothing, createHook, unhook, hook
+local donothing, createHook, hook
 
 local protectedScripts = {
 	OnClick = true,
@@ -77,59 +77,60 @@ function createHook(self, handler, orig, secure, failsafe)
 	return uid
 end
 
-function unhook(self, obj, method)
-	assert(not obj or type(obj) == "table")
-	assert(type(method) == "string")
-	
-	local uid
-	if obj then
-		uid = registry[self][obj][method]
-	else
-		uid = registry[self][method]
-	end
-	assert(uid and actives[uid], not not uid)
-	
-	actives[uid], handlers[uid] = nil, nil
-	
-	if obj then
-		if scripts[uid] and obj:GetScript(method) == uid then  -- unhooks scripts
-			obj:SetScript(method, self.hooks[obj][method] ~= donothing and self.hooks[obj][method] or nil)	
-			scripts[uid] = nil
-		elseif obj and self.hooks[obj] and self.hooks[obj][method] and obj[method] == uid then -- unhooks methods
-			obj[method] = self.hooks[obj][method]
-		end
-		
-		self.hooks[obj][method] = nil
-		registry[self][obj][method] = nil
-		
-		self.hooks[obj] = next(self.hooks[obj]) and self.hooks[obj] or nil
-		registry[self][obj] = next(registry[self][obj]) and registry[self][obj] or nil
-	else
-		if self.hooks[method] and _G[method] == uid then -- unhooks functions
-			_G[method] = self.hooks[method]
-		end
-		
-		self.hooks[method] = nil
-		registry[self][method] = nil
-	end
-end
-
 function donothing() end
 
-function hook(self, obj, method, handler, script, secure, raw)
+function hook(self, obj, method, handler, script, secure, raw, forceSecure, usage)
 	if not handler then hander = method end
 	
-	assert(not obj or type(obj) == "table")
-	assert(type(method) == "string")
-	assert((type(handler) == "string" and type(self[handler]) == "function") or type(handler) == "function")
+	-- These asserts make sure AceHooks's devs play by the rules.
 	assert(not script or type(script) == "boolean")
 	assert(not secure or type(secure) == "boolean")
 	assert(not raw or type(raw) == "boolean")
-	--Need to check on secure variable hooking here as well
-	if script then assert(obj and obj.GetScript and obj:HasScript(method)) end
-
-	local uid
+	assert(not forceSecure or type(forceSecure("boolean")))
+	assert(usage)
 	
+	-- Error checking Battery!
+	if obj and type(obj) ~= "table" then
+		error(string.format("%s: 'object' - nil or table expected got %s", usage, type(obj)), 3)
+	end
+	if type(method) ~= "string" then
+		error(string.format("%s: 'method' - string expected got %s", usage, type(method)), 3)
+	end
+	if type(handler) ~= "string" and type(handler) ~= "function" then
+		error(string.format("%s: 'handler' - nil, string, or function expected got %s", usage, type(handler)), 3)
+	end
+	if type(handler) == "string" and type(self[handler]) ~= "function" then
+		error(string.format("%s: 'handler' - Handler specified does not exist at self[handler]", usage), 3)
+	end
+	if script then
+	 	if not secure and obj:IsProtected() and protectedScripts[method] then
+			error(string.format("Cannot hook secure script %q; Use SecureHookScript(obj, method, [handler]) instead.", method), 3)
+		end
+		if not obj or not obj.GetScript or not obj:HasScript(method) then
+			error(string.format("%s: You can only hook a script on a frame object", usage), 3)
+		end
+	else
+		local issecure 
+		if obj then 
+			issecure = onceSecure[obj] and onceSecure[obj][method] or issecurevariable(obj, method)
+		else
+			issecure = onceSecure[method] or issecurevariable(method)
+		end
+		if issecure then
+			if forceSecure then
+				if obj then
+					onceSecure[obj] = onceSecure[obj] or {}
+					onceSecure[obj][method] = true
+				else
+					onceSecure[method] = true
+				end
+			else
+				error(string.format("%s: Attempt to hook secure function %s. Use `SecureHook' or add `true' to the argument list to override.", usage, method), 3)
+			end
+		end
+	end
+	
+	local uid
 	if obj then
 		uid = registry[self][obj] and registry[self][obj][method]
 	else
@@ -137,7 +138,9 @@ function hook(self, obj, method, handler, script, secure, raw)
 	end
 	
 	if uid then
-		assert(not actives[uid]) -- active hook?
+		if actives[uid] then
+			error(string.format("Attempting to rehook already active hook %s.", method)) -- should this also fail silently?
+		end
 		
 		if handlers[uid] == handler then
 			actives[uid] = true
@@ -165,7 +168,10 @@ function hook(self, obj, method, handler, script, secure, raw)
 	else
 		orig = _G[method]
 	end
-	assert(orig)
+	
+	if not orig then
+		error(string.format("%s: Attempting to hook a non existing function", usage), 3)
+	end
 	
 	uid = createHook(self, handler, orig, secure, not raw)
 	
@@ -211,8 +217,8 @@ function AceHook:Hook(object, method, handler, hookSecure)
 	if handler == true then
 		handler, hookSecure = nil, true
 	end
-	
-	hook(self, object, method, handler, false, false, false)	
+
+	hook(self, object, method, handler, false, false, false, hookSecure or false, "Usage: Hook([object], method, [handler], [hookSecure])")	
 end
 
 -- ("function" [, handler] [, hookSecure]) or (object, "method" [, handler] [, hookSecure])
@@ -225,7 +231,7 @@ function AceHook:RawHook(object, method, handler, hookSecure)
 		handler, hookSecure = nil, true
 	end
 	
-	hook(self, object, method, handler, false, false, true)
+	hook(self, object, method, handler, false, false, true, hookSecure or false,  "Usage: RawHook([object], method, [handler], [hookSecure])")
 end
 
 -- ("function", handler) or (object, "method", handler)
@@ -234,27 +240,68 @@ function AceHook:SecureHook(object, method, handler)
 		method, handler, object = object, method, nil
 	end
 	
-	hook(self, object, method, handler, false, true)
+	hook(self, object, method, handler, false, true, false, false,  "Usage: SecureHook([object], method, [handler])")
 end
 
 function AceHook:HookScript(frame, script, handler)
-	hook(self, frame, script, handler, true, false, false)
+	hook(self, frame, script, handler, true, false, false, false,  "Usage: HookScript(object, method, [handler])")
 end
 
 function AceHook:RawHookScript(frame, script, handler)
-	hook(self, frame, script, handler, true, false, true)
+	hook(self, frame, script, handler, true, false, true, false, "Usage: RawHookScript(object, method, [handler])")
 end
 
 function AceHook:SecureHookScript(frame, script, handler)
-	hook(self, frame, script, handler, true, true)
+	hook(self, frame, script, handler, true, true, false, false, "Usage: SecureHookScript(object, method, [handler])")
 end
 
 -- ("function") or (object, "method")
 function AceHook:Unhook(obj, method)
+	local usage = "Usage: Unhook([obj], method)"
 	if type(obj) == "string" then
-		unhook(self, nil, obj)
+		method, obj = obj, nil
+	end
+		
+	if obj and type(obj) ~= "table" then
+		error(string.format("%s: 'obj' - expecting nil or table got %s", usage, type(obj)), 2)
+	end
+	if type(method) ~= "string" then
+		error(string.format("%s: 'method' - expeting string got %s", usage, type(method)), 2)
+	end
+	
+	local uid
+	if obj then
+		uid = registry[self][obj][method]
 	else
-		unhook(self, obj, method)
+		uid = registry[self][method]
+	end
+	
+	if not uid or not actives[uid] then
+		error(string.format("%s: Attempting to unhook non existant hook.", usage), 2) -- should we let this fail silently?
+	end
+	
+	actives[uid], handlers[uid] = nil, nil
+	
+	if obj then
+		if scripts[uid] and obj:GetScript(method) == uid then  -- unhooks scripts
+			obj:SetScript(method, self.hooks[obj][method] ~= donothing and self.hooks[obj][method] or nil)	
+			scripts[uid] = nil
+		elseif obj and self.hooks[obj] and self.hooks[obj][method] and obj[method] == uid then -- unhooks methods
+			obj[method] = self.hooks[obj][method]
+		end
+		
+		self.hooks[obj][method] = nil
+		registry[self][obj][method] = nil
+		
+		self.hooks[obj] = next(self.hooks[obj]) and self.hooks[obj] or nil
+		registry[self][obj] = next(registry[self][obj]) and registry[self][obj] or nil
+	else
+		if self.hooks[method] and _G[method] == uid then -- unhooks functions
+			_G[method] = self.hooks[method]
+		end
+		
+		self.hooks[method] = nil
+		registry[self][method] = nil
 	end
 end
 
