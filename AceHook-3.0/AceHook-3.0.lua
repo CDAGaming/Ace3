@@ -124,7 +124,7 @@ function hook(self, obj, method, handler, script, secure, raw, forceSecure, usag
 				else
 					onceSecure[method] = true
 				end
-			else
+			elseif not secure then
 				error(string.format("%s: Attempt to hook secure function %s. Use `SecureHook' or add `true' to the argument list to override.", usage, method), 3)
 			end
 		end
