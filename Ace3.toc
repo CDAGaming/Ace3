@@ -16,5 +16,6 @@ AceBucket-3.0\AceBucket-3.0.xml
 AceHook-3.0\AceHook-3.0.xml
 AceDB-3.0\AceDB-3.0.xml
 AceLocale-3.0\AceLocale-3.0.xml
+AceTab-3.0\AceTab-3.0.xml
 AceConsole-3.0\AceConsole-3.0.xml
 AceGUI-3.0\AceGUI-3.0.xml
