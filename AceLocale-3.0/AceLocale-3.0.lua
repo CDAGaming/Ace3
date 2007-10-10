@@ -17,6 +17,7 @@ AceLocale.appnames = AceLocale.appnames or {}  -- array of [localetableref]="App
 local readmeta = {
 	__index = function(self, key)	-- requesting totally unknown entries: fire off a nonbreaking error and return key
 		geterrorhandler()(MAJOR..": "..tostring(AceLocale.appnames[self])..": Missing entry for '"..tostring(key).."'")
+		rawset(self, key, key)
 		return key
 	end
 }

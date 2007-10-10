@@ -35,16 +35,21 @@ local L = assert(AL:GetLocale("Loc1"))
 assert(L["foo1"] == "foo1")
 assert(L["foo2"] == "manual foo2")
 
+-- test warning system for nonexistant strings
 local errormsg
 function geterrorhandler() return function(msg) errormsg=msg end end
 
 assert(L["this doesn't exist"]=="this doesn't exist")
 assert(errormsg=="AceLocale-3.0: Loc1: Missing entry for 'this doesn't exist'", "got: "..errormsg)
 
+-- we shouldnt get warnings for the same string twice
+errormsg="no error"
+
+assert(L["this doesn't exist"]=="this doesn't exist")
+assert(errormsg=="no error")
 
 
 -- (don't) create deDE locale
-
 local L = AL:NewLocale("Loc1", "deDE")
 assert(not L)
 
@@ -58,7 +63,7 @@ assert(not L)
 local L = AL:GetLocale("Loc2", true)
 assert(not L)
 
--- should error
+-- nonsilent - should error
 local ok, msg = pcall(function() return AL:GetLocale("Loc2") end)
 assert(not ok, "got: "..tostring(ok))
 assert(msg=="Usage: GetLocale(application[, silent]): 'application' - No locales registered for 'Loc2'", "got: "..tostring(msg))
