@@ -60,6 +60,9 @@ function AceLocale:NewLocale(application, locale, isDefault)
 
 	-- GAME_LOCALE allows translators to test translations of addons without having that wow client installed
 	-- It also allows users to pick which locale to use (provided they have some addon that sets it)
+	-- Ammo: I still think this is a bad idea, for instance an addon that checks for some ingame string will fail, just because some other addon
+	-- gives the user the illusion that they can run in a different locale? Ditch this whole thing or allow a setting per 'application'. I'm of the
+	-- opinion to remove this.
 	local gameLocale = GAME_LOCALE or gameLocale
 
 	if locale ~= gameLocale and not isDefault then
