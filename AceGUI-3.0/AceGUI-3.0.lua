@@ -965,6 +965,7 @@ do
 		return button
 	end
 
+	
 	local function UpdateButton(button, level, value, text, selected, last, canExpand, isExpanded, disabled)
 		local self = button.obj
 		local expand = button.expand
@@ -1063,34 +1064,69 @@ do
 			-Echo
 		Foxtrot
 		
-		tree = { "A", "B", "F", B = { "C", "D", D = { "E" } } }
-		text = { A = "Alpha", B = "Bravo" ... }
+		tree = { 
+			{ 
+				value = "A",
+				text = "Alpha"
+			},
+			{
+				value = "B",
+				text = "Bravo",
+				children = {
+					{ 
+						value = "C", 
+						text = "Charlie"
+					},
+					{
+						value = "D",	
+						text = "Delta"
+						children = { 
+							{ 
+								value = "E",
+								text = "Echo"
+							} 
+						} 
+					}
+				}
+			},
+			{ 
+				value = "F", 
+				text = "Foxtrot" 
+			},
+		}
 	]]
-	local function SetTree(self, tree, text)
-		assert(type(tree) == "table" and type(text) == "table")
-		
+	local function SetTree(self, tree)
+		assert(type(tree) == "table")
 		self.tree = tree
-		self.text = text
 		self:RefreshTree()
 	end
 
 	
-	local function BuildLevel(self, tree, level)
+	local function BuildLevel(self, tree, level, parent)
 		local lines = self.lines
-		local levels = self.levels
+
 		local status = self.status or self.localstatus
 		local hasChildren = self.hasChildren
 		
 		for i, v in ipairs(tree) do
-			lines[#lines+1] = v
-			levels[v] = level
-			if tree[v] then
-				hasChildren[v] = true
+			local line = new()
+			lines[#lines+1] = line
+			line.value = v.value
+			line.text = v.text
+			line.disabled = v.disabled
+			line.tree = tree
+			line.level = level
+			v.parent = parent
+
+			if v.children then
+				line.hasChildren = true
 			else
-				hasChildren[v] = nil
+				line.hasChildren = nil
 			end
-			if tree[v] and status[v] then
-				self:BuildLevel(tree[v], level+1)
+			if v.children then
+				if status[line.value] then
+					self:BuildLevel(v.children, level+1, v)
+				end
 			end
 		end
 	end
@@ -1112,12 +1148,17 @@ do
 		local tree = self.tree
 		local lines = self.lines
 		local buttons = self.buttons
-		local levels = self.levels
-		local text = self.text
+
 		local treeframe = self.treeframe
-		local hasChildren = self.hasChildren
+
 		
-		while tremove(lines) do end
+		while lines[1] do
+			local t = tremove(lines)
+			for k in pairs(t) do
+				t[k] = nil
+			end
+			del(t)
+		end
 		
 		self:BuildLevel(tree, 1)
 		
@@ -1152,7 +1193,7 @@ do
 		
 		local buttonnum = 1
 		for i = first, last do
-			local v = lines[i]
+			local line = lines[i]
 			local button = buttons[buttonnum]
 			if not button then
 				button = self:CreateButton()
@@ -1174,7 +1215,7 @@ do
 				end
 			end
 
-			UpdateButton(button, levels[v], v,  text[v], self.selected == v, (not lines[i+1]) or levels[lines[i+1]] ~= levels[v], hasChildren[v], status[v] )
+			UpdateButton(button, line.level, line.value, line.text, self.selected == line.value, (not lines[i+1]) or lines[i+1].level ~= line.level, line.hasChildren, status[v] )
 			button:Show()
 			buttonnum = buttonnum + 1
 		end
