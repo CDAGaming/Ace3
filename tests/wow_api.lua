@@ -174,6 +174,16 @@ end
 
 time = os.clock
 
+strmatch = string.match
+
+function SendAddonMessage(prefix, message, distribution, target)
+	assert(#prefix + #message < 255,
+	       string.format("SendAddonMessage: message too long (%d bytes)",
+			     #prefix + #message))
+	-- CHAT_MSG_ADDON(prefix, message, distribution, sender)
+	WoWAPI_FireEvent("CHAT_MSG_ADDON", prefix, message, distribution, "Sender")
+end
+
 RED_FONT_COLOR_CODE = ""
 GREEN_FONT_COLOR_CODE = ""
 
