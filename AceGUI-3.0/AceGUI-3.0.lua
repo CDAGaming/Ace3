@@ -901,7 +901,6 @@ do
 	local function GetButtonParents(line)
 		local parent = line.parent
 		if parent and parent.value then
-			AceLibrary("AceConsole-2.0"):Print(parent.value)
 			return parent.value, GetButtonParents(parent)
 		end
 	end
