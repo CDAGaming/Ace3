@@ -231,13 +231,15 @@ local function initdb(sv, defaults, defaultProfile, olddb)
 	return db
 end
 
-local function logoutHandler()
-	for db in pairs(AceDB.db_registry) do
-		-- TODO: rename callback to something better
-		db.callbacks:Fire("OnDatabaseShutdown", db)
-		for section, key in pairs(db.keys) do
-			if db.defaults[section] and rawget(db, section) then
-				removeDefaults(db[section], db.defaults[section])
+local function logoutHandler(frame, event)
+	if event == "PLAYER_LOGOUT" then
+		for db in pairs(AceDB.db_registry) do
+			-- TODO: rename callback to something better
+			db.callbacks:Fire("OnDatabaseShutdown", db)
+			for section, key in pairs(db.keys) do
+				if db.defaults[section] and rawget(db, section) then
+					removeDefaults(db[section], db.defaults[section])
+				end
 			end
 		end
 	end
