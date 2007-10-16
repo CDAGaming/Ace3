@@ -85,6 +85,7 @@ function AceGUI:Release(widget)
 	if widget.PauseLayout then
 		widget:PauseLayout()
 	end
+	widget:Fire("OnRelease")
 	if widget.ReleaseChildren then
 		widget:ReleaseChildren()
 	end
@@ -131,7 +132,7 @@ do
 			end
 		end,
 		
-		Fire = function(self, name,...)
+		Fire = function(self, name, ...)
 			if self.events[name] then
 				safecall(self.events[name], self, name, ...)
 			end
@@ -893,12 +894,24 @@ do
 
 	end
 	
+	local function GetParentPath(button)
+	
+	end
+	
+	local function GetButtonParents(line)
+		local parent = line.parent
+		if parent and parent.value then
+			AceLibrary("AceConsole-2.0"):Print(parent.value)
+			return parent.value, GetButtonParents(parent)
+		end
+	end
+	
 	local function ButtonOnClick(this)
 		local self = this.obj
 		local status = self.status or self.localstatus
 		
 		if not this.selected then
-			self:SetSelected(this.value)
+			self:SetSelected(this.value, GetButtonParents(this.treeline))
 			this.selected = true
 			this:LockHighlight()
 			self:RefreshTree()
@@ -965,12 +978,14 @@ do
 		return button
 	end
 
-	
-	local function UpdateButton(button, level, value, text, selected, last, canExpand, isExpanded, disabled)
+	local function UpdateButton(button, treeline, selected, last, canExpand, isExpanded, disabled)
 		local self = button.obj
 		local expand = button.expand
 		local frame = self.frame
-		text = text or ""
+		local text = treeline.text or ""
+		local level = treeline.level
+		local value = treeline.value
+		button.treeline = treeline
 		button.value = value
 		if selected then
 			button:LockHighlight()
@@ -1100,7 +1115,6 @@ do
 		self.tree = tree
 		self:RefreshTree()
 	end
-
 	
 	local function BuildLevel(self, tree, level, parent)
 		local lines = self.lines
@@ -1116,7 +1130,7 @@ do
 			line.disabled = v.disabled
 			line.tree = tree
 			line.level = level
-			v.parent = parent
+			line.parent = parent
 
 			if v.children then
 				line.hasChildren = true
@@ -1207,25 +1221,23 @@ do
 					else
 						button:SetPoint("TOPRIGHT", self.treeframe,"TOPRIGHT",-10,-10)
 					end
-					--button:SetPoint("TOPRIGHT", self.treeframe,"TOPRIGHT",-16,0)
 				else
 					button:SetParent(self.treeframe)
 					button:SetPoint("TOPRIGHT", buttons[buttonnum-1], "BOTTOMRIGHT",0,0)
-					--button:SetPoint("TOPRIGHT", buttons[buttonnum-1], "BOTTOMRIGHT",0,0)
 				end
 			end
 
-			UpdateButton(button, line.level, line.value, line.text, self.selected == line.value, (not lines[i+1]) or lines[i+1].level ~= line.level, line.hasChildren, status[v] )
+			UpdateButton(button, line, self.selected == line.value, (not lines[i+1]) or lines[i+1].level ~= line.level, line.hasChildren, status[line.value] )
 			button:Show()
 			buttonnum = buttonnum + 1
 		end
 
 	end
 	
-	local function SetSelected(self, value)
+	local function SetSelected(self, value, ...)
 		if self.selected ~= value then
 			self.selected = value
-			self:Fire("OnGroupSelected", value)
+			self:Fire("OnGroupSelected", value, ...)
 		end
 	end
 	
