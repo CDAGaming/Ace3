@@ -213,9 +213,9 @@ local function FeedOptions(options,container,rootframe,path,group,inline)
 				GroupContainer:SetTitle(v.name or "")
 				GroupContainer.width = "fill"
 				GroupContainer:SetLayout("flow")
-				scroll:AddChild(GroupContainer)
+				container:AddChild(GroupContainer)
 				tinsert(path, k)
-				FeedGroup(options,GroupContainer,rootframe,path)
+				FeedOptions(options,GroupContainer,rootframe,path,v,true)
 				tremove(path)
 			end
 		else
