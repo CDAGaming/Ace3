@@ -12,7 +12,7 @@ lib.OpenFrames = lib.OpenFrames or {}
 
 local gui = LibStub("AceGUI-3.0")
 local reg = LibStub("AceConfigRegistry-3.0")
-
+local con = LibStub("AceConsole-3.0", true)
 --[[
 Group Types
   Tree 	- All Descendant Groups will all become nodes on the tree, direct child options will appear above the tree
@@ -34,9 +34,15 @@ Group Types
 -- Recycling functions
 local new, del
 do
-	local pool = {}
+	local pool = setmetatable({},{__mode='k'})
 	function new()
-		return tremove(pool) or {}
+		local t = next(pool)
+		if t then
+			pool[t] = nil
+			return t
+		else
+			return {}
+		end
 	end
 	function copy(t)
 		local c = new()
@@ -49,7 +55,7 @@ do
 		for k in pairs(t) do
 			t[k] = nil
 		end	
-		tinsert(pool,t)
+		pool[t] = true
 	end
 end
 
@@ -60,6 +66,31 @@ local function pickfirstset(...)
       return select(i,...)
     end
   end
+end
+
+local function compareOptions(a,b)
+	if not a then
+		return true
+	end
+	if not b then
+		return false
+	end
+	local OrderA, OrderB = a.order or 100, b.order or 100
+	if OrderA == OrderB then
+		local NameA = a.guiName or a.name or ""
+		local NameB = b.guiName or b.name or ""
+		return NameA:upper() < NameB:upper()
+	end
+	if OrderA < 0 then
+		if OrderB > 0 then
+			return false
+		end
+	else
+		if OrderB < 0 then
+			return true
+		end
+	end
+	return OrderA < OrderB
 end
 
 local function AceOptions3MouseOver(widget, event)
@@ -105,7 +136,9 @@ local function AceOptions3BuildSubTree(group, tree)
 				entry.text = v.name
 				if not tree.children then tree.children = new() end
 				tinsert(tree.children,entry)
-				AceOptions3BuildSubTree(v,entry)
+				if (v.childGroups or "tree") == "tree" then
+					AceOptions3BuildSubTree(v,entry)
+				end
 			end
 		end
 	end
@@ -123,7 +156,9 @@ local function AceOptions3BuildTree(group)
 				entry.value = k
 				entry.text = v.name
 				tinsert(tree,entry)
-				AceOptions3BuildSubTree(v,entry)
+				if (v.childGroups or "tree") == "tree" then
+					AceOptions3BuildSubTree(v,entry)
+				end
 			end
 		end
 	end
@@ -152,14 +187,25 @@ end
 --]]
 
 local function FeedOptions(options,container,rootframe,path,group,inline)
-	container:ReleaseChildren()
-	local scroll = gui:Create("ScrollFrame")
-	scroll:SetLayout("flow")
-	container:SetLayout("fill")
-	container:AddChild(scroll)
+--	container:ReleaseChildren()
+--	local scroll = gui:Create("ScrollFrame")
+--	scroll:SetLayout("flow")
+--	container:SetLayout("fill")
+--	container:AddChild(scroll)
 	
+	
+	feedkeys = new()
+	feedtmp = new()
 	
 	for k, v in pairs(group.args) do
+		tinsert(feedtmp, v)
+		feedkeys[v] = k
+	end
+
+	table.sort(feedtmp, compareOptions)
+
+	for i, v in ipairs(feedtmp) do
+		local k = feedkeys[v]
 		if v.type == "group" then
 			if inline or pickfirstset(v.dialogInline,v.guiInline,v.inline, false) then
 				--Inline group
@@ -211,10 +257,13 @@ local function FeedOptions(options,container,rootframe,path,group,inline)
 			if control then
 				AceOptions3InjectInfo(control, options, v, path, rootframe)
 				control:SetCallback("OnEnter",AceOptions3MouseOver)
-				scroll:AddChild(control)
+				container:AddChild(control)
 			end				
 		end
 	end
+	
+	del(feedkeys)
+	del(feedtmp)
 end
 
 -- ... is the path up the tree to the current node
@@ -241,9 +290,11 @@ local function AceOptions3GroupSelected(widget, event, value, ...)
 
 	local group = options
 	for i, v in ipairs(feedpath) do
-		group = options.args[v]
+		group = group.args[v]
 	end	
-	FeedOptions(options,widget,rootframe,feedpath,group)
+	
+	widget:ReleaseChildren()
+	lib:FeedGroup(options,widget,rootframe,feedpath,group)
 	
 	del(feedpath)
 end
@@ -257,65 +308,100 @@ local function AceOptionsClearUserData(widget, event)
 end
 
 
-local function FeedInlineGroup(options,container,rootframe,path,group)
-	local GroupContainer = gui:Create("InlineGroup")
-	GroupContainer:SetTitle(v.name or "")
-	GroupContainer.width = "fill"
-	GroupContainer:SetLayout("flow")
-	container:AddChild(GroupContainer)
-	tinsert(path, k)
-	FeedOptions(options,GroupContainer,rootframe,path,group,true)
-	tremove(path)
-end
-
 --[[
 This function will feed one group, and any inline child groups into the given container
 Select Groups will only have the selection control (tree, tabs, dropdown) fed in
 and have a group selected, this event will trigger the feeding of child groups
+
+Rules:
+	If the group is Inline, FeedOptions
+	If the group has no child groups, FeedOptions
+	
+	If the group is a tab or select group, FeedOptions then add the Group Control
+	If the group is a tree group FeedOptions then
+		its parent isn't a tree group:  then add the tree control containing this and all child tree groups
+		if its parent is a tree group, its already a node on a tree
 --]]
+
 function lib:FeedGroup(options,container,rootframe,path)
 	local group = options
 	--follow the path to get to the curent group
 	local inline
+	local grouptype, parenttype = nil, "none"
 	
 	for i, v in ipairs(path) do
 		if group.args[v] then
 			group = group.args[v]
 		end
 		inline = inline or pickfirstset(v.dialogInline,v.guiInline,v.inline, false)
+		parenttype = grouptype
+		grouptype = group.childGroups
 	end
 	
-	if inline then
-		local scroll = gui:Create("ScrollFrame")
-		scroll:SetLayout("flow")
-		container:SetLayout("fill")
-		container:AddChild(scroll)
-		FeedOptions(options,scroll,rootframe,path,group)
-	else
-		local grouptype = group.childGroups
+	if not parenttype then
+		parenttype = "tree"
+	end
+	
+
+	--check if the group has child groups
+	local hasChildGroups
+	for k, v in pairs(group.args) do
+		if v.type == "group" and not pickfirstset(v.dialogInline,v.guiInline,v.inline, false) then
+			hasChildGroups = true
+		end
+	end
+	
+	container:SetLayout("flow")
+
+	if (not hasChildGroups) or inline then
+
+		if container.type ~= "InlineGroup" then
+			local scroll = gui:Create("ScrollFrame")
+			scroll:SetLayout("flow")
+			scroll.width = "fill"
+			scroll.height = "fill"
+			container:AddChild(scroll)
+			container = scroll
+		end
+	end
+	
+	FeedOptions(options,container,rootframe,path,group)
+
+	if hasChildGroups and not inline then
 		
 		if grouptype == "tab" then
+
 			local tab = gui:Create("TabGroup")
+			tab.width = "fill"
+			tab.height = "fill"
 			AceOptions3InjectInfo(tab, options, group, path, rootframe)
-			container:SetLayout("fill")
+
 			tab:SetTabs(AceOptions3BuildTabs(group))
 			tab:SetCallback("OnGroupSelected", AceOptions3GroupSelected)
 			
 			container:AddChild(tab)
 			
 		elseif grouptype == "select" then
+
 			local select = gui:Create("DropdownGroup")
+			select.width = "fill"
+			select.height = "fill"
 			AceOptions3InjectInfo(select, options, group, path, rootframe)
 			select:SetCallback("OnGroupSelected", AceOptions3GroupSelected)
-			container:SetLayout("fill")
+
 			container:AddChild(select)
-		else
+			
+		--assume tree group by default
+		elseif parenttype ~= "tree" then
+
 			local tree = gui:Create("TreeGroup")
+			tree.width = "fill"
+			tree.height = "fill"
 			AceOptions3InjectInfo(tree, options, group, path, rootframe)
-			container:SetLayout("fill")
+
 			tree:SetTree(AceOptions3BuildTree(group))
 			tree:SetCallback("OnGroupSelected", AceOptions3GroupSelected)
-
+	
 			container:AddChild(tree)
 		end
 	end
@@ -335,7 +421,6 @@ function lib:Open(appName)
 	end
 	f:ReleaseChildren()
 	f:SetTitle(options.name or "")
-	f:SetLayout("fill")
 
 	local path = new()
 	

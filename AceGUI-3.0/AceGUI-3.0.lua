@@ -2579,6 +2579,10 @@ AceGUI:RegisterLayout("Flow",
 				usedwidth = 0
 				rowstart = frame
 			end
+			if child.height == "fill" then
+				frame:SetPoint("BOTTOM",content,"BOTTOM")
+				break
+			end
 		end
 		
 		if content.obj.LayoutFinished then
