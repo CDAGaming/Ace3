@@ -8,6 +8,11 @@ REQUIRES: AceConsole-3.0 (loaded on demand)
 
 ]]
 
+-- TODO: handle disabled / hidden
+-- TODO: implement :ShowHelp()
+-- TODO: implement handlers for all types
+-- TODO: plugin args
+
 
 local MAJOR, MINOR = "AceConfigCmd-3.0", 0
 local lib = LibStub:NewLibrary(MAJOR, MINOR)
@@ -19,7 +24,14 @@ local con = LibStub("AceConsole-3.0")
 
 
 
-local function pickfirstset(...)	-- picks the first non-nil value and returns it
+function lib:ShowHelp(slashcmd, options)
+	error("TODO: implement")
+end
+
+
+-- pickfirstset() - picks the first non-nil value and returns it
+
+local function pickfirstset(...)	
 	for i=1,select("#",...) do
 		if select(i,...)~=nil then
 			return select(i,...)
@@ -28,10 +40,15 @@ local function pickfirstset(...)	-- picks the first non-nil value and returns it
 end
 
 
+-- err() - produce real error() regarding malformed options tables etc
+
 local function err(info,inputpos,msg )
 	local cmdstr=" "..strsub(info.input, 1, inputpos-1)
 	error(MAJOR..": /" ..info.slashcmd ..cmdstr ..": "..(msg or "malformed options table"), 2)
 end
+
+
+-- usererr() - produce chatframe message regarding bad slash syntax etc
 
 local function usererr(info,inputpos,msg )
 	local cmdstr=" "..strsub(info.input, 1, inputpos-1)
@@ -39,13 +56,10 @@ local function usererr(info,inputpos,msg )
 end
 
 
-function lib:ShowHelp(slashcmd, options)
-	error("TODO: implement")
-end
-
+-- callmethod() - call a given named method (e.g. "get", "set") with given arguments
 
 local function callmethod(info, inputpos, tab, methodtype, ...)
-	local method = info[methodtype]==nil
+	local method = info[methodtype]
 	if not method then
 		err(info, inputpos, "'"..methodtype.."': not set")
 	end
@@ -53,58 +67,77 @@ local function callmethod(info, inputpos, tab, methodtype, ...)
 	info.arg = tab.arg
 
 	if type(method)=="function" then
-		method(info, ...)
+		return method(info, ...)
 	elseif type(method)=="string" then
 		if type(info.handler[method])~="function" then
 			err(info, inputpos, "'"..methodtype.."': '"..method.."' is not a member function of "..tostring(info.handler))
 		end
-		info.handler[method]
-	
-	if 
-	
-	
+		return info.handler[method](handler, info, ...)
+	else
+		assert(false)	-- type should have already been checked on read
+	end
 end
 
 
-local function handle(info, inputpos, depth, tab)
+-- do_final() - do the final step (set/execute) along with validation and confirmation
 
-	if not(type(tab)=="table" and type(tab.type)=="string") err(info,inputpos) end
+local function do_final(info, inputpos, tab, methodtype, ...)
+	if info.validate then 
+		error("TODO: validation")
+	end
+	if info.confirm then
+		error("TODO: confirmation")
+	end
+	
+	callmethod(info,inputpos,tab,methodtype, ...)
+end
+
+
+-- getparam() - used by handle() to retreive and store "handler", "get", "set", etc
+local function getparam(info, inputpos, tab, depth, paramname, types, errormsg)
+	local old,oldat = info[paramname], info[paramname.."_at"]
+	local val=tab[paramname]
+	if val~=nil then
+		if val==false then
+			val=nil
+		elseif not types[type(val)] then 
+			err(info, inputpos, "'" .. paramname.. "' - "..errormsg) 
+		end
+		info[paramname] = val
+		info[paramname.."_at"] = depth
+	end
+	return old,oldat
+end
+
+
+
+-- constants used by getparam() calls below
+local handlertypes = {"table"=true}
+local handlermsg = "expected a table"
+
+local functypes = {"function"=true, "string"=true}
+local funcmsg = "expected function or member name"
+
+
+-- handle() - selfrecursing function that processes input->optiontable 
+-- - depth - starts at 0
+-- - retfalse - return false rather than produce error if a match is not found (used by inlined groups)
+
+local function handle(info, inputpos, tab, depth, retfalse)
+
+	if not(type(tab)=="table" and type(tab.type)=="string") then err(info,inputpos) end
 
 	-------------------------------------------------------------------
-	-- Grab hold of handler,set,get,func if set (and remember old ones)
-	-- For method names: we do NOT validate if they're correct at this stage, the handler may change before they're actually used!
-	
-	local oldhandler,oldhandler_at = info.handler,info.handler_at
-	if tab.handler then
-		if not(type(tab.handler)=="table") then err(info, inputpos, "'handler' - expected a table") end
-		info.handler = tab.handler
-		info.handler_at = depth
-	end
+	-- Grab hold of handler,set,get,func,etc if set (and remember old ones)
+	-- Note that we do NOT validate if method names are correct at this stage,
+	-- the handler may change before they're actually used!
 
-	local oldset,oldset_at = info.set,info.set_at
-	if tab.set then
-		if not(type(tab.set)=="function" or type(tab.set)=="string") then err(info, inputpos, "'set' - expected a function or string") end
-		info.set,info.set_at = tab.set,depth
-	end
-	
-	local oldget,oldget_at = info.get,info.get_at
-	if tab.get then
-		if not(type(tab.get)=="function" or type(tab.get)=="string") then err(info, inputpos, "'get' - expected a function or string") end
-		info.get,info.get_at = tab.get,depth
-	end
-
-	local oldfunc,oldfunc_at = info.func,info.func_at
-	if tab.func then
-		if not(type(tab.func)=="function" or type(tab.func)=="string") then err(info, inputpos, "'func' - expected a function or string") end
-		info.func,info.func_at = tab.func,depth
-	end
-	
-	local oldvalidate,oldvalidate_at = info.validate,info.validate_at
-	if tab.validate then
-		if not(type(tab.validate)=="function" or type(tab.validate)=="string") then err(info, inputpos, "'validate' - expected a function or string") end
-		info.validate,info.validate_at = tab.validate,depth
-	end
-	
+	local oldhandler,oldhandler_at = getparam(info,inputpos,tab,"handler",handlertypes,handlermsg)
+	local oldset,oldset_at = getparam(info,inputpos,tab,"set",functypes,funcmsg)
+	local oldget,oldget_at = getparam(info,inputpos,tab,"get",functypes,funcmsg)
+	local oldfunc,oldfunc_at = getparam(info,inputpos,tab,"func",functypes,funcmsg)
+	local oldvalidate,oldvalidate_at = getparam(info,inputpos,tab,"validate",functypes,funcmsg)
+	local oldconfirm,oldconfirm_at = getparam(info,inputpos,tab,"confirm",functypes,funcmsg)
 	
 	-------------------------------------------------------------------
 	-- Act according to .type of this table
@@ -117,7 +150,7 @@ local function handle(info, inputpos, depth, tab)
 		-- grab next arg from input
 		local arg,nextpos = con:GetArgs(info.input, 1, inputpos)
 		if not arg then
-			lib:ShowHelp(info.slashcmd, tab)
+			lib:ShowHelp(tab, info.slashcmd, strsub(info.input, 1, inputpos))
 			return
 		end
 		
@@ -128,7 +161,7 @@ local function handle(info, inputpos, depth, tab)
 			-- is this child an inline group? if so, traverse into it
 			if v.type=="group" and pickfirstset(v.cmdInline, v.inline, false) then
 				info[depth+1] = k
-				if(handle(info, inputpos, depth+1, v)==false) then
+				if(handle(info, inputpos, v, depth+1==false) then
 					info[depth+1] = nil
 					-- wasn't found in there, but that's ok, we just keep looking down here
 				else
@@ -139,54 +172,55 @@ local function handle(info, inputpos, depth, tab)
 			-- matching name?
 			if strlower(arg)==strlower(k) then
 				info[depth+1] = k
-				return handle(info,nextpos,depth+1,v)
+				return handle(info,nextpos,v,depth+1)
 			end
 		end
 		
-		-- no match - return false to indicate failure (and restore old infotable members)
-		info.handler,info.handler_at = oldhandler,oldhandler_at
-		info.set,info.set_at = oldset,oldset_at
-		info.get,info.get_at = oldget,oldget_at
-		info.func,info.func_at = oldfunc,oldfunc_at
-		return false
+		-- no match 
+		if retfalse then
+			-- restore old infotable members and return false to indicate failure
+			info.handler,info.handler_at = oldhandler,oldhandler_at
+			info.set,info.set_at = oldset,oldset_at
+			info.get,info.get_at = oldget,oldget_at
+			info.func,info.func_at = oldfunc,oldfunc_at
+			info.validate,info.validate_at = oldvalidate,oldvalidate_alt
+			info.confirm,info.confirm_at = oldconfirm,oldconfirm_at
+			return false
+		end
 		
-		
+		-- couldn't find the command, display error
+		usererr(info, inputpos, "'"..arg.."' - " .. L["unknown argument"])
+		return
+	end
 	
-	elseif tab.type=="execute" then
+	local str = strsub(info.input,inputpos);
+	
+	if tab.type=="execute" then
 		------------ execute --------------------------------------------
-		callmethod(info, inputpos, tab, "func")
+		do_final(info, inputpos, tab, "func")
 		
 
 	
 	elseif tab.type=="input" then
 		------------ input --------------------------------------------
-		local str = strtrim(strsub(info.input, inputpos))
 		
 		local res = true
 		if tab.pattern then
-			res = not not strmatch(str, tab.pattern)
-		end
-		if res and info.validate then
-			res = callmethod(info, inputpos, tab, "validate", str)
-		end
-		if not res then
-			res = L["invalid input"]
-		end
-		if type(res)=="string" then
-			usererr(info, inputpos, "'"..str.."' - "..res)
-			return
+			if not(type(tab.pattern)=="string") then err(info, inputpos, "'pattern' - expected a string") end
+			if not strmatch(str, tab.pattern) then
+				usererr(info, inputpos, "'"..str.."' - " .. L["invalid input"])
+				return
+			end
 		end
 		
-		
-		
-		callmethod(info, inputpos, tab, "set", str)
+		do_final(info, inputpos, tab, "set", str)
 		
 
 	
 	elseif tab.type=="toggle" then
 		------------ toggle --------------------------------------------
 		local b
-		local str = strtrim(strlower(strsub(info.input,inputpos)))
+		local str = strtrim(strlower(str))
 		if str=="" then
 			b = not callmethod(info, inputpos, tab, "get")
 		elseif str==L["on"] then
@@ -195,16 +229,29 @@ local function handle(info, inputpos, depth, tab)
 			b = false
 		else
 			usererr(info, inputpos, format(L["'%s' - expected 'on' or 'off', or no argument to toggle"], str))
+			return
 		end
 		
-		callmethod(info, inputpos, tab, "set", b)
+		do_final(info, inputpos, tab, "set", b)
 		
 
 	elseif tab.type=="range" then
 		------------ range --------------------------------------------
-		local v = tonumber(strsub(info.input,inputpos))
+		local v = tonumber(str)
 		if not v then
-			con:Print()
+			usererr(info, inputpos, "'"..str.."' - "..L["expected number"]]))
+		end
+		if type(info.step)=="number" then
+			v = v - (v % info.step)
+		end
+		if type(info.min)=="number" and v<info.min then
+			usererr(info, inputpos, v.." - "..format(L["must be equal to or higher than %s"], tostring(info.min)) )
+		end
+		if type(info.max)=="number" and v>info.max then
+			usererr(info, inputpos, v.." - "..format(L["must be equal to or lower than %s"], tostring(info.max)) )
+		end
+		
+		do_final(info, inputpos, tab, "set", v)
 
 	elseif tab.type=="select" then
 		------------ select --------------------------------------------
@@ -229,9 +276,11 @@ end
 
 
 
-function lib:HandleCommand(slashcmd, optionsName, input)
+function lib:HandleCommand(slashcmd, appName, input)
 
-	local info = {   -- Recycle this and Mikk will laugh mercilessly at you, and probably scold you for taking shortcuts and not clearing leftover integer indices properly
+	local options = cfgreg:GetOptionsTable(appName)
+
+	local info = {   -- Don't try to recycle this, it gets handed off to confirmation callbacks and whatnot
 		[0] = slashcmd,
 		slashcmd = slashcmd,
 		options = options,
@@ -240,6 +289,6 @@ function lib:HandleCommand(slashcmd, optionsName, input)
 		handler = self
 	}
 	
-	handle(info, 1, 0, options)  -- (info, inputpos, depth, table)
+	handle(info, 1, options, 0)  -- (info, inputpos, table, depth)
 end
 
