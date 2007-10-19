@@ -17,12 +17,12 @@ AceLocale.appnames = AceLocale.appnames or {}  -- array of [localetableref]="App
 local readmeta = {
 	__index = function(self, key)	-- requesting totally unknown entries: fire off a nonbreaking error and return key
 		geterrorhandler()(MAJOR..": "..tostring(AceLocale.appnames[self])..": Missing entry for '"..tostring(key).."'")
-		rawset(self, key, key)
+		rawset(self, key, key)	-- only need to see the warning once, really
 		return key
 	end
 }
 
--- Remember the locale table being registered right now
+-- Remember the locale table being registered right now (it gets set by :NewLocale())
 local registering
 
 -- This metatable proxy is used when registering nondefault locales
@@ -52,14 +52,13 @@ local writedefaultproxy = setmetatable({}, {
 -- AceLocale:NewLocale(application, locale, isDefault)
 --
 --  application (string)  - unique name of addon / module
---  locale (string)       - name of locale to register
+--  locale (string)       - name of locale to register, e.g. "enUS", "deDE", etc...
 --  isDefault (string)    - if this is the default locale being registered
 --
 -- Returns a table where localizations can be filled out, or nil if the locale is not needed
 function AceLocale:NewLocale(application, locale, isDefault)
 
 	-- GAME_LOCALE allows translators to test translations of addons without having that wow client installed
-	-- It also allows users to pick which locale to use (provided they have some addon that sets it)
 	-- Ammo: I still think this is a bad idea, for instance an addon that checks for some ingame string will fail, just because some other addon
 	-- gives the user the illusion that they can run in a different locale? Ditch this whole thing or allow a setting per 'application'. I'm of the
 	-- opinion to remove this.
@@ -91,7 +90,7 @@ end
 --  application (string) - unique name of addon
 --  silent (boolean)     - if true, the locale is optional, silently return nil if it's not found 
 --
--- Returns localizations for the current locale or default locale
+-- Returns localizations for the current locale (or default locale if translations are missing)
 -- Errors if nothing is registered (spank developer, not just a missing translation)
 function AceLocale:GetLocale(application, silent)
 	if not silent and not AceLocale.apps[application] then
