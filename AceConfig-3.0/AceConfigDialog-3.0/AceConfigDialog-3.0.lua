@@ -95,6 +95,50 @@ local function compareOptions(a,b)
 	return OrderA < OrderB
 end
 
+--gets an option from a given group, checking plugins
+local function GetSubOption(group, key)
+	if group.plugins then
+		for plugin, t in pairs(group.plugins) do
+			if t[key] then
+				return t[key]
+			end
+		end		
+	end
+	
+	return group.args[key]
+end
+
+--builds 2 tables out of an options group
+-- feedkeys, a mapping from table to original key
+-- feedtemp, a sorted table of the sub groups
+local function BuildSortedOptionsTable(group, feedkeys, feedtmp)
+	local keys = new()
+
+	if group.plugins then
+		for plugin, t in pairs(group.plugins) do
+			for k, v in pairs(t) do
+				if not keys[k] then
+					tinsert(feedtmp, v)
+					feedkeys[v] = k
+					keys[k] = true
+				end
+			end
+		end
+	end
+	
+	for k, v in pairs(group.args) do
+		if not keys[k] then
+			tinsert(feedtmp, v)
+			feedkeys[v] = k
+			keys[k] = true
+		end
+	end
+
+	table.sort(feedtmp, compareOptions)
+	
+	del(keys)
+end
+
 --[[
 	Gets a status table for the given appname and options path
 ]]
@@ -187,7 +231,7 @@ local function ActivateControl(widget, event, ...)
 	handler = group.handler or handler
 		
 	for i, v in ipairs(path) do
-		group = group.args[v]
+		group = GetSubOption(group, v)
 		info[i] = v
 		if group[funcname] ~= nil then
 			func =  group[funcname]
@@ -280,7 +324,7 @@ local function CallOptionsGet(option, options, path, appName)
 	handler = group.handler or handler
 		
 	for i, v in ipairs(path) do
-		group = group.args[v]
+		group = GetSubOption(group, v)
 		info[i] = v
 		if group.get ~= nil then
 			func =  group.get
@@ -311,8 +355,13 @@ end
 local function BuildTabs(group)
 	local tabs = new()
 	local text = new()
-	
-	for k, v in pairs(group.args) do
+	local feedkeys = new()
+	local feedtmp = new()
+
+	BuildSortedOptionsTable(group, feedkeys, feedtmp)
+
+	for i, v in ipairs(feedtmp) do
+		local k = feedkeys[v]
 		if v.type == "group" then
 			local inline = pickfirstset(v.dialogInline,v.guiInline,v.inline, false)
 			local hidden = pickfirstset(v.dialogHidden,v.guiHidden,v.hidden, false)
@@ -323,20 +372,18 @@ local function BuildTabs(group)
 		end
 	end
 	
+	del(feedkeys)
+	del(feedtmp)
+	
 	return tabs, text
-
 end
+
 
 local function BuildSubTree(group, tree)
 	local feedkeys = new()
 	local feedtmp = new()
-	
-	for k, v in pairs(group.args) do
-		tinsert(feedtmp, v)
-		feedkeys[v] = k
-	end
 
-	table.sort(feedtmp, compareOptions)
+	BuildSortedOptionsTable(group, feedkeys, feedtmp)
 
 	for i, v in ipairs(feedtmp) do
 		local k = feedkeys[v]
@@ -355,6 +402,7 @@ local function BuildSubTree(group, tree)
 			end
 		end
 	end
+	
 	del(feedkeys)
 	del(feedtmp)
 end
@@ -365,12 +413,7 @@ local function BuildTree(group)
 	local feedkeys = new()
 	local feedtmp = new()
 	
-	for k, v in pairs(group.args) do
-		tinsert(feedtmp, v)
-		feedkeys[v] = k
-	end
-
-	table.sort(feedtmp, compareOptions)
+	BuildSortedOptionsTable(group, feedkeys, feedtmp)
 
 	for i, v in ipairs(feedtmp) do
 		local k = feedkeys[v]
@@ -418,13 +461,8 @@ local function FeedOptions(appName, options,container,rootframe,path,group,inlin
 	local feedkeys = new()
 	local feedtmp = new()
 	
-	for k, v in pairs(group.args) do
-		tinsert(feedtmp, v)
-		feedkeys[v] = k
-	end
-
-	table.sort(feedtmp, compareOptions)
-
+	BuildSortedOptionsTable(group, feedkeys, feedtmp)
+	
 	for i, v in ipairs(feedtmp) do
 		local k = feedkeys[v]
 		local hidden = pickfirstset(v.dialogHidden,v.guiHidden,v.hidden, false)
@@ -528,7 +566,7 @@ local function GroupSelected(widget, event, uniquevalue)
 	
 	local group = options
 	for i, v in ipairs(feedpath) do
-		group = group.args[v]
+		group = GetSubOption(group, v)
 	end	
 	
 	widget:ReleaseChildren()
@@ -568,9 +606,7 @@ function lib:FeedGroup(appName,options,container,rootframe,path)
 	local grouptype, parenttype = nil, "none"
 	
 	for i, v in ipairs(path) do
-		if group.args[v] then
-			group = group.args[v]
-		end
+		group = GetSubOption(group, v)
 		inline = inline or pickfirstset(v.dialogInline,v.guiInline,v.inline, false)
 		parenttype = grouptype
 		grouptype = group.childGroups
@@ -586,6 +622,15 @@ function lib:FeedGroup(appName,options,container,rootframe,path)
 	for k, v in pairs(group.args) do
 		if v.type == "group" and not pickfirstset(v.dialogInline,v.guiInline,v.inline, false) then
 			hasChildGroups = true
+		end
+	end
+	if group.plugins then
+		for plugin, t in pairs(group.plugins) do
+			for k, v in pairs(t) do
+				if v.type == "group" and not pickfirstset(v.dialogInline,v.guiInline,v.inline, false) then
+					hasChildGroups = true
+				end
+			end
 		end
 	end
 	
@@ -706,8 +751,4 @@ function lib:Open(appName)
 	self:FeedGroup(appName,options,f,f,path)
 	f:Show()
 	del(path)
-
-
-	
-
 end
