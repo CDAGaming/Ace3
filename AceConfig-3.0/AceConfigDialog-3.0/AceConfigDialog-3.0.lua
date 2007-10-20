@@ -198,8 +198,8 @@ local function ActivateControl(widget, event, ...)
 	info.options = options
 	info[0] = user.appName
 	info.arg = option.arg
+	
 	local confirm = option.confirm
-	local confirmed = true
 	local confirmText = option.confirmText
 	--call confirm func/method
 	if type(confirm) == "string" then
@@ -276,7 +276,8 @@ local function BuildTabs(group)
 	for k, v in pairs(group.args) do
 		if v.type == "group" then
 			local inline = pickfirstset(v.dialogInline,v.guiInline,v.inline, false)
-			if not inline then
+			local hidden = pickfirstset(v.dialogHidden,v.guiHidden,v.hidden, false)
+			if not inline and not hidden then
 				tinsert(tabs, k)
 				text[k] = v.name
 			end
@@ -288,76 +289,8 @@ local function BuildTabs(group)
 end
 
 local function BuildSubTree(group, tree)
-	for k, v in pairs(group.args) do
-		if v.type == "group" then
-			local inline = pickfirstset(v.dialogInline,v.guiInline,v.inline, false)
-			if not inline then
-				local entry = new()
-				entry.value = k
-				entry.text = v.name
-				if not tree.children then tree.children = new() end
-				tinsert(tree.children,entry)
-				if (v.childGroups or "tree") == "tree" then
-					BuildSubTree(v,entry)
-				end
-			end
-		end
-	end
-end
-
---TODO: set an on release handler to del() the tree
-local function BuildTree(group)
-	local tree = new()
-	
-	for k, v in pairs(group.args) do
-		if v.type == "group" then
-			local inline = pickfirstset(v.dialogInline,v.guiInline,v.inline, false)
-			if not inline then
-				local entry = new()
-				entry.value = k
-				entry.text = v.name
-				tinsert(tree,entry)
-				if (v.childGroups or "tree") == "tree" then
-					BuildSubTree(v,entry)
-				end
-			end
-		end
-	end
-	
-	return tree
-end
-
-local function InjectInfo(control, options, option, path, rootframe, appName)
-		local user = control.userdata
-		for i,key in ipairs(path) do
-			user[i] = key
-		end
-		user.rootframe = rootframe
-		user.option = option
-		user.options = options
-		user.path = copy(path)
-		user.appName = appName
-		control:SetCallback("OnRelease", CleanUserData)
-end
-
-
---[[
-	options - root of the options table being fed
-	container - widget that controls will be placed in
-	rootframe - Frame object the options are in
-	path - table with the keys to get to the group being fed
---]]
-
-local function FeedOptions(appName, options,container,rootframe,path,group,inline)
---	container:ReleaseChildren()
---	local scroll = gui:Create("ScrollFrame")
---	scroll:SetLayout("flow")
---	container:SetLayout("fill")
---	container:AddChild(scroll)
-	
-	
-	feedkeys = new()
-	feedtmp = new()
+	local feedkeys = new()
+	local feedtmp = new()
 	
 	for k, v in pairs(group.args) do
 		tinsert(feedtmp, v)
@@ -369,65 +302,155 @@ local function FeedOptions(appName, options,container,rootframe,path,group,inlin
 	for i, v in ipairs(feedtmp) do
 		local k = feedkeys[v]
 		if v.type == "group" then
-			if inline or pickfirstset(v.dialogInline,v.guiInline,v.inline, false) then
-				--Inline group
-				local GroupContainer = gui:Create("InlineGroup")
-				GroupContainer:SetTitle(v.name or "")
-				GroupContainer.width = "fill"
-				GroupContainer:SetLayout("flow")
-				container:AddChild(GroupContainer)
-				tinsert(path, k)
-				FeedOptions(appName,options,GroupContainer,rootframe,path,v,true)
-				tremove(path)
+			local inline = pickfirstset(v.dialogInline,v.guiInline,v.inline, false)
+			local hidden = pickfirstset(v.dialogHidden,v.guiHidden,v.hidden, false)
+			if not inline and not hidden then
+				local entry = new()
+				entry.value = k
+				entry.text = v.name
+				if not tree.children then tree.children = new() end
+				tinsert(tree.children,entry)
+				if (v.childGroups or "tree") == "tree" then
+					BuildSubTree(v,entry)
+				end
 			end
-		else
-			--Control to feed
-			local control
-			if v.type == "execute" then
-				control = gui:Create("Button")
-				control:SetText(v.name)
-				control:SetCallback("OnClick",ActivateControl)
-				
-			elseif v.type == "input" then
-				control = gui:Create("EditBox")
-				control:SetLabel(v.name)
-				
-			elseif v.type == "toggle" then
-				control = gui:Create("CheckBox")
-				control:SetLabel(v.name)
-				
-			elseif v.type == "range" then
-				control = gui:Create("Slider")
-				control:SetLabel(v.name)
-				
-			elseif v.type == "select" then
-				control = gui:Create("DropDown")
-				control:SetLabel(v.name)
-				
-			elseif v.type == "multiselect" then
-				--control = gui:Create("")
-				
-			elseif v.type == "color" then
-				--control = gui:Create("")
-				
-			elseif v.type == "keybinding" then
-				--control = gui:Create("")
-				
-			elseif v.type == "header" then
-				control = gui:Create("Heading")
-				control:SetText(v.name)
-				control.width = "fill"
-				
-			end
+		end
+	end
+	del(feedkeys)
+	del(feedtmp)
+end
 
-			--Common Init
-			if control then
-				tinsert(path, k)
-				InjectInfo(control, options, v, path, rootframe, appName)
-				tremove(path)
-				control:SetCallback("OnEnter",OptionOnMouseOver)
-				container:AddChild(control)
-			end				
+--TODO: set an on release handler to del() the tree
+local function BuildTree(group)
+	local tree = new()
+	local feedkeys = new()
+	local feedtmp = new()
+	
+	for k, v in pairs(group.args) do
+		tinsert(feedtmp, v)
+		feedkeys[v] = k
+	end
+
+	table.sort(feedtmp, compareOptions)
+
+	for i, v in ipairs(feedtmp) do
+		local k = feedkeys[v]
+		if v.type == "group" then
+			local inline = pickfirstset(v.dialogInline,v.guiInline,v.inline, false)
+			local hidden = pickfirstset(v.dialogHidden,v.guiHidden,v.hidden, false)
+			if not inline and not hidden then
+				local entry = new()
+				entry.value = k
+				entry.text = v.name
+				tinsert(tree,entry)
+				if (v.childGroups or "tree") == "tree" then
+					BuildSubTree(v,entry)
+				end
+			end
+		end
+	end
+	del(feedkeys)
+	del(feedtmp)
+	return tree
+end
+
+local function InjectInfo(control, options, option, path, rootframe, appName)
+	local user = control.userdata
+	for i,key in ipairs(path) do
+		user[i] = key
+	end
+	user.rootframe = rootframe
+	user.option = option
+	user.options = options
+	user.path = copy(path)
+	user.appName = appName
+	control:SetCallback("OnRelease", CleanUserData)
+end
+
+
+--[[
+	options - root of the options table being fed
+	container - widget that controls will be placed in
+	rootframe - Frame object the options are in
+	path - table with the keys to get to the group being fed
+--]]
+
+local function FeedOptions(appName, options,container,rootframe,path,group,inline)
+	local feedkeys = new()
+	local feedtmp = new()
+	
+	for k, v in pairs(group.args) do
+		tinsert(feedtmp, v)
+		feedkeys[v] = k
+	end
+
+	table.sort(feedtmp, compareOptions)
+
+	for i, v in ipairs(feedtmp) do
+		local k = feedkeys[v]
+		local hidden = pickfirstset(v.dialogHidden,v.guiHidden,v.hidden, false)
+		if not hidden then
+			if v.type == "group" then
+				if inline or pickfirstset(v.dialogInline,v.guiInline,v.inline, false) then
+					--Inline group
+					local GroupContainer = gui:Create("InlineGroup")
+					GroupContainer:SetTitle(v.name or "")
+					GroupContainer.width = "fill"
+					GroupContainer:SetLayout("flow")
+					container:AddChild(GroupContainer)
+					tinsert(path, k)
+					FeedOptions(appName,options,GroupContainer,rootframe,path,v,true)
+					tremove(path)
+				end
+			else
+				--Control to feed
+				local control
+				if v.type == "execute" then
+					control = gui:Create("Button")
+					control:SetText(v.name)
+					control:SetCallback("OnClick",ActivateControl)
+					
+				elseif v.type == "input" then
+					control = gui:Create("EditBox")
+					control:SetLabel(v.name)
+					
+				elseif v.type == "toggle" then
+					control = gui:Create("CheckBox")
+					control:SetLabel(v.name)
+					
+				elseif v.type == "range" then
+					control = gui:Create("Slider")
+					control:SetLabel(v.name)
+					
+				elseif v.type == "select" then
+					control = gui:Create("DropDown")
+					control:SetLabel(v.name)
+					
+				elseif v.type == "multiselect" then
+					--control = gui:Create("")
+					
+				elseif v.type == "color" then
+					--control = gui:Create("")
+					
+				elseif v.type == "keybinding" then
+					--control = gui:Create("")
+					
+				elseif v.type == "header" then
+					control = gui:Create("Heading")
+					control:SetText(v.name)
+					control.width = "fill"
+					
+				end
+	
+				--Common Init
+				if control then
+					tinsert(path, k)
+					InjectInfo(control, options, v, path, rootframe, appName)
+					tremove(path)
+					control:SetCallback("OnEnter",OptionOnMouseOver)
+					container:AddChild(control)
+				end				
+			end
 		end
 	end
 	
