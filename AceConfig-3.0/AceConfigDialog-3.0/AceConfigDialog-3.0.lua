@@ -137,6 +137,34 @@ local function GetFuncName(option)
 	end	
 end
 
+local function confirmPopup(message, func, info, ...)
+	if not StaticPopupDialogs["ACECONFIGDIALOG30_CONFIRM_DIALOG"] then
+		StaticPopupDialogs["ACECONFIGDIALOG30_CONFIRM_DIALOG"] = {}
+	end
+	local t = StaticPopupDialogs["ACECONFIGDIALOG30_CONFIRM_DIALOG"]
+	for k in pairs(t) do
+		t[k] = nil
+	end
+	t.text = message
+	t.button1 = ACCEPT
+	t.button2 = CANCEL
+	t.OnAccept = function()
+		func(info, unpack(t))
+		del(info)
+	end
+	t.OnCancel = function()
+		del(info)
+	end
+	for i = 1, select('#', ...) do
+		t[i] = select(i, ...) or false
+	end
+	t.timeout = 0
+	t.whileDead = 1
+	t.hideOnEscape = 1
+
+	StaticPopup_Show("ACECONFIGDIALOG30_CONFIRM_DIALOG")
+end
+
 local function ActivateControl(widget, event, ...)
 	--This function will call the set / execute handler for the widget
 	--widget.userdata contains the needed info
@@ -151,6 +179,8 @@ local function ActivateControl(widget, event, ...)
 	local funcname = GetFuncName(option)
 	local handler
 	
+	--build the info table containing the path
+	-- pick up functions while traversing the tree
 	if group[funcname] ~= nil then
 		func =  group[funcname]
 	end
@@ -168,7 +198,53 @@ local function ActivateControl(widget, event, ...)
 	info.options = options
 	info[0] = user.appName
 	info.arg = option.arg
-	con:Print(type(func))
+	local confirm = option.confirm
+	local confirmed = true
+	local confirmText = option.confirmText
+	--call confirm func/method
+	if type(confirm) == "string" then
+		if handler and handler[confirm] then
+			confirm = handler[confirm](handler, info)
+			if type(confirm) == "string" then
+				confirmText = confirm
+				confirm = true
+			end
+		else
+			error("Method doesn't exist in handler")
+		end
+	elseif type(confirm) == "function" then
+		confirm = confirm(info)
+		if type(confirm) == "string" then
+			confirmText = confirm
+			confirm = true
+		end
+	end
+	
+	--confirm if needed
+	if type(confirm) == "boolean" then
+		if confirm then
+			if not confirmText then
+				confirmText = option.name
+				if option.desc then
+					confirmText = confirmText.." - "..option.desc
+				end
+			end
+				
+			if type(func) == "string" then
+				if handler and handler[func] then
+					confirmPopup(confirmText, handler[func], handler, info, ...)
+				else
+					error("Method doesn't exist in handler")
+				end
+			elseif type(func) == "function" then
+				confirmPopup(confirmText, func, info, ...)
+			end
+			--func will be called and info deleted when the confirm dialog is responded to
+			return
+		end
+	end
+	
+	--call the function 
 	if type(func) == "string" then
 		if handler and handler[func] then
 			handler[func](handler, info, ...)
