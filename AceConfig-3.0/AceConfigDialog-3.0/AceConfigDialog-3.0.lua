@@ -125,12 +125,61 @@ end
 
 local function OptionOnMouseOver(widget, event)
 	--show a tooltip/set the status bar to the desc text
-	widget.userdata.rootframe:SetStatusText(widget.userdata.desc)
+	widget.userdata.rootframe:SetStatusText(widget.userdata.option.desc)
+end
+	
+local function GetFuncName(option)
+	local type = option.type
+	if type == 'execute' then
+		return 'func'
+	else
+		return 'set'
+	end	
 end
 
 local function ActivateControl(widget, event, ...)
 	--This function will call the set / execute handler for the widget
 	--widget.userdata contains the needed info
+	local user = widget.userdata
+	local option = user.option
+	local options = user.options
+	local path = user.path
+	local info = new()
+	
+	local func
+	local group = options
+	local funcname = GetFuncName(option)
+	local handler
+	
+	if group[funcname] ~= nil then
+		func =  group[funcname]
+	end
+	handler = group.handler or handler
+		
+	for i, v in ipairs(path) do
+		group = group.args[v]
+		info[i] = v
+		if group[funcname] ~= nil then
+			func =  group[funcname]
+		end
+		handler = group.handler or handler
+	end
+
+	info.options = options
+	info[0] = user.appName
+	info.arg = option.arg
+	con:Print(type(func))
+	if type(func) == "string" then
+		if handler and handler[func] then
+			handler[func](handler, info, ...)
+		else
+			error("Method doesn't exist in handler")
+		end
+	elseif type(func) == "function" then
+		func(info, ...)
+	end	
+	
+	del(info)
 end
 
 local function FrameOnClose(widget, event) 
@@ -297,7 +346,9 @@ local function FeedOptions(appName, options,container,rootframe,path,group,inlin
 
 			--Common Init
 			if control then
+				tinsert(path, k)
 				InjectInfo(control, options, v, path, rootframe, appName)
+				tremove(path)
 				control:SetCallback("OnEnter",OptionOnMouseOver)
 				container:AddChild(control)
 			end				
