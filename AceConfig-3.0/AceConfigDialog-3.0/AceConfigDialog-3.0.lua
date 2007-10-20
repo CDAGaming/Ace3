@@ -245,7 +245,6 @@ local function ActivateControl(widget, event, ...)
 	end
 	
 	--call the function 
-	con:Print(func)
 	if type(func) == "string" then
 		if handler and handler[func] then
 			handler[func](handler, info, ...)
