@@ -32,17 +32,21 @@ end
 
 -- AceConsole:RegisterChatCommand(. command, func, persist )
 --
--- command (string) - chat command to be registered. does not require / in front
--- func (string|function) - function to call, if a string is used then the member of self is used as a string.
--- persist (boolean) - if true is passed the command will not be soft disabled/enabled when aceconsole is used as a mixin
+-- command (string) - chat command to be registered WITHOUT leading "/"
+-- func (function|membername) - function to call, or self[membername](self, ...) call
+-- persist (boolean) - false: the command will be soft disabled/enabled when aceconsole is used as a mixin (default: true)
 -- silent (boolean) - don't whine if command already exists, silently fail
 --
 -- Register a simple chat command
 function AceConsole:RegisterChatCommand( command, func, persist, silent )
+	if type(command)~="string" then error([[Usage: AceConsole:RegisterChatCommand( "command", func[, persist[, silent] ]): 'command' - expected a string]], 2) end
+	
+	if persist==nil then persist=true end	-- I'd rather have my addon's "/addon enable" around if the author screws up. Having some extra slash regged when it shouldnt be isn't as destructive. True is a better default. /Mikk
+	
 	local name = "ACECONSOLE_"..command:upper()
 	if SlashCmdList[name] then
 		if not silent then
-			geterrorhandler()(tostring(self) ": Chat Command '"..command.."' already exists, will not overwrite.")
+			geterrorhandler()(tostring(self)..": Chat Command '"..command.."' already exists, will not overwrite.")
 		end
 		return
 	end
@@ -53,7 +57,7 @@ function AceConsole:RegisterChatCommand( command, func, persist, silent )
 	else
 		SlashCmdList[name] = func
 	end
-	setglobal("SLASH_"..name.."1", "/"..command:lower())
+	_G["SLASH_"..name.."1"] = "/"..command:lower()
 	AceConsole.commands[command] = name
 	-- non-persisting commands are registered for enabling disabling
 	if not persist then
