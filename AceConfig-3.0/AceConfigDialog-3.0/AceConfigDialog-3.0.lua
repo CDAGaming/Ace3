@@ -9,6 +9,8 @@ local lib = LibStub:NewLibrary(MAJOR, MINOR)
 if not lib then return end
 
 lib.OpenFrames = lib.OpenFrames or {}
+lib.Status = lib.Status or {}
+
 
 local gui = LibStub("AceGUI-3.0")
 local reg = LibStub("AceConfigRegistry-3.0")
@@ -93,22 +95,56 @@ local function compareOptions(a,b)
 	return OrderA < OrderB
 end
 
-local function AceOptions3MouseOver(widget, event)
+--[[
+	Gets a status table for the given appname and options path
+]]
+function lib:GetStatusTable(appName, path)
+	local status = self.Status
+	
+	if not status[appName] then
+		status[appName] = {}
+		status[appName].status = {}
+		status[appName].children = {}
+	end
+	
+	status = status[appName]
+
+	if path then
+		for i, v in ipairs(path) do
+			if not status.children[v] then
+				status.children[v] = {}
+				status.children[v].status = {}
+				status.children[v].children = {}
+			end
+			status = status.children[v]
+		end
+	end
+	
+	return status.status
+end
+
+local function OptionOnMouseOver(widget, event)
 	--show a tooltip/set the status bar to the desc text
 	widget.userdata.rootframe:SetStatusText(widget.userdata.desc)
 end
 
-local function AceOptions3ActivateControl(widget, event, ...)
+local function ActivateControl(widget, event, ...)
 	--This function will call the set / execute handler for the widget
 	--widget.userdata contains the needed info
 end
 
-local function AceOptions3Get(option)
+local function FrameOnClose(widget, event) 
+	local appName = widget.userdata.appName
+	lib.OpenFrames[appName] = nil
+	gui:Release(widget)
+end
+
+local function CallOptionsGet(option)
 	--Call the get function for the option
 end
 
 --TODO: set an on release handler to del() the tabs
-local function AceOptions3BuildTabs(group)
+local function BuildTabs(group)
 	local tabs = new()
 	local text = new()
 	
@@ -126,7 +162,7 @@ local function AceOptions3BuildTabs(group)
 
 end
 
-local function AceOptions3BuildSubTree(group, tree)
+local function BuildSubTree(group, tree)
 	for k, v in pairs(group.args) do
 		if v.type == "group" then
 			local inline = pickfirstset(v.dialogInline,v.guiInline,v.inline, false)
@@ -137,7 +173,7 @@ local function AceOptions3BuildSubTree(group, tree)
 				if not tree.children then tree.children = new() end
 				tinsert(tree.children,entry)
 				if (v.childGroups or "tree") == "tree" then
-					AceOptions3BuildSubTree(v,entry)
+					BuildSubTree(v,entry)
 				end
 			end
 		end
@@ -145,7 +181,7 @@ local function AceOptions3BuildSubTree(group, tree)
 end
 
 --TODO: set an on release handler to del() the tree
-local function AceOptions3BuildTree(group)
+local function BuildTree(group)
 	local tree = new()
 	
 	for k, v in pairs(group.args) do
@@ -157,7 +193,7 @@ local function AceOptions3BuildTree(group)
 				entry.text = v.name
 				tinsert(tree,entry)
 				if (v.childGroups or "tree") == "tree" then
-					AceOptions3BuildSubTree(v,entry)
+					BuildSubTree(v,entry)
 				end
 			end
 		end
@@ -166,7 +202,7 @@ local function AceOptions3BuildTree(group)
 	return tree
 end
 
-local function AceOptions3InjectInfo(control, options, option, path, rootframe)
+local function InjectInfo(control, options, option, path, rootframe, appName)
 		local user = control.userdata
 		for i,key in ipairs(path) do
 			user[i] = key
@@ -175,7 +211,8 @@ local function AceOptions3InjectInfo(control, options, option, path, rootframe)
 		user.option = option
 		user.options = options
 		user.path = copy(path)
-		control:SetCallback("OnRelease", AceOptionsClearUserData)
+		user.appName = appName
+		control:SetCallback("OnRelease", CleanUserData)
 end
 
 
@@ -186,7 +223,7 @@ end
 	path - table with the keys to get to the group being fed
 --]]
 
-local function FeedOptions(options,container,rootframe,path,group,inline)
+local function FeedOptions(appName, options,container,rootframe,path,group,inline)
 --	container:ReleaseChildren()
 --	local scroll = gui:Create("ScrollFrame")
 --	scroll:SetLayout("flow")
@@ -215,7 +252,7 @@ local function FeedOptions(options,container,rootframe,path,group,inline)
 				GroupContainer:SetLayout("flow")
 				container:AddChild(GroupContainer)
 				tinsert(path, k)
-				FeedOptions(options,GroupContainer,rootframe,path,v,true)
+				FeedOptions(appName,options,GroupContainer,rootframe,path,v,true)
 				tremove(path)
 			end
 		else
@@ -224,7 +261,7 @@ local function FeedOptions(options,container,rootframe,path,group,inline)
 			if v.type == "execute" then
 				control = gui:Create("Button")
 				control:SetText(v.name)
-				control:SetCallback("OnClick",AceOptions3ActiveControl)
+				control:SetCallback("OnClick",ActivateControl)
 				
 			elseif v.type == "input" then
 				control = gui:Create("EditBox")
@@ -255,8 +292,8 @@ local function FeedOptions(options,container,rootframe,path,group,inline)
 
 			--Common Init
 			if control then
-				AceOptions3InjectInfo(control, options, v, path, rootframe)
-				control:SetCallback("OnEnter",AceOptions3MouseOver)
+				InjectInfo(control, options, v, path, rootframe, appName)
+				control:SetCallback("OnEnter",OptionOnMouseOver)
 				container:AddChild(control)
 			end				
 		end
@@ -266,10 +303,14 @@ local function FeedOptions(options,container,rootframe,path,group,inline)
 	del(feedtmp)
 end
 
--- ... is the path up the tree to the current node
-local function AceOptions3GroupSelected(widget, event, value, ...)
+local function BuildPath(path, ...)
+	for i = 1, select('#',...)  do
+		tinsert(path, (select(i,...)))
+	end
+end
+-- ... is the path up the tree to the current node, in reverse order (node, parent, grandparent)
+local function GroupSelected(widget, event, uniquevalue)
 
-	
 	local user = widget.userdata
 	
 	local options = user.options
@@ -282,24 +323,20 @@ local function AceOptions3GroupSelected(widget, event, value, ...)
 		feedpath[i] = v
 	end
 	
-	for i = 1, select('#',...) do
-		tinsert(feedpath, select(i,...))
-	end
+	BuildPath(feedpath, string.split("\001", uniquevalue))
 	
-	tinsert(feedpath, value)
-
 	local group = options
 	for i, v in ipairs(feedpath) do
 		group = group.args[v]
 	end	
 	
 	widget:ReleaseChildren()
-	lib:FeedGroup(options,widget,rootframe,feedpath,group)
+	lib:FeedGroup(user.appName,options,widget,rootframe,feedpath,group)
 	
 	del(feedpath)
 end
 
-local function AceOptionsClearUserData(widget, event)
+local function CleanUserData(widget, event)
 	local user = widget.userdata
 	
 	if user.path then
@@ -323,7 +360,7 @@ Rules:
 		if its parent is a tree group, its already a node on a tree
 --]]
 
-function lib:FeedGroup(options,container,rootframe,path)
+function lib:FeedGroup(appName,options,container,rootframe,path)
 	local group = options
 	--follow the path to get to the curent group
 	local inline
@@ -354,9 +391,9 @@ function lib:FeedGroup(options,container,rootframe,path)
 	container:SetLayout("flow")
 
 	if (not hasChildGroups) or inline then
-
 		if container.type ~= "InlineGroup" then
 			local scroll = gui:Create("ScrollFrame")
+			
 			scroll:SetLayout("flow")
 			scroll.width = "fill"
 			scroll.height = "fill"
@@ -365,43 +402,76 @@ function lib:FeedGroup(options,container,rootframe,path)
 		end
 	end
 	
-	FeedOptions(options,container,rootframe,path,group)
+	FeedOptions(appName,options,container,rootframe,path,group)
 
+	if container.Type == "ScrollFrame" then
+		local status = self:GetStatusTable(appName, path)
+		if not status.scroll then
+			status.scroll = {}
+		end
+		scroll:SetStatusTable(status.scroll)
+	end
+	
 	if hasChildGroups and not inline then
 		
 		if grouptype == "tab" then
 
 			local tab = gui:Create("TabGroup")
+			InjectInfo(tab, options, group, path, rootframe, appName)
+			tab:SetCallback("OnGroupSelected", GroupSelected)
+			local status = lib:GetStatusTable(appName, path)
+			if not status.groups then
+				status.groups = {}
+			end
+			tab:SetStatusTable(status.groups)
 			tab.width = "fill"
 			tab.height = "fill"
-			AceOptions3InjectInfo(tab, options, group, path, rootframe)
 
-			tab:SetTabs(AceOptions3BuildTabs(group))
-			tab:SetCallback("OnGroupSelected", AceOptions3GroupSelected)
-			
+			local tabs, text = BuildTabs(group)
+			tab:SetTabs(tabs, text)
+
 			container:AddChild(tab)
 			
 		elseif grouptype == "select" then
 
 			local select = gui:Create("DropdownGroup")
+			InjectInfo(select, options, group, path, rootframe, appName)
+			select:SetCallback("OnGroupSelected", GroupSelected)
+			local status = lib:GetStatusTable(appName, path)
+			if not status.groups then
+				status.groups = {}
+			end
+			select:SetStatusTable(status.groups)
 			select.width = "fill"
 			select.height = "fill"
-			AceOptions3InjectInfo(select, options, group, path, rootframe)
-			select:SetCallback("OnGroupSelected", AceOptions3GroupSelected)
-
+			
 			container:AddChild(select)
 			
 		--assume tree group by default
 		elseif parenttype ~= "tree" then
 
 			local tree = gui:Create("TreeGroup")
+			InjectInfo(tree, options, group, path, rootframe, appName)
+			
 			tree.width = "fill"
 			tree.height = "fill"
-			AceOptions3InjectInfo(tree, options, group, path, rootframe)
+			
+			tree:SetCallback("OnGroupSelected", GroupSelected)
+			
+			local status = lib:GetStatusTable(appName, path)
+			if not status.groups then
+				status.groups = {}
+			end
+			local treedefinition = BuildTree(group)
+			tree:SetStatusTable(status.groups)
+			
+			tree:SetTree(treedefinition)
 
-			tree:SetTree(AceOptions3BuildTree(group))
-			tree:SetCallback("OnGroupSelected", AceOptions3GroupSelected)
-	
+			if treedefinition[1] then
+				tree:SelectByValue(status.groups.selected or treedefinition[1].value)
+			end
+
+
 			container:AddChild(tree)
 		end
 	end
@@ -410,7 +480,11 @@ end
 
 function lib:Open(appName)
 	
-	local options = reg:GetOptionsTable(appName)("dialog", MAJOR)
+	local app = reg:GetOptionsTable(appName)
+	if not app then
+		error(("%s isn't registed with AceConfigRegistry, unable to open config"):format(appName), 2)
+	end	
+	local options = app("dialog", MAJOR)
 	
 	local f
 	if not self.OpenFrames[appName] then
@@ -420,11 +494,15 @@ function lib:Open(appName)
 		f = self.OpenFrames[appName]
 	end
 	f:ReleaseChildren()
+	f:SetCallback("OnClose", FrameOnClose)
+	f.userdata.appName = appName
 	f:SetTitle(options.name or "")
+	local status = lib:GetStatusTable(appName)
+	f:SetStatusTable(status)
 
 	local path = new()
 	
-	self:FeedGroup(options,f,f,path)
+	self:FeedGroup(appName,options,f,f,path)
 	f:Show()
 	del(path)
 

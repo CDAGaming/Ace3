@@ -4,6 +4,8 @@ local AceGUI, oldminor = LibStub:NewLibrary(ACEGUI_MAJOR, ACEGUI_MINOR)
 
 if not AceGUI then return end -- No upgrade needed
 
+local con = LibStub("AceConsole-3.0",true)
+
 AceGUI.WidgetRegistry = AceGUI.WidgetRegistry or {}
 AceGUI.LayoutRegistry = AceGUI.LayoutRegistry or {}
 
@@ -99,6 +101,7 @@ function AceGUI:Release(widget)
 	--widget.frame:SetParent(nil)
 	widget.frame:ClearAllPoints()
 	widget.frame:Hide()
+	widget.frame:SetParent(nil)
 	del(widget,widget.type)
 end
 
@@ -296,6 +299,14 @@ do
 		self:Fire("OnClose")
 	end
 	
+	local function frameOnSizeChanged(this)
+		local self = this.obj
+		local status = self.status or self.localstatus
+		
+		status.width = this:GetWidth()
+		status.height = this:GetHeight()
+	end
+	
 	local function closeOnClick(this)
 		this.obj:Hide()
 	end
@@ -305,7 +316,12 @@ do
 	end
 	
 	local function frameOnMouseUp(this)
-		this:GetParent():StopMovingOrSizing()
+		local frame = this:GetParent()
+		frame:StopMovingOrSizing()
+		local self = frame.obj
+		local status = self.status or self.localstatus
+		status.top = frame:GetTop()
+		status.left = frame:GetLeft()
 	end
 	
 	local function sizerseOnMouseDown(this)
@@ -342,12 +358,35 @@ do
 	
 	local function Aquire(self)
 		self.frame:SetParent(UIParent)
+		self:ApplyStatus()
 	end
 	
 	local function Release(self)
-
+		self.status = nil
+		for k in pairs(self.localstatus) do
+			self.localstatus[k] = nil
+		end
 	end
 	
+	-- called to set an external table to store status in
+	local function SetStatusTable(self, status)
+		assert(type(status) == "table")
+		self.status = status
+		self:ApplyStatus()
+	end
+	
+	local function ApplyStatus(self)
+		local status = self.status or self.localstatus
+		local frame = self.frame
+		frame:SetWidth(status.width or 700)
+		frame:SetHeight(status.height or 500)
+		if status.top and status.left then
+			frame:SetPoint("TOP",UIParent,"BOTTOM",0,status.top)
+			frame:SetPoint("LEFT",UIParent,"LEFT",status.left,0)
+		else
+			frame:SetPoint("CENTER",UIParent,"CENTER")
+		end
+	end
 
 	local function Constructor()
 		local frame = CreateFrame("Frame",nil,UIParent)
@@ -360,6 +399,10 @@ do
 		self.Release = Release
 		self.Aquire = Aquire
 		self.SetStatusText = SetStatusText
+		self.SetStatusTable = SetStatusTable
+		self.ApplyStatus = ApplyStatus
+		
+		self.localstatus = {}
 		
 		self.frame = frame
 		frame.obj = self
@@ -375,6 +418,7 @@ do
 		frame:SetBackdropColor(0,0,0,1)
 		frame:SetScript("OnHide",frameOnClose)
 		frame:SetMinResize(400,200)
+		frame:SetScript("OnSizeChanged", frameOnSizeChanged)
 		
 		local closebutton = CreateFrame("Button",nil,frame,"UIPanelButtonTemplate")
 		closebutton:SetScript("OnClick", closeOnClick)
@@ -621,6 +665,12 @@ do
 		self.dropdown.list = list
 	end
 	
+	-- called to set an external table to store status in
+	local function SetStatusTable(self, status)
+		assert(type(status) == "table")
+		self.status = status
+	end
+	
 	local function SetGroup(self,group)
 		self.dropdown:SetValue(group)
 	end
@@ -636,6 +686,7 @@ do
 		
 		self.SetGroupList = SetGroupList
 		self.SetGroup = SetGroup
+		self.SetStatusTable = SetStatusTable
 
 		self.frame = frame
 		frame.obj = self
@@ -699,6 +750,10 @@ do
 	local function Release(self)
 		self.frame:ClearAllPoints()
 		self.frame:Hide()
+		self.status = nil
+		for k in pairs(self.localstatus) do
+			self.localstatus[k] = nil
+		end
 	end
 	
 	local function Tab_FixWidth(self)
@@ -794,14 +849,21 @@ do
 		self.titletext:SetText(text or "")
 	end
 	
+	-- called to set an external table to store status in
+	local function SetStatusTable(self, status)
+		assert(type(status) == "table")
+		self.status = status
+	end
+	
 	local function SelectTab(self, id)
+		local status = self.status or self.localstatus
 		for i, v in ipairs(self.tabs) do
 			v:SetSelected(v.id == id)
 		end
+		status.selected = id
 		self:Fire("OnGroupSelected",self.tablist[id])
 	end
-	
-	
+		
 	local function SetTabs(self, tabs, text)
 		self.tablist = tabs
 		self.text = text
@@ -809,6 +871,7 @@ do
 	end
 	
 	local function BuildTabs(self)
+		local status = self.status or self.localstatus
 		local tablist = self.tablist
 		local text = self.text
 		local tabs = self.tabs
@@ -828,7 +891,7 @@ do
 			tab:SetText(text[v])
 		end
 		
-		self:SelectTab(1)
+		self:SelectTab(status.selected or 1)
 	end
 
 	local function Constructor()
@@ -836,12 +899,15 @@ do
 		local self = {}
 		self.type = Type
 
+		self.localstatus = {}
+		
 		self.Release = Release
 		self.Aquire = Aquire
 		self.SetTitle = SetTitle
 		self.CreateTab = CreateTab
 		self.SelectTab = SelectTab
 		self.BuildTabs = BuildTabs
+		self.SetStatusTable = SetStatusTable
 		self.SetTabs = SetTabs
 		self.frame = frame
 		frame.obj = self
@@ -894,8 +960,20 @@ do
 
 	end
 	
-	local function GetParentPath(button)
-	
+	local function Release(self)
+		self.frame:ClearAllPoints()
+		self.frame:Hide()
+		self.status = nil
+		for k, v in pairs(self.localstatus) do
+			if k == "groups" then
+				for k2 in pairs(v) do
+					v[k2] = nil
+				end
+			else
+				self.localstatus[k] = nil
+			end
+		end
+		self.localstatus.scrollvalue = 0
 	end
 	
 	local function GetButtonParents(line)
@@ -905,12 +983,19 @@ do
 		end
 	end
 	
+	local function GetButtonUniqueValue(line)
+		local parent = line.parent
+		if parent and parent.value then
+			return GetButtonUniqueValue(parent).."\001"..line.value
+		else
+			return line.value
+		end		
+	end
+	
 	local function ButtonOnClick(this)
 		local self = this.obj
-		local status = self.status or self.localstatus
-		
 		if not this.selected then
-			self:SetSelected(this.value, GetButtonParents(this.treeline))
+			self:SetSelected(this.uniquevalue)
 			this.selected = true
 			this:LockHighlight()
 			self:RefreshTree()
@@ -920,15 +1005,16 @@ do
 	local function ExpandOnClick(this)
 		local button = this.button
 		local self = button.obj
-		local status = self.status or self.localstatus
-		status[button.value] = not status[button.value]
+		local status = (self.status or self.localstatus).groups
+		status[button.uniquevalue] = not status[button.uniquevalue]
 		self:RefreshTree()
 	end
 	
 	local function ButtonOnDoubleClick(button)
 		local self = button.obj
 		local status = self.status or self.localstatus
-		status[button.value] = not status[button.value]
+		local status = (self.status or self.localstatus).groups
+		status[button.uniquevalue] = not status[button.uniquevalue]
 		self:RefreshTree()
 	end
 	
@@ -984,8 +1070,11 @@ do
 		local text = treeline.text or ""
 		local level = treeline.level
 		local value = treeline.value
+		local uniquevalue = treeline.uniquevalue
+
 		button.treeline = treeline
 		button.value = value
+		button.uniquevalue = uniquevalue
 		if selected then
 			button:LockHighlight()
 			button.selected = true
@@ -1050,21 +1139,27 @@ do
 		end
 	end
 
-	local function Release(self)
-		self.frame:ClearAllPoints()
-		self.frame:Hide()
-	end
+
 	
 	local function OnScrollValueChanged(this, value)
 		if this.obj.noupdate then return end
-		this.obj.scrollvalue = value
-		this.obj:RefreshTree()
+		local self = this.obj
+		local status = self.status or self.localstatus
+		status.scrollvalue = value
+		self:RefreshTree()
 	end
 	
 	-- called to set an external table to store status in
 	local function SetStatusTable(self, status)
 		assert(type(status) == "table")
 		self.status = status
+		if not status.groups then
+			status.groups = {}
+		end
+		if not status.scrollvalue then
+			status.scrollvalue = 0
+		end
+		self:RefreshTree()
 	end
 
 	--sets the tree to be displayed
@@ -1118,7 +1213,8 @@ do
 	local function BuildLevel(self, tree, level, parent)
 		local lines = self.lines
 
-		local status = self.status or self.localstatus
+		local status = (self.status or self.localstatus)
+		local groups = status.groups
 		local hasChildren = self.hasChildren
 		
 		for i, v in ipairs(tree) do
@@ -1130,15 +1226,16 @@ do
 			line.tree = tree
 			line.level = level
 			line.parent = parent
-
+			line.uniquevalue = GetButtonUniqueValue(line)
+			
 			if v.children then
 				line.hasChildren = true
 			else
 				line.hasChildren = nil
 			end
 			if v.children then
-				if status[line.value] then
-					self:BuildLevel(v.children, level+1, v)
+				if groups[line.uniquevalue] then
+					self:BuildLevel(v.children, level+1, line)
 				end
 			end
 		end
@@ -1156,8 +1253,10 @@ do
 	end
 	
 	local function RefreshTree(self)
+		if not self.tree then return end
 		--Build the list of visible entries from the tree and status tables
 		local status = self.status or self.localstatus
+		local groupstatus = status.groups
 		local tree = self.tree
 		local lines = self.lines
 		local buttons = self.buttons
@@ -1187,7 +1286,7 @@ do
 		
 		if numlines <= maxlines then
 			--the whole tree fits in the frame
-			self.scrollvalue = 0
+			status.scrollvalue = 0
 			self:ShowScroll(false)
 			first, last = 1, numlines
 		else
@@ -1196,12 +1295,12 @@ do
 			self.noupdate = true
 			self.scrollbar:SetMinMaxValues(0, numlines - maxlines)
 			--check if we are scrolled down too far
-			if numlines - self.scrollvalue < maxlines then
-				self.scrollvalue = numlines - maxlines
-				self.scrollbar:SetValue(self.scrollvalue)
+			if numlines - status.scrollvalue < maxlines then
+				status.scrollvalue = numlines - maxlines
+				self.scrollbar:SetValue(status.scrollvalue)
 			end
 			self.noupdate = nil
-			first, last = self.scrollvalue+1, self.scrollvalue + maxlines
+			first, last = status.scrollvalue+1, status.scrollvalue + maxlines
 		end
 		
 		local buttonnum = 1
@@ -1226,20 +1325,51 @@ do
 				end
 			end
 
-			UpdateButton(button, line, self.selected == line.value, (not lines[i+1]) or lines[i+1].level ~= line.level, line.hasChildren, status[line.value] )
+			UpdateButton(button, line, status.selected == line.uniquevalue, (not lines[i+1]) or lines[i+1].level ~= line.level, line.hasChildren, groupstatus[line.uniquevalue] )
 			button:Show()
 			buttonnum = buttonnum + 1
 		end
 
 	end
 	
-	local function SetSelected(self, value, ...)
-		if self.selected ~= value then
-			self.selected = value
-			self:Fire("OnGroupSelected", value, ...)
+	local function SetSelected(self, value)
+		local status = self.status or self.localstatus
+		if status.selected ~= value then
+			status.selected = value
+			self:Fire("OnGroupSelected", value)
 		end
 	end
 	
+	function BuildUniqueValue(...)
+		local n = select('#', ...)
+		if n == 1 then
+			return ...
+		else
+			return (...).."\001"..BuildUniqueValue(select(2,...))
+		end
+	end
+	
+	local function Select(self, uniquevalue, ...)
+		local status = self.status or self.localstatus
+		local groups = status.groups
+		for i = 1, select('#', ...) do
+			groups[BuildUniqueValue(select(i, ...))] = true
+		end
+		status.selected = uniquevalue
+		self:RefreshTree()
+		self:Fire("OnGroupSelected", uniquevalue)
+	end
+	
+	local function SelectByPath(self, ...)
+		 self:Select(BuildUniqueValue(...), ...)
+	end
+	
+	--Selects a tree node by UniqueValue
+	local function SelectByValue(self, uniquevalue)
+		self:Select(uniquevalue,string.split("\001", uniquevalue))
+	end
+	
+
 	local function ShowScroll(self, show)
 		self.showscroll = show
 		if show then
@@ -1253,19 +1383,18 @@ do
 				self.buttons[1]:SetPoint("TOPRIGHT", self.treeframe,"TOPRIGHT",-10,-10)
 			end
 		end
-		
 	end
 	
 	local function Constructor()
 		local frame = CreateFrame("Frame",nil,UIParent)
 		local self = {}
 		self.type = Type
-		self.localstatus = {}
 		self.lines = {}
 		self.levels = {}
 		self.buttons = {}
 		self.hasChildren = {}
-		
+		self.localstatus = {}
+		self.localstatus.groups = {}
 		
 		local treeframe = CreateFrame("Frame",nil,frame)
 		treeframe.obj = self
@@ -1290,6 +1419,10 @@ do
 		self.CreateButton = CreateButton
 		self.SetSelected = SetSelected
 		self.ShowScroll = ShowScroll
+		self.SetStatusTable = SetStatusTable
+		self.Select = Select
+		self.SelectByValue = SelectByValue
+		self.SelectByPath = SelectByPath
 		
 		self.frame = frame
 		frame.obj = self
@@ -1302,7 +1435,7 @@ do
 		scrollbar:SetPoint("BOTTOMRIGHT",treeframe,"BOTTOMRIGHT",-10,26)
 		scrollbar:SetScript("OnValueChanged", OnScrollValueChanged)
 		scrollbar:SetMinMaxValues(0,0)
-		self.scrollvalue = 0
+		self.localstatus.scrollvalue = 0
 		scrollbar:SetValueStep(1)
 		scrollbar:SetValue(0)
 		scrollbar:SetWidth(16)
@@ -1345,9 +1478,15 @@ do
 	local function Release(self)
 		self.frame:ClearAllPoints()
 		self.frame:Hide()
+		self.status = nil
+		for k in pairs(self.localstatus) do
+			self.localstatus[k] = nil
+		end
 	end
 	
 	local function SetScroll(self, value)
+		local status = self.status or self.localstatus
+		
 		local frame, child = self.scrollframe, self.content
 		local viewheight = frame:GetHeight()
 		local height = child:GetHeight()
@@ -1362,10 +1501,11 @@ do
 		child:SetPoint("TOPRIGHT",frame,"TOPRIGHT",0,offset)
 		child.offset = offset
 
-		self.scrollvalue = value
+		status.scrollvalue = value
 	end
 	
 	local function MoveScroll(self, value)
+		local status = self.status or self.localstatus
 		local frame, child = self.scrollframe, self.content
 		local height, viewheight = frame:GetHeight(), child:GetHeight()
 		if height > viewheight then
@@ -1377,7 +1517,7 @@ do
 			if value < 0 then
 				delta = -1
 			end
-			self.scrollbar:SetValue(math.min(math.max(self.scrollvalue + delta*(1000/(diff/45)),0), 1000))
+			self.scrollbar:SetValue(math.min(math.max(status.scrollvalue + delta*(1000/(diff/45)),0), 1000))
 		end
 	end
 	
@@ -1427,12 +1567,22 @@ do
 		self.content:SetHeight(height or 0 + 20)
 	end
 	
-
+	-- called to set an external table to store status in
+	local function SetStatusTable(self, status)
+		assert(type(status) == "table")
+		self.status = status
+		if not status.scrollvalue then
+			status.scrollvalue = 0
+		end
+		self:SetScroll(status.scrollvalue)
+	end
+	
+	
 	local function Constructor()
 		local frame = CreateFrame("Frame",nil,UIParent)
 		local self = {}
 		self.type = Type
-
+	
 		self.Release = Release
 		self.Aquire = Aquire
 		
@@ -1440,7 +1590,9 @@ do
 		self.FixScroll = FixScroll
 		self.SetScroll = SetScroll
 		self.LayoutFinished = LayoutFinished
-		
+		self.SetStatusTable = SetStatusTable
+	
+		self.localstatus = {} 	
 		self.frame = frame
 		frame.obj = self
 
@@ -1479,7 +1631,7 @@ do
 		scrollbar:SetValue(0)
 		scrollbar:SetWidth(16)
 		
-		self.scrollvalue = 0
+		self.localstatus.scrollvalue = 0
 		
 
 		self:FixScroll()
@@ -2502,6 +2654,7 @@ AceGUI:RegisterLayout("List",
 			
 			local frame = child.frame
 			frame:ClearAllPoints()
+			frame:Show()
 			if i == 1 then
 				frame:SetPoint("TOPLEFT",content,"TOPLEFT",0,0)
 			else
@@ -2526,6 +2679,7 @@ AceGUI:RegisterLayout("Fill",
 	 function(content, children)
 		if children[1] then
 			children[1].frame:SetAllPoints(content)
+			children[1].frame:Show()
 			if content.obj.LayoutFinished then
 				content.obj:LayoutFinished(nil, children[1].frame:GetHeight())
 			end
@@ -2549,6 +2703,7 @@ AceGUI:RegisterLayout("Flow",
 		for i, child in ipairs(children) do
 			
 			local frame = child.frame
+			frame:Show()
 			frame:ClearAllPoints()
 			if i == 1 then
 				-- anchor the first control to the top left
