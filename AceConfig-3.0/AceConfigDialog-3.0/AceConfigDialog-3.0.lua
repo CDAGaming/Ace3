@@ -245,6 +245,7 @@ local function ActivateControl(widget, event, ...)
 	end
 	
 	--call the function 
+	con:Print(func)
 	if type(func) == "string" then
 		if handler and handler[func] then
 			handler[func](handler, info, ...)
@@ -264,8 +265,47 @@ local function FrameOnClose(widget, event)
 	gui:Release(widget)
 end
 
-local function CallOptionsGet(option)
+local function CallOptionsGet(option, options, path, appName)
 	--Call the get function for the option
+	local info = new()
+	
+	local func
+	local group = options
+	local handler
+	
+	--build the info table containing the path
+	-- pick up functions while traversing the tree
+	if group.get ~= nil then
+		func = group.get
+	end
+	handler = group.handler or handler
+		
+	for i, v in ipairs(path) do
+		group = group.args[v]
+		info[i] = v
+		if group.get ~= nil then
+			func =  group.get
+		end
+		handler = group.handler or handler
+	end
+
+	info.options = options
+	info[0] = appName
+	info.arg = option.arg
+
+	local a, b, c ,d
+	if type(func) == "string" then
+		if handler and handler[func] then
+			a,b,c,d = handler[func](handler, info)
+		else
+			error("Method doesn't exist in handler")
+		end
+	elseif type(func) == "function" then
+		a,b,c,d = func(info)
+	end
+	
+	del(info)
+	return a,b,c,d
 end
 
 --TODO: set an on release handler to del() the tabs
@@ -403,6 +443,7 @@ local function FeedOptions(appName, options,container,rootframe,path,group,inlin
 					tremove(path)
 				end
 			else
+				tinsert(path, k)
 				--Control to feed
 				local control
 				if v.type == "execute" then
@@ -413,14 +454,21 @@ local function FeedOptions(appName, options,container,rootframe,path,group,inlin
 				elseif v.type == "input" then
 					control = gui:Create("EditBox")
 					control:SetLabel(v.name)
+					control:SetCallback("OnValueChanged",ActivateControl)
+					control:SetText(CallOptionsGet(v, options, path, appName))
 					
 				elseif v.type == "toggle" then
 					control = gui:Create("CheckBox")
 					control:SetLabel(v.name)
+					control:SetValue(CallOptionsGet(v, options, path, appName))
+					control:SetCallback("OnValueChanged",ActivateControl)
 					
 				elseif v.type == "range" then
 					control = gui:Create("Slider")
 					control:SetLabel(v.name)
+					control:SetSliderValues(v.min or 0,v.max or 100,v.bigStep or 0)
+					control:SetValue(CallOptionsGet(v, options, path, appName))
+					control:SetCallback("OnValueChanged",ActivateControl)
 					
 				elseif v.type == "select" then
 					control = gui:Create("DropDown")
@@ -444,12 +492,11 @@ local function FeedOptions(appName, options,container,rootframe,path,group,inlin
 	
 				--Common Init
 				if control then
-					tinsert(path, k)
 					InjectInfo(control, options, v, path, rootframe, appName)
-					tremove(path)
 					control:SetCallback("OnEnter",OptionOnMouseOver)
 					container:AddChild(control)
-				end				
+				end	
+				tremove(path)			
 			end
 		end
 	end
