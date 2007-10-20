@@ -315,4 +315,788 @@ function TestFrame()
 	
 	f:Show()
 end
+
+local p
+local BagginsAce3Opts = {
+		type = "group",
+		icon = "Interface\\Icons\\INV_Jewelry_Ring_03",
+		name = "Baggins",
+		childGroups = "tree",
+		args = {
+			Refresh = {
+				name = "Force Full Refresh",
+				type = "execute",
+				order = 9,
+				desc = "Forces a Full Refresh of item sorting",
+				func = function(info) Baggins:ForceFullRefresh() Baggins:UpdateBags() end,
+			},
+
+			BagCatEdit = {
+				name = "Bag/Category Config",
+				type = "execute",
+				order = 2,
+				desc = "Opens the Waterfall Config window",
+				func = function(info) waterfall:Open("BagginsEdit") dewdrop:Close() end,
+				disabled = function(info) return not waterfall end,
+				
+			},
+			LoadProfile = {
+				name = "Load Profile",
+				type = "group",
+				desc = "Load a built-in profile: NOTE: ALL Custom Bags will be lost and any edited built in categories will be lost.",
+				order = 20,
+				args = {
+					Default = {
+						name = "Default",
+						type = "execute",
+						desc = "A default set of bags sorting your inventory into categories",
+						func = function(info) Baggins:ApplyProfile(Baggins.profiles.default)	end,
+						order = 10,
+					},
+					AllInOne = {
+						name = "All in one",
+						type = "execute",
+						desc = "A single bag containing your whole inventory, sorted by quality",
+						func = function(info) Baggins:ApplyProfile(Baggins.profiles.allinone)	end,
+						order = 15,
+					},
+					AllInOneSorted = {
+						name = "All In One Sorted",
+						type = "execute",
+						desc = "A single bag containing your whole inventory, sorted into categories",
+						func = function(info) Baggins:ApplyProfile(Baggins.profiles.allinonesorted) end,
+						order = 20,
+					},
+					UserDefined = {
+						name = "User Defined",
+						type = "group",
+						desc = "Load a User Defined Profile",
+						inline = true,
+						order = 30,
+						pass = true,
+						func = function(info, name) local p = Baggins.db.account.profiles[name] if p then Baggins:ApplyProfile(p) end end,
+						args = {},
+					},
+				},
+			},
+			SaveProfile = {
+				name = "Save Profile",
+				type = "group",
+				desc = "Save a User Defined Profile",
+				pass = true,
+				order = 30,
+				func = function(info, name) Baggins:SaveProfile(name) end,
+				set = function(info, key, name) Baggins:SaveProfile(name) end,
+				get = false,
+				args = {
+					New = {
+						type = "text",
+						name = "New",
+						desc = "Create a new Profile",
+						usage = "<Name>",
+						get = false,
+						order = 1
+					},
+				},
+			},
+			DeleteProfile = {
+				name = "Delete Profile",
+				type = "group",
+				desc = "Delete a User Defined Profile",
+				pass = true,
+				order = 40,
+				func = function(info, name) Baggins:SaveProfile(name) end,
+				confirm = true,
+				func = function(info, name) Baggins.db.account.profiles[name] = nil Baggins:RefreshProfileOptions() end,
+				args = {
+				},
+			},
+			spacer3 = {
+				type = "header",
+				order = 90,
+			},
+			Items = {
+				name = "Items",
+				type = 'group',
+				order = 120,
+				desc = "Item display settings",
+				childGroups = "tab",
+				args = {
+					Compress = {
+						name = "Compress",
+						desc = "Compress Multiple stacks into one item button",
+						type = "group",
+						order = 10,
+						disabled = function(info) return p.sort == "slot" end,
+						args = {
+							CompressAll = {
+								name = "Compress All",
+								type = "toggle",
+								desc = "Show all items as a single button with a count on it",
+								order = 10,
+								get = function(info) return p.compressall end,
+								set = function(info, value)
+									p.compressall = value
+									Baggins:RebuildSectionLayouts()
+									Baggins:UpdateBags()
+								end,
+							},
+							CompressStackable = {
+								name = "Compress Stackable Items",
+								type = "toggle",
+								desc = "Show stackable items as a single button with a count on it",
+								order = 20,
+								disabled = function(info) return p.compressall end,
+								get = function(info) return p.compressstackable or p.compressall end,
+								set = function(info, value)
+									p.compressstackable = value
+									Baggins:RebuildSectionLayouts()									
+									Baggins:UpdateBags()
+								end,
+							},
+							spacer = {
+								type = 'header',
+								order = 90,
+							},
+							CompressEmptySlots = {
+								name = "Compress Empty Slots",
+								type = "toggle",
+								desc = "Show all empty slots as a single button with a count on it",
+								order = 100,
+								disabled = function(info) return p.compressall end,
+								get = function(info) return p.compressempty or p.compressall end,
+								set = function(info, value)
+									p.compressempty = value
+									Baggins:RebuildSectionLayouts()
+									Baggins:UpdateBags()
+								end,
+							},
+							CompressShards = {
+								name = "Compress Soul Shards",
+								type = "toggle",
+								desc = "Show all soul shards as a single button with a count on it",
+								order = 110,
+								disabled = function(info) return p.compressall end,
+								get = function(info) return p.compressshards or p.compressall end,
+								set = function(info, value)
+									p.compressshards = value
+									Baggins:RebuildSectionLayouts()
+									Baggins:UpdateBags()
+								end,
+							},
+							CompressAmmo = {
+								name = "Compress Ammo",
+								type = "toggle",
+								desc = "Show all ammo as a single button with a count on it",
+								order = 120,
+								disabled = function(info) return p.compressall or p.compressstackable end,
+								get = function(info) return p.compressammo or p.compressstackable or p.compressall end,
+								set = function(info, value)
+									p.compressammo = value
+									Baggins:RebuildSectionLayouts()
+									Baggins:UpdateBags()
+								end,
+							},
+						}
+					},
+					QualityColor = {
+						name = "Quality Colors",
+						desc = "Color item buttons based on the quality of the item",
+						type = "group",
+						order = 15,
+						args = {
+							Enable = {
+								name = "Enable",
+								type = "toggle",
+								desc = "Enable quality coloring",
+								order = 10,
+								get = function(info) return p.qualitycolor end,
+								set = function(info, value)
+									p.qualitycolor = value
+									Baggins:UpdateItemButtons()
+								end,
+							},
+							Threshold = {
+								name = "Color Threshold",
+								type = "text",
+								desc = "Only color items of this quality or above",
+								order = 15,
+
+								get = function(info) return ("%d"):format(p.qualitycolormin) end,
+								set = function(info, value)
+									p.qualitycolormin = tonumber(value)
+									Baggins:UpdateItemButtons()
+								end,
+								disabled = function(info) return not p.qualitycolor end,
+								validate = { 
+									["0"] = "|c00000000"..select(4,GetItemQualityColor(0))..ITEM_QUALITY0_DESC,
+									["1"] = "|c10000000"..select(4,GetItemQualityColor(1))..ITEM_QUALITY1_DESC,
+									["2"] = "|c20000000"..select(4,GetItemQualityColor(2))..ITEM_QUALITY2_DESC,
+									["3"] = "|c30000000"..select(4,GetItemQualityColor(3))..ITEM_QUALITY3_DESC,
+									["4"] = "|c40000000"..select(4,GetItemQualityColor(4))..ITEM_QUALITY4_DESC,
+									["5"] = "|c50000000"..select(4,GetItemQualityColor(5))..ITEM_QUALITY5_DESC,
+									["6"] = "|c60000000"..select(4,GetItemQualityColor(6))..ITEM_QUALITY6_DESC,
+								}
+							},
+							Intensity = {
+								name = "Color Intensity",
+								type = "range",
+								desc = "Intensity of the quality coloring",
+								order = 20,
+								max = 1,
+								min = 0.1,
+								step = 0.1,
+								get = function(info) return p.qualitycolorintensity end,
+								set = function(info, value)
+									p.qualitycolorintensity = value
+									Baggins:UpdateItemButtons()
+								end,
+								disabled = function(info) return not p.qualitycolor end,
+							},
+						}
+					},
+					HideDuplicates = {
+						name = "Hide Duplicate Items",
+						type = "text",
+						desc = "Prevents items from appearing in more than one section/bag.",
+						order = 20,
+						get = function(info) return p.hideduplicates end,
+						set = function(info, value)
+							p.hideduplicates = value
+							Baggins:ResortSections()
+							Baggins:UpdateBags()
+						end,
+						validate = { 'global', 'bag', 'disabled' },
+					},
+					AlwaysReSort = {
+						name = "Always Resort",
+						type = "toggle",
+						desc = "Keeps Items sorted always, this will cause items to jump around when selling etc.",
+						order = 22,
+						get = function(info) return p.alwaysresort end,
+						set = function(info, value)
+							p.alwaysresort = value
+						end
+					},
+					spacer = {
+						type = 'header',
+						order = 25,
+					},
+					HighlightNew = {
+						name = "Highlight New Items",
+						type = "toggle",
+						desc = "Add *New* to new items, *+++* to items that you have gained more of.",
+						order = 30,
+						get = function(info) return p.highlightnew end,
+						set = function(info, value)
+							p.highlightnew = value
+							Baggins:UpdateItemButtons()
+						end
+					},
+					ResetNew = {
+						name = "Reset New Items",
+						type = "execute",
+						desc = "Resets the new items highlights.",
+						order = 35,
+						func = function(info)
+							Baggins:SaveItemCounts()
+							Baggins:ForceFullUpdate()
+						end,
+						disabled = function(info) return not p.highlightnew end,
+					},
+				}
+			},
+			Layout = {
+				name = "Layout",
+				type = 'group',
+				order = 125,
+				desc = "Appearance and layout",
+				args = {
+					Bags = {
+						type = 'header',
+						order = 5,
+						name = "Bags",
+					},
+					Type = {
+						name = "Layout Type",
+						type = 'text',
+						order = 10,
+						desc = "Sets how all bags are laid out on screen.",
+						get = function(info) return p.layout end,
+						set = function(info, value) p.layout = value Baggins:UpdateLayout() end,
+						validate = { "auto", "manual" },
+					},
+					LayoutAnchor = {
+						name = "Layout Anchor",
+						type = "text",
+						order = 15,
+						desc = "Sets which corner of the layout bounds the bags will be anchored to.",
+						get = function(info) return p.layoutanchor end,
+						set = function(info, value) p.layoutanchor =  value Baggins:LayoutBagFrames() end,
+						validate = { TOPRIGHT = "Top Right",
+									TOPLEFT = "Top Left",
+									BOTTOMRIGHT = "Bottom Right",
+									BOTTOMLEFT = "Bottom Left" },
+						disabled = function(info) return p.layout ~= 'auto' end,
+					},
+					SetLayoutBounds = {
+						name = "Set Layout Bounds",
+						type = "execute",
+						order = 20,
+						desc = "Shows a frame you can drag and size to set where the bags will be placed when Layout is automatic",
+						func = function(info) Baggins:ShowPlacementFrame() end,
+						disabled = function(info) return p.layout ~= 'auto' end,
+					},
+					Lock = {
+						name = "Lock",
+						type = "toggle",
+						desc = "Locks the bag frames making them unmovable",
+						order = 30,
+						get = function(info) return p.lock or p.layout == "auto" end,
+						set = function(info, value) p.lock = value end,
+						disabled = function(info) return p.layout == "auto" end,
+					},
+		 			OpenAtAuction = {
+		 				name = "Automatically open at auction house",
+		 				type = "toggle",
+		 				desc = "Automatically open at auction house",
+		 				order = 35,
+		 				get = function(info) return p.openatauction end,
+		 				set = function(info, value) p.openatauction = value end,
+		 			},
+					ShrinkWidth = {
+						name = "Shrink Width",
+						type = "toggle",
+						desc = "Shrink the bag's width to fit the items contained in them",
+						order = 40,
+						get = function(info) return p.shrinkwidth end,
+						set = function(info, value)
+							p.shrinkwidth = value
+							Baggins:UpdateBags()
+						end,
+					},
+					ShrinkTitle = {
+						name = "Shrink bag title",
+						type = "toggle",
+						desc = "Mangle bag title to fit to content width",
+						order = 50,
+						get = function(info) return p.shrinkbagtitle end,
+						set = function(info, value)
+							p.shrinkbagtitle = value
+							Baggins:UpdateBags()
+						end,
+					},
+					Scale = {
+						name = "Scale",
+						type = "range",
+						desc = "Scale of the bag frames",
+						order = 60,
+						max = 2,
+						min = 0.3,
+						step = 0.1,
+						get = function(info) return p.scale end,
+						set = function(info, value)
+							p.scale = value 
+							Baggins:UpdateBagScale()
+							Baggins:UpdateLayout()
+						end,
+					},
+					ShowMoney = {
+						name = "Show Money On Bag",
+						type = "group",
+						desc = "Which Bag to Show Money On",
+						order = 64,
+						pass = true,
+						inline = true,
+						get = function(info, key) return p.moneybag == key end,
+						set = function(info, key, value) p.moneybag = key Baggins:UpdateBags() end,
+						args = {
+							None = {
+								type = "toggle",
+								isRadio = true,
+								name = "None",
+								desc = "None",
+								passValue = 0,
+								order = 1,
+							},
+						}
+					},
+					Sections = {
+						type = 'header',
+						order = 65,
+						name = "Sections",
+					},
+					SectionLayout = {
+						name = "Optimize Section Layout",
+						type = "toggle",
+						desc = "Change order and layout of sections in order to save display space.",
+						order = 70,
+						get = function(info) return p.optimizesectionlayout end,
+						set = function(info, value)
+							p.optimizesectionlayout = value
+							Baggins:UpdateBags()
+						end
+					},
+					SectionTitle = {
+						name = "Show Section Title",
+						type = "toggle",
+						desc = "Show a title on each section of the bags",
+						order = 80,
+						get = function(info) return p.showsectiontitle end,
+						set = function(info, value)
+							p.showsectiontitle = value
+							Baggins:UpdateBags()
+						end
+					},
+					HideEmptySections = {
+						name = "Hide Empty Sections",
+						type = "toggle",
+						desc = "Hide sections that have no items in them.",
+						order = 90,
+						get = function(info) return p.hideemptysections end,
+						set = function(info, value)
+							p.hideemptysections = value
+							Baggins:UpdateBags()
+						end
+					},
+					Sort = {
+						name = "Sort",
+						type = "text",
+						desc = "How items are sorted",
+						order = 100,
+						get = function(info) return p.sort end,
+						set = function(info, value) p.sort = value Baggins:UpdateBags() end,
+						validate = {'quality', 'name', 'type', 'slot' }
+					},
+					SortNewFirst = {
+						name = "Sort New First",
+						type = "toggle",
+						desc = "Sorts New Items to the beginning of sections",
+						order = 105,
+						get = function(info) return p.sortnewfirst end,
+						set = function(info, value) p.sortnewfirst = value end,
+					},
+					Columns = {
+						name = "Columns",
+						type = "range",
+						desc = "Number of Columns shown in the bag frames",
+						order = 110,
+						get = function(info) return p.columns end,
+						set = function(info, value) p.columns = value Baggins:UpdateBags() end,
+						min = 2,
+						max = 20,
+						step = 1,
+					},
+				}
+			},
+			FubarText = {
+				name = "FuBar Text",
+				type = "group",
+				desc = "Options for the text shown on fubar",
+				order = 130,
+				args = {	
+					ShowEmpty = {
+						name = "Show empty bag slots",
+						type = "toggle",
+						order = 10,
+						desc = "Show empty bag slots",
+						get = function(info) return p.showempty end,
+						set = function(info, value)
+							p.showempty = value
+							Baggins:UpdateText()
+						end,
+					},
+					ShowUsed = {
+						name = "Show used bag slots",
+						type = "toggle",
+						order = 20,
+						desc = "Show used bag slots",
+						get = function(info) return p.showused end,
+						set = function(info, value)
+							p.showused = value
+							Baggins:UpdateText()
+						end,
+					},
+					ShowTotal = {
+						name = "Show Total bag slots",
+						type = "toggle",
+						order = 30,
+						desc = "Show Total bag slots",
+						get = function(info) return p.showtotal end,
+						set = function(info, value)
+							p.showtotal = value
+							Baggins:UpdateText()
+						end,
+					},
+					Combine = {
+						name = "Combine Counts",
+						type = "toggle",
+						order = 40,
+						desc = "Show only one count with all the seclected types included",
+						get = function(info) return p.combinecounts end,
+						set = function(info, value)
+							p.combinecounts = value
+							Baggins:UpdateText()
+						end,
+					},
+					spacer = {
+						type = 'header',
+						order = 45,
+					},
+					ShowAmmo = {
+						name = "Show Ammo Bags Count",
+						type = "toggle",
+						order = 50,
+						desc = "Show Ammo Bags Count",
+						get = function(info) return p.showammocount end,
+						set = function(info, value)
+							p.showammocount = value
+							Baggins:UpdateText()
+						end,
+					},
+					ShowSoul = {
+						name = "Show Soul Bags Count",
+						type = "toggle",
+						order = 55,
+						desc = "Show Soul Bags Count",
+						get = function(info) return p.showsoulcount end,
+						set = function(info, value)
+							p.showsoulcount = value
+							Baggins:UpdateText()
+						end,
+					},
+					ShowSpecialty = {
+						name = "Show Specialty Bags Count",
+						type = "toggle",
+						order = 60,
+						desc = "Show Specialty (profession etc) Bags Count",
+						get = function(info) return p.showspecialcount end,
+						set = function(info, value)
+							p.showspecialcount = value
+							Baggins:UpdateText()
+						end,
+					},
+					FubarText2 = {
+				name = "FuBar Text",
+				type = "group",
+				desc = "Options for the text shown on fubar",
+				order = 130,
+				args = {	
+					ShowEmpty = {
+						name = "Show empty bag slots2",
+						type = "toggle",
+						order = 10,
+						desc = "Show empty bag slots",
+						get = function(info) return p.showempty end,
+						set = function(info, value)
+							p.showempty = value
+							Baggins:UpdateText()
+						end,
+					},
+					ShowUsed = {
+						name = "Show used bag slots2",
+						type = "toggle",
+						order = 20,
+						desc = "Show used bag slots",
+						get = function(info) return p.showused end,
+						set = function(info, value)
+							p.showused = value
+							Baggins:UpdateText()
+						end,
+					},
+					ShowTotal = {
+						name = "Show Total bag slots2",
+						type = "toggle",
+						order = 30,
+						desc = "Show Total bag slots",
+						get = function(info) return p.showtotal end,
+						set = function(info, value)
+							p.showtotal = value
+							Baggins:UpdateText()
+						end,
+					},
+					Combine = {
+						name = "Combine Counts2",
+						type = "toggle",
+						order = 40,
+						desc = "Show only one count with all the seclected types included",
+						get = function(info) return p.combinecounts end,
+						set = function(info, value)
+							p.combinecounts = value
+							Baggins:UpdateText()
+						end,
+					},
+					spacer = {
+						type = 'header',
+						order = 45,
+					},
+					ShowAmmo = {
+						name = "Show Ammo Bags Count",
+						type = "toggle",
+						dialogHidden = true,
+						order = 50,
+						desc = "Show Ammo Bags Count",
+						get = function(info) return p.showammocount end,
+						set = function(info, value)
+							p.showammocount = value
+							Baggins:UpdateText()
+						end,
+					},
+					ShowSoul = {
+						name = "Show Soul Bags Count2",
+						type = "toggle",
+						dialogHidden = true,
+						order = 55,
+						desc = "Show Soul Bags Count",
+						get = function(info) return p.showsoulcount end,
+						set = function(info, value)
+							p.showsoulcount = value
+							Baggins:UpdateText()
+						end,
+					},
+					ShowSpecialty = {
+						name = "Show Specialty Bags Count",
+						type = "toggle",
+						dialogHidden = true,
+						order = 60,
+						desc = "Show Specialty (profession etc) Bags Count",
+						get = function(info) return p.showspecialcount end,
+						set = function(info, value)
+							p.showspecialcount = value
+							Baggins:UpdateText()
+						end,
+					},
+					FubarText3 = {
+				name = "FuBar Text",
+				type = "group",
+				desc = "Options for the text shown on fubar",
+				order = 130,
+				dialogHidden = true,
+				args = {	
+					ShowEmpty = {
+						name = "Show empty bag slots32",
+						type = "toggle",
+						order = 10,
+						desc = "Show empty bag slots",
+						get = function(info) return p.showempty end,
+						set = function(info, value)
+							p.showempty = value
+							Baggins:UpdateText()
+						end,
+					},
+					ShowUsed = {
+						name = "Show used bag slots3",
+						type = "toggle",
+						order = 20,
+						desc = "Show used bag slots",
+						get = function(info) return p.showused end,
+						set = function(info, value)
+							p.showused = value
+							Baggins:UpdateText()
+						end,
+					},
+					ShowTotal = {
+						name = "Show Total bag slots3",
+						type = "toggle",
+						order = 30,
+						desc = "Show Total bag slots",
+						get = function(info) return p.showtotal end,
+						set = function(info, value)
+							p.showtotal = value
+							Baggins:UpdateText()
+						end,
+					},
+					Combine = {
+						name = "Combine Counts3",
+						type = "toggle",
+						order = 40,
+						desc = "Show only one count with all the seclected types included",
+						get = function(info) return p.combinecounts end,
+						set = function(info, value)
+							p.combinecounts = value
+							Baggins:UpdateText()
+						end,
+					},
+					spacer = {
+						type = 'header',
+						order = 45,
+					},
+					ShowAmmo = {
+						name = "Show Ammo Bags Count3",
+						type = "toggle",
+						order = 50,
+						desc = "Show Ammo Bags Count",
+						get = function(info) return p.showammocount end,
+						set = function(info, value)
+							p.showammocount = value
+							Baggins:UpdateText()
+						end,
+					},
+					ShowSoul = {
+						name = "Show Soul Bags Count3",
+						type = "toggle",
+						order = 55,
+						desc = "Show Soul Bags Count",
+						get = function(info) return p.showsoulcount end,
+						set = function(info, value)
+							p.showsoulcount = value
+							Baggins:UpdateText()
+						end,
+					},
+					ShowSpecialty = {
+						name = "Show Specialty Bags Count3",
+						type = "toggle",
+						order = 60,
+						desc = "Show Specialty (profession etc) Bags Count",
+						get = function(info) return p.showspecialcount end,
+						set = function(info, value)
+							p.showspecialcount = value
+							Baggins:UpdateText()
+						end,
+					},
+				},
+			},
+				},
+			},
+				},
+			},
+			
+			spacer = {
+				type = 'header',
+				order = 150,
+			},
+			Skin = {
+				name = "Bag Skin",
+				type = "text",
+				desc = "Select bag skin",
+				order = 160,
+				get = function(info) return p.skin end,
+				set = 'ApplySkin',
+				--validate = Baggins:GetSkinList()
+			},
+			HideDefaultBank = {
+				name = "Hide Default Bank",
+				type = "toggle",
+				desc = "Hide the default bank window.",
+				order = 170,
+				get = function(info) return p.hidedefaultbank end,
+				set = function(info, value) p.hidedefaultbank = value end,
+			},
+			OverrideBags = {
+				name = "Override Default Bags",
+				type = "toggle",
+				desc = "Baggins will open instead of the default bags",
+				order = 180,
+				get = function(info) return p.overridedefaultbags end,
+				set = function(info, value) p.overridedefaultbags = value Baggins:UpdateBagHooks() end,
+			},
+		
+		}
+	}
+	
+function BagginsConfigTest()
+	p = Baggins.db.profile
+	LibStub("AceConfigRegistry-3.0"):RegisterOptionsTable("Baggins", BagginsAce3Opts)
+	LibStub("AceConfigDialog-3.0"):Open("Baggins")
+end
 --TestFrame()
