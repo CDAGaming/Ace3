@@ -51,8 +51,10 @@ end
 -- usererr() - produce chatframe message regarding bad slash syntax etc
 
 local function usererr(info,inputpos,msg )
-	local cmdstr=" "..strsub(info.input, 1, inputpos-1)
-	(SELECTED_CHAT_FRAME or DEFAULT_CHAT_FRAME):AddMessage("/" ..info.slashcmd ..cmdstr ..": "..(msg or "malformed options table"))
+	local cmdstr=strsub(info.input, 1, inputpos-1);
+	(SELECTED_CHAT_FRAME or DEFAULT_CHAT_FRAME):AddMessage(
+	  "/" ..info.slashcmd .. " "..cmdstr ..": "..(msg or "malformed options table")
+	)
 end
 
 
@@ -86,7 +88,7 @@ local function do_final(info, inputpos, tab, methodtype, ...)
 		error("TODO: validation")
 	end
 	if info.confirm then
-		error("TODO: confirmation")
+		error("TODO: confirmation? or skip for commandline?")
 	end
 	
 	callmethod(info,inputpos,tab,methodtype, ...)
@@ -112,10 +114,10 @@ end
 
 
 -- constants used by getparam() calls below
-local handlertypes = {"table"=true}
+local handlertypes = {["table"]=true}
 local handlermsg = "expected a table"
 
-local functypes = {"function"=true, "string"=true}
+local functypes = {["function"]=true, ["string"]=true}
 local funcmsg = "expected function or member name"
 
 
@@ -156,12 +158,12 @@ local function handle(info, inputpos, tab, depth, retfalse)
 		
 		-- loop .args and try to find a key with a matching name
 		for k,v in pairs(tab.args) do
-			if not(type(k)=="string" and type(v)=="table" and type(v.type)=="string") err(info,inputpos, "options table child '"..tostring(k).."' is malformed") end
+			if not(type(k)=="string" and type(v)=="table" and type(v.type)=="string") then err(info,inputpos, "options table child '"..tostring(k).."' is malformed") end
 
 			-- is this child an inline group? if so, traverse into it
 			if v.type=="group" and pickfirstset(v.cmdInline, v.inline, false) then
 				info[depth+1] = k
-				if(handle(info, inputpos, v, depth+1==false) then
+				if handle(info, inputpos, v, depth+1)==false then
 					info[depth+1] = nil
 					-- wasn't found in there, but that's ok, we just keep looking down here
 				else
@@ -237,37 +239,71 @@ local function handle(info, inputpos, tab, depth, retfalse)
 
 	elseif tab.type=="range" then
 		------------ range --------------------------------------------
-		local v = tonumber(str)
-		if not v then
-			usererr(info, inputpos, "'"..str.."' - "..L["expected number"]]))
+		local val = tonumber(str)
+		if not val then
+			usererr(info, inputpos, "'"..str.."' - "..L["expected number"])
+			return
 		end
 		if type(info.step)=="number" then
-			v = v - (v % info.step)
+			val = val- (val % info.step)
 		end
-		if type(info.min)=="number" and v<info.min then
-			usererr(info, inputpos, v.." - "..format(L["must be equal to or higher than %s"], tostring(info.min)) )
+		if type(info.min)=="number" and val<info.min then
+			usererr(info, inputpos, val.." - "..format(L["must be equal to or higher than %s"], tostring(info.min)) )
+			return
 		end
-		if type(info.max)=="number" and v>info.max then
-			usererr(info, inputpos, v.." - "..format(L["must be equal to or lower than %s"], tostring(info.max)) )
+		if type(info.max)=="number" and val>info.max then
+			usererr(info, inputpos, val.." - "..format(L["must be equal to or lower than %s"], tostring(info.max)) )
+			return
 		end
 		
-		do_final(info, inputpos, tab, "set", v)
+		do_final(info, inputpos, tab, "set", val)
 
-	elseif tab.type=="select" then
-		------------ select --------------------------------------------
+	
+	elseif tab.type=="select" or tab.type=="multiselect" then
+		------------ select / multiselect ------------------------------------
+		local str = strtrim(strlower(str))
+
+		local sels   -- sels = table with list of arguments (just a single one for type=select)
+		if tab.type=="select" then
+			if str=="" then
+				usererr(info, inputpos, "missing selection")
+			end
+			sels = { str }
+		else
+			sels = {}
+			for v in string.gmatch("  a  b c  ", "[^ ]+") do
+				tinsert(sels, v)
+			end
+		end
 		
 
-	elseif tab.type=="multiselect" then
-		------------ multiselect --------------------------------------------
+		if type(tab.values)~="table" then err(info, inputpos, "'values' - expected a table") end
+		for selk, sel in pairs(sels) do
+			local ok
+			for k,v in pairs(tab.values) do 
+				if strlower(k)==str then
+					sels[selk] = k	-- overwrite with key (in case of case mismatches)
+					ok = true
+					break
+				end
+			end
+			if not ok then
+				usererr(info, inputpos, "'"..sel.."' - "..L["unknown selection"])
+				return
+			end
+		end
 		
-
+		do_final(info, inputpos, tab, "set", unpack(t))
+		
+	
 	elseif tab.type=="color" then
 		------------ color --------------------------------------------
+		error("TODO: color type")
 		
 
 	elseif tab.type=="keybinding" then
 		------------ keybinding --------------------------------------------
-		
+		error("TODO: keybinding type")
 
 	else
 		err(info, inputpos, "unknown options table item type '"..tostring(tab.type).."'")
