@@ -2536,28 +2536,34 @@ do
 	
 	local function SetText(self, text)
 		self.label:SetText(text or "")
+		if (text or "") == "" then
+			self.left:SetPoint("RIGHT",self.frame,"RIGHT",-3,0)
+			self.right:Hide()
+		else
+			self.left:SetPoint("RIGHT",self.label,"LEFT",-5,0)
+			self.right:Show()
+		end
 	end
 
 	local function Constructor()
 		local frame = CreateFrame("Frame",nil,UIParent)
 		local self = {}
 		self.type = Type
-
+		
 		self.Release = Release
 		self.Aquire = Aquire
 		self.SetText = SetText
 		self.frame = frame
 		frame.obj = self
-
+		
 		frame:SetHeight(18)
-	
+		
 		local label = frame:CreateFontString(nil,"BACKGROUND","GameFontNormal")
 		label:SetPoint("TOP",frame,"TOP",0,0)
 		label:SetPoint("BOTTOM",frame,"BOTTOM",0,0)
 		label:SetJustifyH("CENTER")
 		label:SetHeight(18)
 		self.label = label
-		
 		
 		local left = frame:CreateTexture(nil, "BACKGROUND")
 		self.left = left

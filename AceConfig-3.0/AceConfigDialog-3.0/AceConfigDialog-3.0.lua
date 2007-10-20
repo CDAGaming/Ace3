@@ -288,6 +288,11 @@ local function FeedOptions(appName, options,container,rootframe,path,group,inlin
 			elseif v.type == "keybinding" then
 				--control = gui:Create("")
 				
+			elseif v.type == "header" then
+				control = gui:Create("Heading")
+				control:SetText(v.name)
+				control.width = "fill"
+				
 			end
 
 			--Common Init
