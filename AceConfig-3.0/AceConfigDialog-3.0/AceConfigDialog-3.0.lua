@@ -647,6 +647,7 @@ local function FeedOptions(appName, options,container,rootframe,path,group,inlin
 					control = gui:Create("InlineGroup")
 					control:SetLayout("Flow")
 					control:SetTitle(v.name)
+					control.width = "fill"
 					
 					local valuesort = new()
 					local values = v.values

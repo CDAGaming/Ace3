@@ -1770,7 +1770,7 @@ do
 		editbox.obj = self
 		
 		frame:SetHeight(44)
-		frame:SetWidth(300)
+		frame:SetWidth(200)
 
 		
 		--frame:SetScript("OnEnter",Control_OnEnter)
@@ -1980,6 +1980,7 @@ do
 		frame:SetWidth(200)
 		text:SetHeight(18)
 		text:SetPoint("LEFT",check,"RIGHT",0,0)
+		text:SetPoint("RIGHT",frame,"RIGHT",0,0)
 		--Container Support
 		--local content = CreateFrame("Frame",nil,frame)
 		--self.content = content
@@ -2406,7 +2407,7 @@ do
 		frame:EnableMouse()
 
 		frame:SetHeight(24)
-		frame:SetWidth(150)
+		frame:SetWidth(200)
 	
 		self.Release = Release
 		self.Aquire = Aquire
