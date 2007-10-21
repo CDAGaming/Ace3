@@ -12,7 +12,6 @@ if not AceComm then return end
 local CallbackHandler = LibStub:GetLibrary("CallbackHandler-1.0")
 
 local SendAddonMessage = SendAddonMessage
-
 local pairs = pairs
 local ceil = math.ceil
 local strsub = string.sub
@@ -232,5 +231,5 @@ AceComm.frame:RegisterEvent("CHAT_MSG_ADDON")
 
 -- Update embeds
 for target, v in pairs(AceComm.embeds) do
-	AceEvent:Embed(target)
+	AceComm:Embed(target)
 end
