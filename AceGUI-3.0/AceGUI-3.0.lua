@@ -1997,15 +1997,26 @@ do
 		self.list = nil
 	end
 	
+	local function UglyScrollLeft(this)
+	  this:HighlightText(0,1);
+	  this:Insert(" "..strsub(this:GetText(),1,1));
+	  this:HighlightText(0,1);
+	  this:Insert("");
+	  this:SetScript("OnUpdate", nil);
+	end
+	
 	local function SetText(self, text)
 		self.editbox:SetText(text)
+		self.editbox:SetScript("OnUpdate",UglyScrollLeft)
 	end
 	
 	local function SetValue(self, value)
 		if self.list then
 			self.editbox:SetText(self.list[value] or "")
+			con:Print(type(value), value, self.list[value])
 		end
 		self.editbox.value = value
+		self.editbox:SetScript("OnUpdate",UglyScrollLeft)
 	end
 	
 	local function SetList(self, list)
@@ -2167,7 +2178,6 @@ do
 		end
 	end
 
-	-- For large list, if specified, 0 based row, 1 based column gives a grid.
 	local function CreateLine(self, row, column)
 		local frame = CreateFrame("Button",nil,self.pullout)
 		frame.text = frame:CreateFontString(nil,"OVERLAY","GameFontNormalSmall")
@@ -2200,7 +2210,7 @@ do
 		frame:SetScript("OnLeave",Dropdown_LineLeave)
 		return frame
 	end
-
+	
 	local function Constructor()
 		local frame = CreateFrame("Frame",nil,UIParent)
 		local self = {}

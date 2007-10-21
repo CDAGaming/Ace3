@@ -346,7 +346,6 @@ local function CallOptionsGet(option, options, path, appName)
 	elseif type(func) == "function" then
 		a,b,c,d = func(info)
 	end
-	
 	del(info)
 	return a,b,c,d
 end
@@ -508,8 +507,11 @@ local function FeedOptions(appName, options,container,rootframe,path,group,inlin
 					control:SetCallback("OnValueChanged",ActivateControl)
 					
 				elseif v.type == "select" then
-					control = gui:Create("DropDown")
+					control = gui:Create("Dropdown")
 					control:SetLabel(v.name)
+					control:SetList(v.values)
+					control:SetValue(CallOptionsGet(v, options, path, appName))
+					control:SetCallback("OnValueChanged",ActivateControl)
 					
 				elseif v.type == "multiselect" then
 					--control = gui:Create("")
