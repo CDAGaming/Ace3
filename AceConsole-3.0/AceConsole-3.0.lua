@@ -101,7 +101,7 @@ end
 --   startpos - Where in the string to start scanning (default  1)
 --
 -- Returns arg1, arg2, ..., nextposition
--- Missing arguments will be returned as nils. 'nextposition' is returned as 1e99 at the end of the string.
+-- Missing arguments will be returned as nils. 'nextposition' is returned as 1e9 at the end of the string.
 
 function AceConsole:GetArgs(str, numargs, startpos)
 	numargs = numargs or 1
@@ -112,7 +112,7 @@ function AceConsole:GetArgs(str, numargs, startpos)
 	-- find start of new arg
 	pos = strfind(str, "[^ ]", pos)
 	if not pos then	-- whoops, end of string
-		return nils(numargs, 1e99)
+		return nils(numargs, 1e9)
 	end
 
 	if numargs<1 then
@@ -163,7 +163,7 @@ function AceConsole:GetArgs(str, numargs, startpos)
 	end
 	
 	-- search aborted, we hit end of string. return it all as one argument. (yes, even if it's an unterminated quote or hyperlink)
-	return strsub(str, startpos), nils(numargs-1, 1e99)
+	return strsub(str, startpos), nils(numargs-1, 1e9)
 end
 
 
