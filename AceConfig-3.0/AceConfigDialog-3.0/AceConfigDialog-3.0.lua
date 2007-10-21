@@ -35,14 +35,17 @@ Group Types
 
 -- Recycling functions
 local new, del
+--local newcount, delcount,createdcount = 0,0,0
 do
 	local pool = setmetatable({},{__mode='k'})
 	function new()
+		--newcount = newcount + 1
 		local t = next(pool)
 		if t then
 			pool[t] = nil
 			return t
 		else
+			--createdcount = createdcount + 1
 			return {}
 		end
 	end
@@ -54,6 +57,7 @@ do
 		return c
 	end
 	function del(t)
+		--delcount = delcount + 1
 		for k in pairs(t) do
 			t[k] = nil
 		end	
@@ -139,12 +143,49 @@ local function BuildSortedOptionsTable(group, feedkeys, feedtmp)
 	del(keys)
 end
 
+local function DelTree(tree)
+	if tree.children then
+		for i, v in ipairs(tree.children) do
+			DelTree(v)
+			del(v)
+		end
+		del(tree.children)
+	end
+end
+
+local function CleanUserData(widget, event)
+	local user = widget.userdata
+
+	if user.path then
+		del(user.path)
+	end	
+	
+	if widget.type == "TreeGroup" then
+		local tree = widget.tree
+		if tree then
+			for i, v in ipairs(tree) do
+				DelTree(v)
+				del(v)
+			end
+			del(tree)
+			widget.tree = nil
+		end
+	end
+	
+	if widget.type == "TabGroup" then
+		del(widget.tablist)
+		del(widget.text)
+		widget.tablist = nil
+		widget.text = nil
+	end
+end
+
 --[[
 	Gets a status table for the given appname and options path
 ]]
 function lib:GetStatusTable(appName, path)
 	local status = self.Status
-	
+
 	if not status[appName] then
 		status[appName] = {}
 		status[appName].status = {}
@@ -317,8 +358,91 @@ local function FrameOnClose(widget, event)
 	gui:Release(widget)
 end
 
-local function CallOptionsGet(option, options, path, appName, ...)
-	--Call the get function for the option
+local function CheckOptionHidden(option, options, path, appName)
+	--check for a specific boolean option
+	local hidden = pickfirstset(option.dialogHidden,option.guiHidden)
+	if hidden ~= nil then
+		return hidden
+	end
+	
+	hidden = option.hidden
+	if type(hidden) == "boolean" then
+		return hidden
+	end
+
+	local info = new()
+	
+	local group = options
+	local handler
+	
+	for i, option in ipairs(path) do
+		group = GetSubOption(group, option)
+		info[i] = option
+		handler = group.handler or handler
+	end
+	
+	info.options = options
+	info[0] = appName
+	info.arg = option.arg
+	
+	if type(hidden) == "string" then
+		if handler and handler[hidden] then
+			hidden = handler[hidden](handler, info)
+		else
+			error("Method doesn't exist in handler")
+		end
+	elseif type(hidden) == "function" then
+		hidden = hidden(info)
+	end
+
+	del(info)
+	
+	return hidden
+end
+
+local function CheckOptionDisabled(option, options, path, appName)
+	--check for a specific boolean option
+	local disabled = pickfirstset(option.dialogDisabled,option.guiDisabled)
+	if disabled ~= nil then
+		return disabled
+	end
+	
+	disabled = option.disabled
+	if type(disabled) == "boolean" then
+		return disabled
+	end
+
+	local info = new()
+	
+	local group = options
+	local handler
+	
+	for i, option in ipairs(path) do
+		group = GetSubOption(group, option)
+		info[i] = option
+		handler = group.handler or handler
+	end
+	
+	info.options = options
+	info[0] = appName
+	info.arg = option.arg
+	
+	if type(disabled) == "string" then
+		if handler and handler[disabled] then
+			disabled = handler[disabled](handler, info)
+		else
+			error("Method doesn't exist in handler")
+		end
+	elseif type(disabled) == "function" then
+		disabled = disabled(info)
+	end
+
+	del(info)
+	
+	return disabled
+end
+
+local function CallOptionsFunction(funcname ,option, options, path, appName, ...)
 	local info = new()
 	
 	local func
@@ -327,16 +451,16 @@ local function CallOptionsGet(option, options, path, appName, ...)
 	
 	--build the info table containing the path
 	-- pick up functions while traversing the tree
-	if group.get ~= nil then
-		func = group.get
+	if group[funcname] ~= nil then
+		func = group[funcname]
 	end
 	handler = group.handler or handler
 		
 	for i, v in ipairs(path) do
 		group = GetSubOption(group, v)
 		info[i] = v
-		if group.get ~= nil then
-			func =  group.get
+		if group[funcname] ~= nil then
+			func =  group[funcname]
 		end
 		handler = group.handler or handler
 	end
@@ -359,8 +483,7 @@ local function CallOptionsGet(option, options, path, appName, ...)
 	return a,b,c,d
 end
 
---TODO: set an on release handler to del() the tabs
-local function BuildTabs(group)
+local function BuildTabs(group, options, path, appName)
 	local tabs = new()
 	local text = new()
 	local feedkeys = new()
@@ -372,7 +495,7 @@ local function BuildTabs(group)
 		local k = feedkeys[v]
 		if v.type == "group" then
 			local inline = pickfirstset(v.dialogInline,v.guiInline,v.inline, false)
-			local hidden = pickfirstset(v.dialogHidden,v.guiHidden,v.hidden, false)
+			local hidden = CheckOptionHidden(v, options, path, appName)
 			if not inline and not hidden then
 				tinsert(tabs, k)
 				text[k] = v.name
@@ -386,8 +509,7 @@ local function BuildTabs(group)
 	return tabs, text
 end
 
-
-local function BuildSubTree(group, tree)
+local function BuildSubTree(group, tree, options, path, appName)
 	local feedkeys = new()
 	local feedtmp = new()
 
@@ -397,7 +519,7 @@ local function BuildSubTree(group, tree)
 		local k = feedkeys[v]
 		if v.type == "group" then
 			local inline = pickfirstset(v.dialogInline,v.guiInline,v.inline, false)
-			local hidden = pickfirstset(v.dialogHidden,v.guiHidden,v.hidden, false)
+			local hidden = CheckOptionHidden(v, options, path, appName)
 			if not inline and not hidden then
 				local entry = new()
 				entry.value = k
@@ -405,7 +527,7 @@ local function BuildSubTree(group, tree)
 				if not tree.children then tree.children = new() end
 				tinsert(tree.children,entry)
 				if (v.childGroups or "tree") == "tree" then
-					BuildSubTree(v,entry)
+					BuildSubTree(v,entry, options, path, appName)
 				end
 			end
 		end
@@ -415,8 +537,7 @@ local function BuildSubTree(group, tree)
 	del(feedtmp)
 end
 
---TODO: set an on release handler to del() the tree
-local function BuildTree(group)
+local function BuildTree(group, options, path, appName)
 	local tree = new()
 	local feedkeys = new()
 	local feedtmp = new()
@@ -427,14 +548,14 @@ local function BuildTree(group)
 		local k = feedkeys[v]
 		if v.type == "group" then
 			local inline = pickfirstset(v.dialogInline,v.guiInline,v.inline, false)
-			local hidden = pickfirstset(v.dialogHidden,v.guiHidden,v.hidden, false)
+			local hidden = CheckOptionHidden(v, options, path, appName)
 			if not inline and not hidden then
 				local entry = new()
 				entry.value = k
 				entry.text = v.name
 				tinsert(tree,entry)
 				if (v.childGroups or "tree") == "tree" then
-					BuildSubTree(v,entry)
+					BuildSubTree(v,entry, options, path, appName)
 				end
 			end
 		end
@@ -473,7 +594,7 @@ local function FeedOptions(appName, options,container,rootframe,path,group,inlin
 	
 	for i, v in ipairs(feedtmp) do
 		local k = feedkeys[v]
-		local hidden = pickfirstset(v.dialogHidden,v.guiHidden,v.hidden, false)
+		local hidden = CheckOptionHidden(v, options, path, appName)
 		if not hidden then
 			if v.type == "group" then
 				if inline or pickfirstset(v.dialogInline,v.guiInline,v.inline, false) then
@@ -500,26 +621,26 @@ local function FeedOptions(appName, options,container,rootframe,path,group,inlin
 					control = gui:Create("EditBox")
 					control:SetLabel(v.name)
 					control:SetCallback("OnValueChanged",ActivateControl)
-					control:SetText(CallOptionsGet(v, options, path, appName))
+					control:SetText(CallOptionsFunction("get",v, options, path, appName))
 					
 				elseif v.type == "toggle" then
 					control = gui:Create("CheckBox")
 					control:SetLabel(v.name)
-					control:SetValue(CallOptionsGet(v, options, path, appName))
+					control:SetValue(CallOptionsFunction("get",v, options, path, appName))
 					control:SetCallback("OnValueChanged",ActivateControl)
 					
 				elseif v.type == "range" then
 					control = gui:Create("Slider")
 					control:SetLabel(v.name)
 					control:SetSliderValues(v.min or 0,v.max or 100,v.bigStep or 0)
-					control:SetValue(CallOptionsGet(v, options, path, appName))
+					control:SetValue(CallOptionsFunction("get",v, options, path, appName))
 					control:SetCallback("OnValueChanged",ActivateControl)
 					
 				elseif v.type == "select" then
 					control = gui:Create("Dropdown")
 					control:SetLabel(v.name)
 					control:SetList(v.values)
-					control:SetValue(CallOptionsGet(v, options, path, appName))
+					control:SetValue(CallOptionsFunction("get",v, options, path, appName))
 					control:SetCallback("OnValueChanged",ActivateControl)
 					
 				elseif v.type == "multiselect" then
@@ -529,6 +650,8 @@ local function FeedOptions(appName, options,container,rootframe,path,group,inlin
 					
 					local valuesort = new()
 					local values = v.values
+					local disabled = CheckOptionDisabled(v, options, path, appName)
+
 					if values then
 						for value, text in pairs(v.values) do
 							tinsert(valuesort, value)
@@ -541,7 +664,8 @@ local function FeedOptions(appName, options,container,rootframe,path,group,inlin
 							local check = gui:Create("CheckBox")
 							check:SetLabel(text)
 							check.userdata.value = value
-							check:SetValue(CallOptionsGet(v, options, path, appName, value))
+							check:SetDisabled(disabled)
+							check:SetValue(CallOptionsFunction("get",v, options, path, appName, value))
 							check:SetCallback("OnValueChanged",ActivateMultiControl)
 							InjectInfo(check, options, v, path, rootframe, appName)
 							check:SetCallback("OnEnter",OptionOnMouseOver)
@@ -565,6 +689,11 @@ local function FeedOptions(appName, options,container,rootframe,path,group,inlin
 	
 				--Common Init
 				if control then
+					if control.SetDisabled then
+						local disabled = CheckOptionDisabled(v, options, path, appName)
+						control:SetDisabled(disabled)
+					end
+
 					InjectInfo(control, options, v, path, rootframe, appName)
 					control:SetCallback("OnEnter",OptionOnMouseOver)
 					container:AddChild(control)
@@ -611,13 +740,7 @@ local function GroupSelected(widget, event, uniquevalue)
 	del(feedpath)
 end
 
-local function CleanUserData(widget, event)
-	local user = widget.userdata
-	
-	if user.path then
-		del(user.path)
-	end	
-end
+
 
 
 --[[
@@ -709,7 +832,7 @@ function lib:FeedGroup(appName,options,container,rootframe,path)
 			tab.width = "fill"
 			tab.height = "fill"
 
-			local tabs, text = BuildTabs(group)
+			local tabs, text = BuildTabs(group, options, path, appName)
 			tab:SetTabs(tabs, text)
 
 			container:AddChild(tab)
@@ -744,7 +867,7 @@ function lib:FeedGroup(appName,options,container,rootframe,path)
 			if not status.groups then
 				status.groups = {}
 			end
-			local treedefinition = BuildTree(group)
+			local treedefinition = BuildTree(group, options, path, appName)
 			tree:SetStatusTable(status.groups)
 			
 			tree:SetTree(treedefinition)

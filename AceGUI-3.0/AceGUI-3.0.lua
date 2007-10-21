@@ -1682,6 +1682,7 @@ do
 	local function Release(self)
 		self.frame:ClearAllPoints()
 		self.frame:Hide()
+		self:SetDisabled(false)
 	end
 	
 	local function EditBox_OnEscapePressed(this)
@@ -1832,6 +1833,7 @@ do
 		self.down = nil
 		self.checked = nil
 		self:SetType()
+		self:SetDisabled(false)
 	end
 	
   
@@ -2010,6 +2012,7 @@ do
 		self.frame:Hide()
 		self:SetLabel(nil)
 		self.list = nil
+		self:SetDisabled(false)
 	end
 	
 	local function UglyScrollLeft(this)
@@ -2104,6 +2107,26 @@ do
 		else
 			self.editbox:EnableMouse(true)
 			self.editbox:SetTextColor(1,1,1)
+		end
+	end
+	
+	local function SetDisabled(self, disabled)
+		self.disabled = disabled
+		if disabled then
+			self.editbox:EnableMouse(false)
+			self.editbox:ClearFocus()
+			self.editbox:SetTextColor(0.5,0.5,0.5)
+			self.button:Disable()
+		else
+			self.button:Enable()
+			if self.strict then
+				self.editbox:EnableMouse(false)
+				self.editbox:ClearFocus()
+				self.editbox:SetTextColor(1,1,1)
+			else
+				self.editbox:EnableMouse(true)
+				self.editbox:SetTextColor(1,1,1)
+			end
 		end
 	end
 	
@@ -2242,6 +2265,7 @@ do
 		self.AddItem = AddItem
 		self.SetStrict = SetStrict
 		self.SetLabel = SetLabel
+		self.SetDisabled = SetDisabled
 		
 		self.frame = frame
 		frame.obj = self
@@ -2330,6 +2354,7 @@ do
 	local function Release(self)
 		self.frame:ClearAllPoints()
 		self.frame:Hide()
+		self:SetDisabled(false)
 	end
 	
 	local function Button_OnClick(this)
@@ -2351,6 +2376,14 @@ do
 		self.text:SetText(text or "")
 	end
 	
+	local function SetDisabled(self, disabled)
+		self.disabled = disabled
+		if disabled then
+			self.frame:Disable()
+		else
+			self.frame:Enable()
+		end
+	end
 	local function Constructor()
 		local frame = CreateFrame("Button",nil,UIParent,"UIPanelButtonTemplate")
 		local self = {}
@@ -2368,6 +2401,7 @@ do
 		frame:SetScript("OnLeave",Button_OnLeave)
 
 		self.SetText = SetText
+		self.SetDisabled = SetDisabled
 		
 		frame:EnableMouse()
 
@@ -2407,6 +2441,7 @@ do
 	local function Release(self)
 		self.frame:ClearAllPoints()
 		self.frame:Hide()
+		self:SetDisabled(false)
 	end
 	
 	local function Slider_OnValueChanged(this)
