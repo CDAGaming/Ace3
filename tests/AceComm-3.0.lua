@@ -3,6 +3,8 @@ dofile("LibStub.lua")
 dofile("../CallbackHandler-1.0/CallbackHandler-1.0.lua")
 dofile("../AceComm-3.0/AceComm-3.0.lua")
 
+local VERBOSE = false
+
 local AceComm = LibStub("AceComm-3.0")
 
 local function printf(format, ...)
@@ -30,7 +32,9 @@ for i = 1, 500 do
 		data = data .. randchar()
 	end
 	addon.data = data
-	printf("Running test, data length %d", #data)
+	if VERBOSE then printf("Running test, data length %d", #data) end
 	addon:SendCommMessage(prefix, data, "RAID", nil)
 end
 
+-----------------------------------------------------------------------
+print "OK"
