@@ -620,7 +620,7 @@ local function FeedOptions(appName, options,container,rootframe,path,group,inlin
 				elseif v.type == "input" then
 					control = gui:Create("EditBox")
 					control:SetLabel(v.name)
-					control:SetCallback("OnValueChanged",ActivateControl)
+					control:SetCallback("OnEnterPressed",ActivateControl)
 					control:SetText(CallOptionsFunction("get",v, options, path, appName))
 					
 				elseif v.type == "toggle" then
