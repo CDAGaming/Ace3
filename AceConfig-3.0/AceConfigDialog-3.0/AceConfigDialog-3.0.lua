@@ -300,7 +300,16 @@ local function ActivateControl(widget, event, ...)
 	end	
 	
 	del(info)
+	
+	--full refresh of the frame
+	lib:Open(user.appName)
 end
+
+
+local function ActivateMultiControl(widget, event, ...)
+	ActivateControl(widget, event, widget.userdata.value, ...)
+end
+
 
 local function FrameOnClose(widget, event) 
 	local appName = widget.userdata.appName
@@ -308,7 +317,7 @@ local function FrameOnClose(widget, event)
 	gui:Release(widget)
 end
 
-local function CallOptionsGet(option, options, path, appName)
+local function CallOptionsGet(option, options, path, appName, ...)
 	--Call the get function for the option
 	local info = new()
 	
@@ -339,12 +348,12 @@ local function CallOptionsGet(option, options, path, appName)
 	local a, b, c ,d
 	if type(func) == "string" then
 		if handler and handler[func] then
-			a,b,c,d = handler[func](handler, info)
+			a,b,c,d = handler[func](handler, info, ...)
 		else
 			error("Method doesn't exist in handler")
 		end
 	elseif type(func) == "function" then
-		a,b,c,d = func(info)
+		a,b,c,d = func(info, ...)
 	end
 	del(info)
 	return a,b,c,d
@@ -514,7 +523,32 @@ local function FeedOptions(appName, options,container,rootframe,path,group,inlin
 					control:SetCallback("OnValueChanged",ActivateControl)
 					
 				elseif v.type == "multiselect" then
-					--control = gui:Create("")
+					control = gui:Create("InlineGroup")
+					control:SetLayout("Flow")
+					control:SetTitle(v.name)
+					
+					local valuesort = new()
+					local values = v.values
+					if values then
+						for value, text in pairs(v.values) do
+							tinsert(valuesort, value)
+						end
+						
+						table.sort(valuesort)
+						
+						for i, value in ipairs(valuesort) do
+							local text = values[value]
+							local check = gui:Create("CheckBox")
+							check:SetLabel(text)
+							check.userdata.value = value
+							check:SetValue(CallOptionsGet(v, options, path, appName, value))
+							check:SetCallback("OnValueChanged",ActivateMultiControl)
+							InjectInfo(check, options, v, path, rootframe, appName)
+							check:SetCallback("OnEnter",OptionOnMouseOver)
+							control:AddChild(check)
+						end
+					end
+					del(valuesort)
 					
 				elseif v.type == "color" then
 					--control = gui:Create("")

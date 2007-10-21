@@ -146,7 +146,7 @@ do
 		
 	local function LayoutOnUpdate(this)
 		this:SetScript("OnUpdate",nil)
-		this.obj:DoLayout()
+		this.obj:PerformLayout()
 	end
 	
 	local WidgetContainerBase = {
@@ -159,17 +159,23 @@ do
 			self.LayoutPaused = nil
 		end,
 		
-		DoLayout = function(self)
+		PerformLayout = function(self)
 			if self.LayoutFunc and not self.LayoutPaused then
 				self.LayoutFunc(self.content, self.children)
 			end
+		end,
+		
+		--call this function to layout, makes sure layed out objects get a frame to get sizes etc
+		DoLayout = function(self)
+			self:PerformLayout()
+			self.frame:SetScript("OnUpdate", LayoutOnUpdate)
 		end,
 		
 		AddChild = function(self, child)
 			tinsert(self.children,child)
 			child:SetParent(self.content)
 			child.frame:Show()
-			self.frame:SetScript("OnUpdate",LayoutOnUpdate)
+			self:DoLayout()
 		end,
 		
 		ReleaseChildren = function(self)
@@ -260,6 +266,14 @@ local ControlBackdrop  = {
 	tile = true, tileSize = 16, edgeSize = 16,
 	insets = { left = 3, right = 3, top = 3, bottom = 3 }
 }
+
+local function Control_OnEnter(this)
+	this.obj:Fire("OnEnter")
+end
+
+local function Control_OnLeave(this)
+	this.obj:Fire("OnLeave")
+end
 
 -------------
 -- Widgets --
@@ -1814,6 +1828,8 @@ do
 		self.frame:ClearAllPoints()
 		self.frame:Hide()
 		self.check:Hide()
+		self.highlight:Hide()
+		self.down = nil
 		self.checked = nil
 		self:SetType()
 	end
@@ -1961,8 +1977,7 @@ do
 		frame:SetHeight(24)
 		frame:SetWidth(200)
 		text:SetHeight(18)
-		text:SetPoint("LEFT",check,"RIGHT",0,2)
-	
+		text:SetPoint("LEFT",check,"RIGHT",0,0)
 		--Container Support
 		--local content = CreateFrame("Frame",nil,frame)
 		--self.content = content
@@ -2013,7 +2028,6 @@ do
 	local function SetValue(self, value)
 		if self.list then
 			self.editbox:SetText(self.list[value] or "")
-			con:Print(type(value), value, self.list[value])
 		end
 		self.editbox.value = value
 		self.editbox:SetScript("OnUpdate",UglyScrollLeft)
