@@ -1,4 +1,4 @@
---[[ $Id: $ ]]
+--[[ $Id$ ]]
 
 --[[ AceComm-3.0 proof-of-concept
 ]]
