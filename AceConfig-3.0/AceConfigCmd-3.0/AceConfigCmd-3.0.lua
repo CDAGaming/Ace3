@@ -23,6 +23,10 @@ local cfgreg = LibStub("AceConfigRegistry-3.0")
 local con = LibStub("AceConsole-3.0")
 
 
+local L = setmetatable({}, {	-- TODO: replace with proper locale
+	__index = function(self,k) return k end
+})
+
 
 function lib:ShowHelp(slashcmd, options)
 	error("TODO: implement")
@@ -74,7 +78,7 @@ local function callmethod(info, inputpos, tab, methodtype, ...)
 		if type(info.handler[method])~="function" then
 			err(info, inputpos, "'"..methodtype.."': '"..method.."' is not a member function of "..tostring(info.handler))
 		end
-		return info.handler[method](handler, info, ...)
+		return info.handler[method](info.handler, info, ...)
 	else
 		assert(false)	-- type should have already been checked on read
 	end
@@ -85,10 +89,14 @@ end
 
 local function do_final(info, inputpos, tab, methodtype, ...)
 	if info.validate then 
-		error("TODO: validation")
+		local res = callmethod(info,inputpos,tab,"validate",...)
+		if type(res)=="string" then
+			usererr(info, inputpos, "'"..strsub(info.input, inputpos).."' - "..res)
+			return
+		end
 	end
 	if info.confirm then
-		error("TODO: confirmation? or skip for commandline?")
+		con.Print(MAJOR, "TODO: Confirm for commandline? Or not? See ACE-60")
 	end
 	
 	callmethod(info,inputpos,tab,methodtype, ...)
@@ -96,6 +104,7 @@ end
 
 
 -- getparam() - used by handle() to retreive and store "handler", "get", "set", etc
+
 local function getparam(info, inputpos, tab, depth, paramname, types, errormsg)
 	local old,oldat = info[paramname], info[paramname.."_at"]
 	local val=tab[paramname]
@@ -112,8 +121,32 @@ local function getparam(info, inputpos, tab, depth, paramname, types, errormsg)
 end
 
 
+-- iterateatgs(tab) - iterate t.args and t.plugins.*
+
+local function iterateargs(tab)
+	local argtabkey,argtab=next(tab.plugins)
+	local v
+	
+	return function(_, k)
+		while argtab do
+			k,v = next(argtab, k)
+			if k then return k,v end
+			if argtab==tab.args then
+				argtab=nil
+			else
+				argtabkey,argtab = next(tab.plugins, argtabkey)
+				if not argtabkey then
+					argtab=tab.args
+				end
+			end
+		end
+	end
+end
+
+
 
 -- constants used by getparam() calls below
+
 local handlertypes = {["table"]=true}
 local handlermsg = "expected a table"
 
@@ -134,12 +167,12 @@ local function handle(info, inputpos, tab, depth, retfalse)
 	-- Note that we do NOT validate if method names are correct at this stage,
 	-- the handler may change before they're actually used!
 
-	local oldhandler,oldhandler_at = getparam(info,inputpos,tab,"handler",handlertypes,handlermsg)
-	local oldset,oldset_at = getparam(info,inputpos,tab,"set",functypes,funcmsg)
-	local oldget,oldget_at = getparam(info,inputpos,tab,"get",functypes,funcmsg)
-	local oldfunc,oldfunc_at = getparam(info,inputpos,tab,"func",functypes,funcmsg)
-	local oldvalidate,oldvalidate_at = getparam(info,inputpos,tab,"validate",functypes,funcmsg)
-	local oldconfirm,oldconfirm_at = getparam(info,inputpos,tab,"confirm",functypes,funcmsg)
+	local oldhandler,oldhandler_at = getparam(info,inputpos,tab,depth,"handler",handlertypes,handlermsg)
+	local oldset,oldset_at = getparam(info,inputpos,tab,depth,"set",functypes,funcmsg)
+	local oldget,oldget_at = getparam(info,inputpos,tab,depth,"get",functypes,funcmsg)
+	local oldfunc,oldfunc_at = getparam(info,inputpos,tab,depth,"func",functypes,funcmsg)
+	local oldvalidate,oldvalidate_at = getparam(info,inputpos,tab,depth,"validate",functypes,funcmsg)
+	local oldconfirm,oldconfirm_at = getparam(info,inputpos,tab,depth,"confirm",functypes,funcmsg)
 	
 	-------------------------------------------------------------------
 	-- Act according to .type of this table
@@ -147,7 +180,8 @@ local function handle(info, inputpos, tab, depth, retfalse)
 	if tab.type=="group" then
 		------------ group --------------------------------------------
 		
-		if not(type(tab.args)=="table") then err(info, inputpos) end
+		if type(tab.args)~="table" then err(info, inputpos) end
+		if tab.plugins and type(tab.plugins)~="table" then err(info,inputpos) end
 		
 		-- grab next arg from input
 		local arg,nextpos = con:GetArgs(info.input, 1, inputpos)
@@ -163,7 +197,7 @@ local function handle(info, inputpos, tab, depth, retfalse)
 			-- is this child an inline group? if so, traverse into it
 			if v.type=="group" and pickfirstset(v.cmdInline, v.inline, false) then
 				info[depth+1] = k
-				if handle(info, inputpos, v, depth+1)==false then
+				if handle(info, nextpos, v, depth+1)==false then
 					info[depth+1] = nil
 					-- wasn't found in there, but that's ok, we just keep looking down here
 				else
@@ -230,7 +264,7 @@ local function handle(info, inputpos, tab, depth, retfalse)
 		elseif str==L["off"] then
 			b = false
 		else
-			usererr(info, inputpos, format(L["'%s' - expected 'on' or 'off', or no argument to toggle"], str))
+			usererr(info, inputpos, format(L["'%s' - expected 'on' or 'off', or no argument to toggle."], str))
 			return
 		end
 		
@@ -311,11 +345,23 @@ local function handle(info, inputpos, tab, depth, retfalse)
 end
 
 
+-----------------------------------------------------------------------
+-- HandleCommand(slashcmd, appName, input)
+--
+-- Call this from a chat command handler to parse the command input as operations on an aceoptions table
+-- 
+-- slashcmd (string) - the slash command WITHOUT leading slash (only used for error output)
+-- appName (string) - the application name as given to AceConfigRegistry:RegisterOptionsTable()
+-- input (string) -- the commandline input (as given by the WoW handler, i.e. without the command itself)
 
 function lib:HandleCommand(slashcmd, appName, input)
 
-	local options = cfgreg:GetOptionsTable(appName)
-
+	local optgetter = cfgreg:GetOptionsTable(appName)
+	if not optgetter then
+		error([[Usage: HandleCommand("slashcmd", "appName", "input"): 'appName' - no options table "]]..tostring(appName)..[[" has been registered]], 2)
+	end
+	local options = assert( optgetter("slash", MAJOR) )
+	
 	local info = {   -- Don't try to recycle this, it gets handed off to confirmation callbacks and whatnot
 		[0] = slashcmd,
 		slashcmd = slashcmd,
@@ -327,4 +373,3 @@ function lib:HandleCommand(slashcmd, appName, input)
 	
 	handle(info, 1, options, 0)  -- (info, inputpos, table, depth)
 end
-
