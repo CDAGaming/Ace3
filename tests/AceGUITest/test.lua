@@ -317,12 +317,73 @@ function TestFrame()
 end
 
 local p
+
+local testing = { color1 = {1,1,1,1},color2 = {0,0,0,1} }
+local key1, key2 = "", ""
+			
 local BagginsAce3Opts = {
 		type = "group",
 		icon = "Interface\\Icons\\INV_Jewelry_Ring_03",
 		name = "Baggins",
 		childGroups = "tree",
+		set = function(info, value) Baggins:Print(value) end,
+		get = function(info) return "Testing inherited set/get" end,
 		args = {
+			Test = {
+				name = "Test",
+				type = 'group',
+				order = 1,
+				desc = "Test Controls",
+				args = {
+					Test = {
+						type = 'input',
+						order = 1,
+						name = 'Testing',
+						desc = 'Testing',
+						arg = "Test",
+					},
+					TestMulti = {
+						type = "multiselect",
+						name = "Testing Multiselect",
+						order = 1,
+						set = function(info, key, value) testing[key] = value end,
+						get = function(info, key) return testing[key] end,
+						values = {
+							Test1 = "Testing 1",
+							Test2 = "Testing 2",
+							Test3 = "Testing 3"
+						}
+					},	
+					Color = {
+						type = 'color',
+						name = "Test Color",
+						order = 2,
+						set = function(info, r,g,b,a) Baggins:Print(r,g,b,a) testing.color1 = {r,g,b,a} end,
+						get = function(info) return unpack(testing.color1) end,
+					},
+					Color2 = {
+						type = 'color',
+						name = "Test Color 2",
+						order = 3,
+						set = function(info, r,g,b,a) Baggins:Print(r,g,b,a) testing.color2 = {r,g,b,a} end,
+						get = function(info) return unpack(testing.color2) end,
+					},
+					Key1 = {
+						type = 'keybinding',
+						name = "Test Keybind",
+						order = 4,
+						set = function(info, key) Baggins:Print(key) key1 = key end,
+						get = function(info) return key1 end,
+					},
+					Key2 = {
+						type = 'keybinding',
+						name = "Test Keybind 2",
+						order = 4,
+						set = function(info, key) Baggins:Print(key) key2 = key end,
+						get = function(info) return key2 end,
+					},
+				}
+			},
 			Refresh = {
 				name = "Force Full Refresh",
 				type = "execute",
@@ -330,7 +391,6 @@ local BagginsAce3Opts = {
 				desc = "Forces a Full Refresh of item sorting",
 				func = function(info) Baggins:ForceFullRefresh() Baggins:UpdateBags() end,
 			},
-
 			BagCatEdit = {
 				name = "Bag/Category Config",
 				type = "execute",
@@ -340,80 +400,10 @@ local BagginsAce3Opts = {
 				disabled = function(info) return not waterfall end,
 				
 			},
-			LoadProfile = {
-				name = "Load Profile",
-				type = "group",
-				desc = "Load a built-in profile: NOTE: ALL Custom Bags will be lost and any edited built in categories will be lost.",
-				order = 20,
-				args = {
-					Default = {
-						name = "Default",
-						type = "execute",
-						desc = "A default set of bags sorting your inventory into categories",
-						func = function(info) Baggins:ApplyProfile(Baggins.profiles.default)	end,
-						order = 10,
-					},
-					AllInOne = {
-						name = "All in one",
-						type = "execute",
-						desc = "A single bag containing your whole inventory, sorted by quality",
-						func = function(info) Baggins:ApplyProfile(Baggins.profiles.allinone)	end,
-						order = 15,
-					},
-					AllInOneSorted = {
-						name = "All In One Sorted",
-						type = "execute",
-						desc = "A single bag containing your whole inventory, sorted into categories",
-						func = function(info) Baggins:ApplyProfile(Baggins.profiles.allinonesorted) end,
-						order = 20,
-					},
-					UserDefined = {
-						name = "User Defined",
-						type = "group",
-						desc = "Load a User Defined Profile",
-						inline = true,
-						order = 30,
-						pass = true,
-						func = function(info, name) local p = Baggins.db.account.profiles[name] if p then Baggins:ApplyProfile(p) end end,
-						args = {},
-					},
-				},
-			},
-			SaveProfile = {
-				name = "Save Profile",
-				type = "group",
-				desc = "Save a User Defined Profile",
-				pass = true,
-				order = 30,
-				func = function(info, name) Baggins:SaveProfile(name) end,
-				set = function(info, key, name) Baggins:SaveProfile(name) end,
-				get = false,
-				args = {
-					New = {
-						type = "text",
-						name = "New",
-						desc = "Create a new Profile",
-						usage = "<Name>",
-						get = false,
-						order = 1
-					},
-				},
-			},
-			DeleteProfile = {
-				name = "Delete Profile",
-				type = "group",
-				desc = "Delete a User Defined Profile",
-				pass = true,
-				order = 40,
-				func = function(info, name) Baggins:SaveProfile(name) end,
-				confirm = true,
-				func = function(info, name) Baggins.db.account.profiles[name] = nil Baggins:RefreshProfileOptions() end,
-				args = {
-				},
-			},
 			spacer3 = {
 				type = "header",
 				order = 90,
+				dialogHidden=true,
 			},
 			Items = {
 				name = "Items",
@@ -518,7 +508,7 @@ local BagginsAce3Opts = {
 							},
 							Threshold = {
 								name = "Color Threshold",
-								type = "text",
+								type = "select",
 								desc = "Only color items of this quality or above",
 								order = 15,
 
@@ -528,7 +518,7 @@ local BagginsAce3Opts = {
 									Baggins:UpdateItemButtons()
 								end,
 								disabled = function(info) return not p.qualitycolor end,
-								validate = { 
+								values = { 
 									["0"] = "|c00000000"..select(4,GetItemQualityColor(0))..ITEM_QUALITY0_DESC,
 									["1"] = "|c10000000"..select(4,GetItemQualityColor(1))..ITEM_QUALITY1_DESC,
 									["2"] = "|c20000000"..select(4,GetItemQualityColor(2))..ITEM_QUALITY2_DESC,
@@ -693,7 +683,7 @@ local BagginsAce3Opts = {
 						order = 60,
 						max = 2,
 						min = 0.3,
-						step = 0.1,
+						bigStep = 0.1,
 						get = function(info) return p.scale end,
 						set = function(info, value)
 							p.scale = value 
@@ -933,7 +923,7 @@ local BagginsAce3Opts = {
 					ShowAmmo = {
 						name = "Show Ammo Bags Count",
 						type = "toggle",
-						dialogHidden = true,
+						hidden = true,
 						order = 50,
 						desc = "Show Ammo Bags Count",
 						get = function(info) return p.showammocount end,
@@ -945,7 +935,7 @@ local BagginsAce3Opts = {
 					ShowSoul = {
 						name = "Show Soul Bags Count2",
 						type = "toggle",
-						dialogHidden = true,
+						hidden = function(info) return true end,
 						order = 55,
 						desc = "Show Soul Bags Count",
 						get = function(info) return p.showsoulcount end,
@@ -1064,6 +1054,7 @@ local BagginsAce3Opts = {
 			spacer = {
 				type = 'header',
 				order = 150,
+				dialogHidden=true,
 			},
 			Skin = {
 				name = "Bag Skin",
@@ -1091,6 +1082,81 @@ local BagginsAce3Opts = {
 				set = function(info, value) p.overridedefaultbags = value Baggins:UpdateBagHooks() end,
 			},
 		
+		},
+		plugins = {
+			Profiles = {
+				LoadProfile = {
+					name = "Load Profile",
+					type = "group",
+					desc = "Load a built-in profile: NOTE: ALL Custom Bags will be lost and any edited built in categories will be lost.",
+					order = 20,
+					args = {
+						Default = {
+							name = "Default",
+							type = "execute",
+							desc = "A default set of bags sorting your inventory into categories",
+							func = function(info) Baggins:ApplyProfile(Baggins.profiles.default)	end,
+							order = 10,
+						},
+						AllInOne = {
+							name = "All in one",
+							type = "execute",
+							desc = "A single bag containing your whole inventory, sorted by quality",
+							func = function(info) Baggins:ApplyProfile(Baggins.profiles.allinone)	end,
+							order = 15,
+						},
+						AllInOneSorted = {
+							name = "All In One Sorted",
+							type = "execute",
+							desc = "A single bag containing your whole inventory, sorted into categories",
+							func = function(info) Baggins:ApplyProfile(Baggins.profiles.allinonesorted) end,
+							order = 20,
+						},
+						UserDefined = {
+							name = "User Defined",
+							type = "group",
+							desc = "Load a User Defined Profile",
+							inline = true,
+							order = 30,
+							pass = true,
+							func = function(info, name) local p = Baggins.db.account.profiles[name] if p then Baggins:ApplyProfile(p) end end,
+							args = {},
+						},
+					},
+				},
+				SaveProfile = {
+					name = "Save Profile",
+					type = "group",
+					desc = "Save a User Defined Profile",
+					pass = true,
+					order = 30,
+					func = function(info, name) Baggins:SaveProfile(name) end,
+					set = function(info, key, name) Baggins:SaveProfile(name) end,
+					get = false,
+					args = {
+						New = {
+							type = "text",
+							name = "New",
+							desc = "Create a new Profile",
+							usage = "<Name>",
+							get = false,
+							order = 1
+						},
+					},
+				},
+				DeleteProfile = {
+					name = "Delete Profile",
+					type = "group",
+					desc = "Delete a User Defined Profile",
+					pass = true,
+					order = 40,
+					func = function(info, name) Baggins:SaveProfile(name) end,
+					confirm = true,
+					func = function(info, name) Baggins.db.account.profiles[name] = nil Baggins:RefreshProfileOptions() end,
+					args = {
+					},
+				},
+			}
 		}
 	}
 	
