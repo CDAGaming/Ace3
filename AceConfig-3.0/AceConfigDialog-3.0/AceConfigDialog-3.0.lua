@@ -342,15 +342,24 @@ local function ActivateControl(widget, event, ...)
 	
 	del(info)
 	
-	--full refresh of the frame
-	lib:Open(user.appName)
+	--full refresh of the frame, some controls dont cause this on all events
+	if widget.type == "ColorPicker" then
+		if event == "OnValueConfirmed" then
+			lib:Open(user.appName)
+		end
+	elseif widget.type == "Slider" then
+		if event == "OnMouseUp" then
+			lib:Open(user.appName)
+		end
+	else
+		lib:Open(user.appName)
+	end
 end
 
 
 local function ActivateMultiControl(widget, event, ...)
 	ActivateControl(widget, event, widget.userdata.value, ...)
 end
-
 
 local function FrameOnClose(widget, event) 
 	local appName = widget.userdata.appName
@@ -635,6 +644,7 @@ local function FeedOptions(appName, options,container,rootframe,path,group,inlin
 					control:SetSliderValues(v.min or 0,v.max or 100,v.bigStep or 0)
 					control:SetValue(CallOptionsFunction("get",v, options, path, appName))
 					control:SetCallback("OnValueChanged",ActivateControl)
+					control:SetCallback("OnMouseUp",ActivateControl)
 					
 				elseif v.type == "select" then
 					control = gui:Create("Dropdown")
@@ -676,7 +686,11 @@ local function FeedOptions(appName, options,container,rootframe,path,group,inlin
 					del(valuesort)
 					
 				elseif v.type == "color" then
-					--control = gui:Create("")
+					control = gui:Create("ColorPicker")
+					control:SetLabel(v.name)
+					control:SetColor(CallOptionsFunction("get",v, options, path, appName, value))
+					control:SetCallback("OnValueChanged",ActivateControl)
+					control:SetCallback("OnValueConfirmed",ActivateControl)
 					
 				elseif v.type == "keybinding" then
 					--control = gui:Create("")
@@ -881,11 +895,9 @@ function lib:FeedGroup(appName,options,container,rootframe,path)
 			container:AddChild(tree)
 		end
 	end
-
 end 
 
 function lib:Open(appName)
-	
 	local app = reg:GetOptionsTable(appName)
 	if not app then
 		error(("%s isn't registed with AceConfigRegistry, unable to open config"):format(appName), 2)
