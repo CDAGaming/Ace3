@@ -570,6 +570,7 @@ local function BuildTree(group, options, path, appName)
 				local entry = new()
 				entry.value = k
 				entry.text = v.name
+				entry.disabled = CheckOptionDisabled(v, options, path, appName)
 				tinsert(tree,entry)
 				if (v.childGroups or "tree") == "tree" then
 					BuildSubTree(v,entry, options, path, appName)
@@ -603,7 +604,7 @@ end
 	path - table with the keys to get to the group being fed
 --]]
 
-local function FeedOptions(appName, options,container,rootframe,path,group,inline)
+local function FeedOptions(appName, options,container,rootframe,path,group,inline,groupDisabled)
 	local feedkeys = new()
 	local feedtmp = new()
 	
@@ -616,13 +617,14 @@ local function FeedOptions(appName, options,container,rootframe,path,group,inlin
 			if v.type == "group" then
 				if inline or pickfirstset(v.dialogInline,v.guiInline,v.inline, false) then
 					--Inline group
+					groupDisabled = groupDisabled or  CheckOptionDisabled(v, options, path, appName)
 					local GroupContainer = gui:Create("InlineGroup")
 					GroupContainer:SetTitle(v.name or "")
 					GroupContainer.width = "fill"
 					GroupContainer:SetLayout("flow")
 					container:AddChild(GroupContainer)
 					tinsert(path, k)
-					FeedOptions(appName,options,GroupContainer,rootframe,path,v,true)
+					FeedOptions(appName,options,GroupContainer,rootframe,path,v,true,groupDisabled)
 					tremove(path)
 				end
 			else
@@ -669,7 +671,7 @@ local function FeedOptions(appName, options,container,rootframe,path,group,inlin
 					
 					local valuesort = new()
 					local values = v.values
-					local disabled = CheckOptionDisabled(v, options, path, appName)
+					local disabled = groupDisabled or CheckOptionDisabled(v, options, path, appName)
 
 					if values then
 						for value, text in pairs(v.values) do
@@ -717,7 +719,7 @@ local function FeedOptions(appName, options,container,rootframe,path,group,inlin
 				if control then
 					if control.SetDisabled then
 						local disabled = CheckOptionDisabled(v, options, path, appName)
-						control:SetDisabled(disabled)
+						control:SetDisabled(groupDisabled or disabled)
 					end
 
 					InjectInfo(control, options, v, path, rootframe, appName)
@@ -790,9 +792,12 @@ function lib:FeedGroup(appName,options,container,rootframe,path)
 	local inline
 	local grouptype, parenttype = nil, "none"
 	
+	local groupDisabled
+	
 	for i, v in ipairs(path) do
 		group = GetSubOption(group, v)
 		inline = inline or pickfirstset(v.dialogInline,v.guiInline,v.inline, false)
+		groupDisabled = groupDisabled or CheckOptionDisabled(group, options, path, appName)
 		parenttype = grouptype
 		grouptype = group.childGroups
 	end
@@ -833,7 +838,7 @@ function lib:FeedGroup(appName,options,container,rootframe,path)
 		end
 	end
 	
-	FeedOptions(appName,options,container,rootframe,path,group)
+	FeedOptions(appName,options,container,rootframe,path,group,nil,groupDisabled)
 
 	if container.Type == "ScrollFrame" then
 		local status = self:GetStatusTable(appName, path)
@@ -879,6 +884,7 @@ function lib:FeedGroup(appName,options,container,rootframe,path)
 			container:AddChild(select)
 			
 		--assume tree group by default
+		--if parenttype is tree then this group is already a node on that tree
 		elseif parenttype ~= "tree" then
 
 			local tree = gui:Create("TreeGroup")
@@ -898,10 +904,12 @@ function lib:FeedGroup(appName,options,container,rootframe,path)
 			
 			tree:SetTree(treedefinition)
 
-			if treedefinition[1] then
-				tree:SelectByValue(status.groups.selected or treedefinition[1].value)
+			for i, entry in ipairs(treedefinition) do
+				if not entry.disabled then
+					tree:SelectByValue(status.groups.selected or entry.value)
+					break
+				end
 			end
-
 
 			container:AddChild(tree)
 		end

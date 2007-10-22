@@ -1077,7 +1077,7 @@ do
 		return button
 	end
 
-	local function UpdateButton(button, treeline, selected, last, canExpand, isExpanded, disabled)
+	local function UpdateButton(button, treeline, selected, last, canExpand, isExpanded)
 		local self = button.obj
 		local expand = button.expand
 		local frame = self.frame
@@ -1085,7 +1085,9 @@ do
 		local level = treeline.level
 		local value = treeline.value
 		local uniquevalue = treeline.uniquevalue
-
+		local disabled = treeline.disabled
+		
+		
 		button.treeline = treeline
 		button.value = value
 		button.uniquevalue = uniquevalue
@@ -1127,6 +1129,13 @@ do
 				line:SetTexCoord(0, 0.4375, 0, 0.625)
 			end
 			line:Show();
+		end
+		
+		if disabled then
+			button:EnableMouse(false)
+			button:SetText("|cff808080"..text..FONT_COLOR_CODE_CLOSE)
+		else
+			button:EnableMouse(true)
 		end
 		
 		if canExpand then
