@@ -356,6 +356,14 @@ local function ActivateControl(widget, event, ...)
 	end
 end
 
+local function ActivateSlider(widget, event, value)
+	local option = widget.userdata.option
+	local min, max, step = option.min or 0, option.max or 100, option.step
+	if step then
+		value = math.floor((value - min) / step + 0.5) * step + min
+	end
+	ActivateControl(widget,event,value)
+end
 
 local function ActivateMultiControl(widget, event, ...)
 	ActivateControl(widget, event, widget.userdata.value, ...)
@@ -641,10 +649,10 @@ local function FeedOptions(appName, options,container,rootframe,path,group,inlin
 				elseif v.type == "range" then
 					control = gui:Create("Slider")
 					control:SetLabel(v.name)
-					control:SetSliderValues(v.min or 0,v.max or 100,v.bigStep or 0)
+					control:SetSliderValues(v.min or 0,v.max or 100, v.bigStep or v.step or 0)
 					control:SetValue(CallOptionsFunction("get",v, options, path, appName))
-					control:SetCallback("OnValueChanged",ActivateControl)
-					control:SetCallback("OnMouseUp",ActivateControl)
+					control:SetCallback("OnValueChanged",ActivateSlider)
+					control:SetCallback("OnMouseUp",ActivateSlider)
 					
 				elseif v.type == "select" then
 					control = gui:Create("Dropdown")
@@ -693,7 +701,10 @@ local function FeedOptions(appName, options,container,rootframe,path,group,inlin
 					control:SetCallback("OnValueConfirmed",ActivateControl)
 					
 				elseif v.type == "keybinding" then
-					--control = gui:Create("")
+					control = gui:Create("Keybinding")
+					control:SetLabel(v.name)
+					control:SetKey(CallOptionsFunction("get",v, options, path, appName, value))
+					control:SetCallback("OnKeyChanged",ActivateControl)
 					
 				elseif v.type == "header" then
 					control = gui:Create("Heading")
