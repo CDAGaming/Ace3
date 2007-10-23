@@ -8,6 +8,8 @@
 ## X-License: To be decided
 ## OptionalDeps: LibStub
 
+embeds.xml
+
 CallbackHandler-1.0\CallbackHandler-1.0.xml
 AceAddon-3.0\AceAddon-3.0.xml
 AceEvent-3.0\AceEvent-3.0.xml
