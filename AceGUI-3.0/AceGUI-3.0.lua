@@ -890,6 +890,9 @@ do
 		local text = self.text
 		local tabs = self.tabs
 		
+		for i, v in ipairs(tabs) do
+			v:Hide()
+		end
 		for i, v in ipairs(tablist) do
 			local tab = tabs[i]
 			if not tab then
@@ -901,7 +904,7 @@ do
 					tab:SetPoint("LEFT",tabs[i-1],"RIGHT",-3,0)
 				end					
 			end
-			
+			tab:Show()
 			tab:SetText(text[v])
 		end
 		

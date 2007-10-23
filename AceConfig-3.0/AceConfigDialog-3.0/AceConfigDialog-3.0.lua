@@ -263,14 +263,16 @@ local function ActivateControl(widget, event, ...)
 	local group = options
 	local funcname = GetFuncName(option)
 	local handler
-	
+	local confirm 
+	local validate
 	--build the info table containing the path
 	-- pick up functions while traversing the tree
 	if group[funcname] ~= nil then
 		func =  group[funcname]
 	end
 	handler = group.handler or handler
-		
+	confirm = group.confirm
+	validate = group.validate
 	for i, v in ipairs(path) do
 		group = GetSubOption(group, v)
 		info[i] = v
@@ -278,81 +280,102 @@ local function ActivateControl(widget, event, ...)
 			func =  group[funcname]
 		end
 		handler = group.handler or handler
+		if group.confirm ~= nil then
+			confirm = group.confirm
+		end
+		if group.validate ~= nil then
+			validate = group.validate
+		end
 	end
 
 	info.options = options
 	info[0] = user.appName
 	info.arg = option.arg
 	
-	local confirm = option.confirm
-	local confirmText = option.confirmText
-	--call confirm func/method
-	if type(confirm) == "string" then
-		if handler and handler[confirm] then
-			confirm = handler[confirm](handler, info)
+	local validated = true
+	
+	if widget.type ~= "Button" then
+		if type(validate) == "string" then
+		if handler and handler[validate] then
+			validated = handler[validate](handler, info, ...)
+		else
+			error("Method doesn't exist in handler")
+		end
+		elseif type(validate) == "function" then
+			validated = validate(info, ...)
+		end		
+	end
+	
+	if validated then
+		local confirmText = option.confirmText
+		--call confirm func/method
+		if type(confirm) == "string" then
+			if handler and handler[confirm] then
+				confirm = handler[confirm](handler, info)
+				if type(confirm) == "string" then
+					confirmText = confirm
+					confirm = true
+				end
+			else
+				error("Method doesn't exist in handler")
+			end
+		elseif type(confirm) == "function" then
+			confirm = confirm(info)
 			if type(confirm) == "string" then
 				confirmText = confirm
 				confirm = true
 			end
-		else
-			error("Method doesn't exist in handler")
 		end
-	elseif type(confirm) == "function" then
-		confirm = confirm(info)
-		if type(confirm) == "string" then
-			confirmText = confirm
-			confirm = true
-		end
-	end
-	
-	--confirm if needed
-	if type(confirm) == "boolean" then
-		if confirm then
-			if not confirmText then
-				confirmText = option.name
-				if option.desc then
-					confirmText = confirmText.." - "..option.desc
+		
+		--confirm if needed
+		if type(confirm) == "boolean" then
+			if confirm then
+				if not confirmText then
+					confirmText = option.name
+					if option.desc then
+						confirmText = confirmText.." - "..option.desc
+					end
 				end
-			end
-				
-			if type(func) == "string" then
-				if handler and handler[func] then
-					confirmPopup(confirmText, handler[func], handler, info, ...)
-				else
-					error("Method doesn't exist in handler")
+					
+				if type(func) == "string" then
+					if handler and handler[func] then
+						confirmPopup(confirmText, handler[func], handler, info, ...)
+					else
+						error("Method doesn't exist in handler")
+					end
+				elseif type(func) == "function" then
+					confirmPopup(confirmText, func, info, ...)
 				end
-			elseif type(func) == "function" then
-				confirmPopup(confirmText, func, info, ...)
+				--func will be called and info deleted when the confirm dialog is responded to
+				return
 			end
-			--func will be called and info deleted when the confirm dialog is responded to
-			return
 		end
-	end
-	
-	--call the function 
-	if type(func) == "string" then
-		if handler and handler[func] then
-			handler[func](handler, info, ...)
+		
+		--call the function 
+		if type(func) == "string" then
+			if handler and handler[func] then
+				handler[func](handler, info, ...)
+			else
+				error("Method doesn't exist in handler")
+			end
+		elseif type(func) == "function" then
+			func(info, ...)
+		end	
+		
+		del(info)
+		
+		--full refresh of the frame, some controls dont cause this on all events
+		if widget.type == "ColorPicker" then
+			if event == "OnValueConfirmed" then
+				lib:Open(user.appName)
+			end
+		elseif widget.type == "Slider" then
+			if event == "OnMouseUp" then
+				lib:Open(user.appName)
+			end
 		else
-			error("Method doesn't exist in handler")
-		end
-	elseif type(func) == "function" then
-		func(info, ...)
-	end	
-	
-	del(info)
-	
-	--full refresh of the frame, some controls dont cause this on all events
-	if widget.type == "ColorPicker" then
-		if event == "OnValueConfirmed" then
 			lib:Open(user.appName)
 		end
-	elseif widget.type == "Slider" then
-		if event == "OnMouseUp" then
-			lib:Open(user.appName)
-		end
-	else
-		lib:Open(user.appName)
 	end
 end
 
