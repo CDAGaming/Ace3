@@ -210,7 +210,17 @@ end
 
 local function OptionOnMouseOver(widget, event)
 	--show a tooltip/set the status bar to the desc text
-	widget.userdata.rootframe:SetStatusText(widget.userdata.option.desc)
+	local user = widget.userdata
+	local opt = user.option
+	--user.rootframe:SetStatusText(user.option.desc)
+	
+	GameTooltip_SetDefaultAnchor(GameTooltip, widget.frame)
+	GameTooltip:SetText(opt.name, 1, 1, 1, 1)
+	if opt.desc then
+		GameTooltip:AddLine(opt.desc, NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b, 1)
+	end
+
+	GameTooltip:Show()
 end
 	
 local function GetFuncName(option)
@@ -564,6 +574,7 @@ local function BuildSubTree(group, tree, options, path, appName)
 				local entry = new()
 				entry.value = k
 				entry.text = v.name
+				entry.disabled = CheckOptionDisabled(v, options, path, appName)
 				if not tree.children then tree.children = new() end
 				tinsert(tree.children,entry)
 				if (v.childGroups or "tree") == "tree" then
