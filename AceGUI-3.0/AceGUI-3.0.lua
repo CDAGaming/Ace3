@@ -1717,7 +1717,24 @@ do
 		self:Fire("OnEnterPressed",value)
 	end
 	
-
+	local function EditBox_OnReceiveDrag(this)
+		local self = this.obj
+		local type, id, info = GetCursorInfo()
+		if type == "item" then
+			self:SetText(info)
+			self:Fire("OnEnterPressed",info)
+			ClearCursor()
+		elseif type == "spell" then
+			local name, rank = GetSpellName(id, info)
+			if rank and rank:match("%d") then
+				name = name.." ("..rank..")"
+			end
+			self:SetText(name)
+			self:Fire("OnEnterPressed",name)
+			ClearCursor()
+		end
+	end
+	
 	local function UglyScrollLeft(this)
 	  this:HighlightText(0,1);
 	  this:Insert(" "..strsub(this:GetText(),1,1));
@@ -1794,16 +1811,18 @@ do
 		frame:SetHeight(44)
 		frame:SetWidth(200)
 
-		
+		editbox:SetAutoFocus(false)
 		--frame:SetScript("OnEnter",Control_OnEnter)
 		--frame:SetScript("OnLeave",Control_OnLeave)
 		editbox:SetFontObject(ChatFontNormal)
 		editbox:SetScript("OnEscapePressed",EditBox_OnEscapePressed)
 		editbox:SetScript("OnEnterPressed",EditBox_OnEnterPressed)
 		editbox:SetScript("OnTextChanged",EditBox_OnTextChanged)
+		editbox:SetScript("OnReceiveDrag", EditBox_OnReceiveDrag)
+		editbox:SetScript("OnMouseDown", EditBox_OnReceiveDrag)
 		editbox:SetTextInsets(5,5,3,3)
 		editbox:SetMaxLetters(256)
-		editbox:SetAutoFocus(false)
+		
 
 		editbox:SetBackdrop(ControlBackdrop)
 		editbox:SetBackdropColor(0,0,0)

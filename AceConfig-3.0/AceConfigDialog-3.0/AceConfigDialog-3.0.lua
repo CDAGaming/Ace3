@@ -954,7 +954,32 @@ function lib:FeedGroup(appName,options,container,rootframe,path)
 	end
 end 
 
+local old_CloseSpecialWindows
+
+function lib:CloseAll()
+	local closed
+	for k, v in pairs(self.OpenFrames) do
+		v:Hide()
+		closed = true
+	end
+	return closed	
+end
+
+function lib:Close(appName)
+	if self.OpenFrames[appName] then
+		self.OpenFrames[appName]:Hide()
+		return true
+	end
+end
+
 function lib:Open(appName)
+	if not old_CloseSpecialWindows then
+		old_CloseSpecialWindows = CloseSpecialWindows
+		CloseSpecialWindows = function()
+			local found = old_CloseSpecialWindows()
+			return self:CloseAll() or found
+		end
+	end
 	local app = reg:GetOptionsTable(appName)
 	if not app then
 		error(("%s isn't registed with AceConfigRegistry, unable to open config"):format(appName), 2)
