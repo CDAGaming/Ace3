@@ -222,6 +222,10 @@ local function OptionOnMouseOver(widget, event)
 
 	GameTooltip:Show()
 end
+
+local function OptionOnMouseLeave(widget, event)
+	GameTooltip:Hide()
+end
 	
 local function GetFuncName(option)
 	local type = option.type
@@ -628,6 +632,8 @@ local function InjectInfo(control, options, option, path, rootframe, appName)
 	user.path = copy(path)
 	user.appName = appName
 	control:SetCallback("OnRelease", CleanUserData)
+	control:SetCallback("OnLeave", OptionOnMouseLeave)
+	control:SetCallback("OnEnter", OptionOnMouseOver)
 end
 
 
@@ -723,7 +729,6 @@ local function FeedOptions(appName, options,container,rootframe,path,group,inlin
 							check:SetValue(CallOptionsFunction("get",v, options, path, appName, value))
 							check:SetCallback("OnValueChanged",ActivateMultiControl)
 							InjectInfo(check, options, v, path, rootframe, appName)
-							check:SetCallback("OnEnter",OptionOnMouseOver)
 							control:AddChild(check)
 						end
 					end
@@ -757,7 +762,6 @@ local function FeedOptions(appName, options,container,rootframe,path,group,inlin
 					end
 
 					InjectInfo(control, options, v, path, rootframe, appName)
-					control:SetCallback("OnEnter",OptionOnMouseOver)
 					container:AddChild(control)
 				end	
 				tremove(path)			
