@@ -52,10 +52,14 @@ function CallbackHandler:New(target, RegisterName, UnregisterName, UnregisterAll
 		end
 	end
 
-	-- Registration of a callback, handles self["method"], self with function ref, "addonId" (instead of self) with function ref
-	target[RegisterName] = function(self, eventname, method)
+	-- Registration of a callback, handles:
+	--   self["method"], leads to self["method"](self, ...)
+	--   self with function ref, leads to functionref(...)
+	--   "addonId" (instead of self) with function ref, leads to functionref(...)
+	-- all with an optional arg, which, if present, gets passed as first argument (after self if present)
+	target[RegisterName] = function(self, eventname, method, ... --[[actually just a single arg]])
 		if type(eventname) ~= "string" then 
-			error("Usage: "..RegisterName.."(eventname, method): 'eventname' - string expected.", 2)
+			error("Usage: "..RegisterName.."(eventname, method[, arg]): 'eventname' - string expected.", 2)
 		end
 	
 		method = method or eventname
@@ -63,28 +67,35 @@ function CallbackHandler:New(target, RegisterName, UnregisterName, UnregisterAll
 		local first = not rawget(events, eventname) or not next(events[eventname])	-- test for empty before. not test for one member after. that one member may have been overwritten.
 		
 		if type(method) ~= "string" and type(method) ~= "function" then
-			error("Usage: "..RegisterName.."(eventname, method: 'method' - string or function expected.", 2)
+			error("Usage: "..RegisterName.."(\"eventname\", \"methodname\"): 'methodname' - string or function expected.", 2)
 		end
 		
 		if type(method) == "string" then
 			-- self["method"] calling style
 			if type(self) ~= "table" then
-				error("Usage: "..RegisterName.."(eventname, methodname): self was not a table?", 2)
+				error("Usage: "..RegisterName.."(\"eventname\", \"methodname\"): self was not a table?", 2)
 			elseif self==target then
-				error("Usage: "..RegisterName.."(eventname, methodname): do not use Library:"..RegisterName.."(), use your own 'self'", 2)
+				error("Usage: "..RegisterName.."(\"eventname\", \"methodname\"): do not use Library:"..RegisterName.."(), use your own 'self'", 2)
 			elseif type(self[method]) ~= "function" then
-				error("Usage: "..RegisterName.."(eventname, methodname): 'methodname' - method not found on self.", 2)
+				error("Usage: "..RegisterName.."(\"eventname\", \"methodname\"): 'methodname' - method '"..tostring(method).."' not found on self.", 2)
+			end
+			
+			if select("#",...)>=1 then	-- this is not the same as testing for arg==nil!
+				local arg=select(1,...)
+				events[eventname][self] = function(...) self[method](self,arg,...) end
 			else
 				events[eventname][self] = function(...) self[method](self,...) end
 			end
 		else
-			if type(self)=="table" then
-				-- function ref with self=object
-				events[eventname][self] = method
-			elseif type(self)~="string" then
-				error("Usage: "..RegisterName.."(\"addonId\", eventname, method): 'addonId': string expected.", 2)
+			-- function ref with self=object or self="addonId"
+			if type(self)~="table" and type(self)~="string" then
+				error("Usage: "..RegisterName.."(self or \"addonId\", eventname, method): 'self or addonId': table or string expected.", 2)
+			end
+			
+			if select("#",...)>=1 then	-- this is not the same as testing for arg==nil!
+				local arg=select(1,...)
+				events[eventname][self] = function(...) method(arg,...) end
 			else
-				-- function ref with self="addonID"
 				events[eventname][self] = method
 			end
 		end
@@ -117,12 +128,16 @@ function CallbackHandler:New(target, RegisterName, UnregisterName, UnregisterAll
 	if UnregisterAllName then
 		target[UnregisterAllName] = function(...)
 			if select("#",...)<1 then
-				error("Usage: "..UnregisterAllName.."(): missing 'self' or \"addonId\" to unregister events for.")
+				error("Usage: "..UnregisterAllName.."([whatFor]): missing 'self' or \"addonId\" to unregister events for.", 2)
 			end
+			if select("#",...)==1 and ...==target then
+				error("Usage: "..UnregisterAllName.."([whatFor]): supply a meaningful 'self' or \"addonId\"", 2)
+			end
+				
 			
 			for i=1,select("#",...) do
 				local self = select(i,...)
-				for eventname, callbacks in events do
+				for eventname, callbacks in pairs(events) do
 					if callbacks[self] then
 						callbacks[self] = nil
 						-- Fire OnUnused callback?
