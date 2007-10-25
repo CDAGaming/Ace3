@@ -5,7 +5,7 @@ local donothing = function() end
 local frames = {} -- Stores globally created frames, and their internal properties.
 
 local FrameClass = {} -- A class for creating frames.
-FrameClass.methods = { "SetScript", "RegisterEvent", "UnregisterEvent", "UnregisterAllEvents", "OnShow", "OnHide" }
+FrameClass.methods = { "SetScript", "RegisterEvent", "UnregisterEvent", "UnregisterAllEvents", "Show", "Hide", "IsShown" }
 function FrameClass:New()
 	local frame = {}
 	for i,method in ipairs(self.methods) do
@@ -182,6 +182,15 @@ function SendAddonMessage(prefix, message, distribution, target)
 			     #prefix + #message))
 	-- CHAT_MSG_ADDON(prefix, message, distribution, sender)
 	WoWAPI_FireEvent("CHAT_MSG_ADDON", prefix, message, distribution, "Sender")
+end
+
+function hooksecurefunc(func_name, post_hook_func)
+	local orig_func = _G[func_name]
+
+	_G[func_name] = function (...)
+				orig_func(...)
+				return post_hook_func(...)
+			end
 end
 
 RED_FONT_COLOR_CODE = ""
