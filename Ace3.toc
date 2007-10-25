@@ -7,6 +7,7 @@
 ## X-Category: Library
 ## X-License: To be decided
 ## OptionalDeps: LibStub
+## X-Embeds: LibStub
 
 embeds.xml
 
