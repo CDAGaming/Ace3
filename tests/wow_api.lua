@@ -218,7 +218,7 @@ function dump(...)
 	for i=1,select("#", ...) do
 		local v = select(i, ...)
 		if type(v)=="string" then
-			tinsert(t, '"'..v..'"')
+			tinsert(t, string.format("%q", v))
 		else
 			tinsert(t, tostring(v))
 		end
