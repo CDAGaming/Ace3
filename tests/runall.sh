@@ -2,25 +2,19 @@ echo
 echo Running all -3.x test cases:
 echo
 
-setlocal
-if "%lua%"=="" set lua=lua
+if [ -z $lua ]; then
+	lua=lua
+fi
 
-for %%i in (*-3.*.lua) do call :runtest %%i
+for i in *-3.*.lua; do 
+	echo ----- Running $i:
+	$lua $i
+done
 
 
-echo.
+echo
 echo -----------------------
 echo DONE!
-echo.
-echo (To point at a specific lua.exe, use "set lua=c:\path\to\lua.exe" prior to executing %0)
-echo.
-pause
-goto :eof
-
-
-:runtest
-echo ----- Running %1:
-%lua% %1
-goto :eof
-
-for i in *; do echo $i; done
+echo
+echo '(To point at a specific lua.exe, use "export lua=/path/to/lua" prior to executing runall.sh)'
+echo
