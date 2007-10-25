@@ -1,6 +1,7 @@
 dofile("wow_api.lua")
-dofile("LibStub.lua")
+dofile("../LibStub/LibStub.lua")
 dofile("../CallbackHandler-1.0/CallbackHandler-1.0.lua")
+dofile("../AceComm-3.0/ChatThrottleLib.lua")
 dofile("../AceComm-3.0/AceComm-3.0.lua")
 
 local VERBOSE = false

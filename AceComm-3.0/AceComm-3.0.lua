@@ -11,7 +11,10 @@ if not AceComm then return end
 
 local CallbackHandler = LibStub:GetLibrary("CallbackHandler-1.0")
 
-local SendAddonMessage = SendAddonMessage
+local CTL = ChatThrottleLib
+local single_prio = "NORMAL"
+local multipart_prio = "BULK"
+
 local pairs = pairs
 local ceil = math.ceil
 local strsub = string.sub
@@ -129,7 +132,8 @@ function AceComm.SendCommMessage(addon, prefix, text, distribution, target)
 	
 	if text_len < chunk_size + meta_len then
 		-- fits all in one message
-		SendAddonMessage(prefix, text, distribution, target)
+		CTL:SendAddonMessage(single_prio, prefix, text, distribution,
+				     target)
 	else
 		local chunks = ceil(text_len / chunk_size)
 		-- string offsets
@@ -140,8 +144,8 @@ function AceComm.SendCommMessage(addon, prefix, text, distribution, target)
 		local chunk = strsub(text, chunk_begin, chunk_end)
 		chunk_begin = chunk_end + 1
 		chunk_end = chunk_begin + chunk_size
-		SendAddonMessage(real_prefix, chunk, distribution,
-				 target)
+		CTL:SendAddonMessage(multipart_prio, real_prefix, chunk,
+				     distribution, target)
 		
 		-- continuation
 		real_prefix = prefix .. message_type_rev["multipart_continue"]
@@ -149,14 +153,15 @@ function AceComm.SendCommMessage(addon, prefix, text, distribution, target)
 			chunk = strsub(text, chunk_begin, chunk_end)
 			chunk_begin = chunk_end + 1
 			chunk_end = chunk_begin + chunk_size
-			SendAddonMessage(real_prefix, chunk,
-					 distribution, target)
+			CTL:SendAddonMessage(multipart_prio, real_prefix, chunk,
+					     distribution, target)
 		end
 		
 		-- end
 		real_prefix = prefix .. message_type_rev["multipart_end"]
 		chunk = strsub(text, chunk_begin, chunk_end)
-		SendAddonMessage(real_prefix, chunk, distribution, target)
+		CTL:SendAddonMessage(multipart_prio, real_prefix, chunk,
+				     distribution, target)
 	end
 end
 
