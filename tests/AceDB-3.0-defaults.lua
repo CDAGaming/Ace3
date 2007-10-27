@@ -107,9 +107,44 @@ do
 	
 	local data = LibStub("AceDB-3.0"):New(bugdb, defaultTest) 
 	 
-	assert(defaultTest.profile.units["**"].test == 2)
-	 
 	assert(data.profile.units["player"].test == 2)
+	assert(data.profile.units["pet"].test == 2)
+	assert(data.profile.units["focus"].test == 2)
+end
+
+do
+	local AceDB = LibStub("AceDB-3.0") 
+	local defaultTest = { 
+		profile = { 
+			units = { 
+				["*"] = { 
+					test = 2 
+				}, 
+				["player"] = { 
+				} 
+			} 
+		} 
+	} 
+	
+	local bugdb = { 
+		["profileKeys"] = { 
+			["player - Realm Name"] = "player - Realm Name", 
+		}, 
+		["profiles"] = { 
+			["player - Realm Name"] = { 
+				["units"] = { 
+					["player"] = { 
+					}, 
+					["pet"] = {
+					}, 
+				}, 
+			}, 
+		}, 
+	} 
+	
+	local data = LibStub("AceDB-3.0"):New(bugdb, defaultTest) 
+	 
+	assert(data.profile.units["player"].test == nil)
 	assert(data.profile.units["pet"].test == 2)
 	assert(data.profile.units["focus"].test == 2)
 end

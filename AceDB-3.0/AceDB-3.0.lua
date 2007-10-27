@@ -50,8 +50,10 @@ local function copyDefaults(dest, src)
 						end,
 				}
 				setmetatable(dest, mt)
-				if k == "**" then
-					for dk,dv in pairs(dest) do
+				-- handle already existing tables in the SV
+				for dk,dv in pairs(dest) do
+					-- ** values get populated to every entry, * tables only to entrys that dont exist in the src
+					if k == "**" or not rawget(src, dk) then
 						copyDefaults(dv, v)
 					end
 				end
