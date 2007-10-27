@@ -74,7 +74,6 @@ do
 end
 
 do
-	local AceDB = LibStub("AceDB-3.0") 
 	local defaultTest = { 
 		profile = { 
 			units = { 
@@ -113,7 +112,6 @@ do
 end
 
 do
-	local AceDB = LibStub("AceDB-3.0") 
 	local defaultTest = { 
 		profile = { 
 			units = { 
