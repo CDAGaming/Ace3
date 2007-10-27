@@ -318,22 +318,27 @@ end
 
 local p
 
-local testing = { color1 = {1,1,1,1},color2 = {0,0,0,1} }
+local testing = { color1 = {1,1,1,1}, color2 = {0,0,0,1} }
+
 local key1, key2 = "", ""
-			
+local testedit = "Testing inherited set/get"
+
+local dragvalue = "Healing Touch(Rank 7)"
+	
 local BagginsAce3Opts = {
 		type = "group",
 		icon = "Interface\\Icons\\INV_Jewelry_Ring_03",
 		name = "Baggins",
 		childGroups = "tree",
-		set = function(info, value) Baggins:Print(value) end,
-		get = function(info) return "Testing inherited set/get" end,
+		set = function(info, value) Baggins:Print(value) testedit = value end,
+		get = function(info) return testedit end,
 		args = {
 			Test = {
 				name = "Test",
 				type = 'group',
 				order = 1,
 				desc = "Test Controls",
+				validate = function(info, ...) Baggins:Print("Validating ", ...) return true end,
 				args = {
 					Test = {
 						type = 'input',
@@ -381,6 +386,13 @@ local BagginsAce3Opts = {
 						order = 4,
 						set = function(info, key) Baggins:Print(key) key2 = key end,
 						get = function(info) return key2 end,
+					},
+					DragTest = {
+						type = 'input',
+						dlgType = "DragTarget",
+						name = "Test Drag",
+						set = function(info, value) Baggins:Print(value) dragvalue = value end,
+						get = function(info) return dragvalue end,
 					},
 				}
 			},
@@ -1166,3 +1178,175 @@ function BagginsConfigTest()
 	LibStub("AceConfigDialog-3.0"):Open("Baggins")
 end
 --TestFrame()
+
+
+do
+	local Type = "DragTarget"
+	
+	local function Aquire(self)
+
+	end
+	
+	local function Release(self)
+		self.frame:ClearAllPoints()
+		self.frame:Hide()
+	end
+	
+
+	local function SetLabel(self, text)
+		self.text:SetText(text)
+	end
+
+	local function PickupItem(link)
+		local name = GetItemInfo(link)
+		for bag = 0, 4 do
+			for slot = 1, GetContainerNumSlots(bag) do
+				local slotlink = GetContainerItemLink(bag, slot)
+				if slotlink then
+					local slotname = GetItemInfo(slotlink)
+					if slotname == name then
+						PickupContainerItem(bag, slot)
+						return
+					end
+				end
+			end
+		end
+	end
+
+	local function DragLinkOnDragStart(this)
+		local self = this.obj
+		if (self.objType == "item") then
+			PickupItem(self.value)
+		elseif (self.objType == "spell") then
+			PickupSpell(self.value)
+		elseif (self.objType == "macro") then
+			PickupMacro(strsub(self.value,3))
+		end
+	end
+	
+
+	local function DragLinkGetTexture(self)
+		if (self.objType == "item") then
+				local texture = select(10,GetItemInfo(self.value))
+				if (texture) then
+					return texture
+				end
+		elseif (self.objType == "spell") then
+			local texture = GetSpellTexture(self.value)
+			if (texture) then
+				return texture
+			end
+		elseif (self.objType == "macro") then
+			local name, texture = GetMacroInfo(strsub(self.value,3))
+			return texture
+		end
+		return "Interface\\Icons\\INV_Misc_QuestionMark"
+	end
+	
+	local function GetValueFromParams(objType, Info1, Info2)
+		if objType == "item" then
+			--for items use the link
+			return Info2
+		elseif objType == "spell" then
+			local name, rank = GetSpellName(Info1, Info2)
+			if rank ~= "" then name = name.."("..rank..")" end
+			return name
+		elseif objType == "macro" then
+			return "m:"..GetMacroInfo(Info1)
+		end
+	end
+	
+	local function DragLinkOnReceiveDrag(this)
+		local self = this.obj
+
+		local objType, Info1, Info2 = GetCursorInfo()
+
+		if (objType == "item" or objType == "spell" or objType == "macro") then
+			self.objType = objType
+			self.value = GetValueFromParams(objType, Info1, Info2)
+			self:Fire("OnEnterPressed", self.value)
+			self.linkIcon:SetTexture(DragLinkGetTexture(self))
+
+			ClearCursor()
+		end
+	end
+	
+	local function SetText(self, text)
+		if text:find("item:%d+") then
+			self.objType = "item"
+			self.value = text
+		elseif strsub(text,1,2) == "m:" then
+			self.objType = "macro"
+			self.value = text
+		elseif text ~= "" then
+			self.objType = "spell"
+			self.value = text
+		end
+		self.linkIcon:SetTexture(DragLinkGetTexture(self))
+	end
+	
+	local function SetDisabled(self, disabled)
+	
+	end
+	
+	local function Constructor()
+		local frame = CreateFrame("Button",nil,UIParent)
+		local self = {}
+		self.type = Type
+		
+
+		self.Release = Release
+		self.Aquire = Aquire
+		self.SetLabel = SetLabel
+		self.SetText = SetText
+		self.SetDisabled = SetDisabled
+		self.UpdateValue = UpdateValue
+		
+		self.frame = frame
+		frame.obj = self
+
+		local text = frame:CreateFontString(nil,"OVERLAY","GameFontNormalSmall")
+		self.text = text
+	
+		frame:SetScript("OnDragStart", DragLinkOnDragStart)
+		frame:SetScript("OnReceiveDrag", DragLinkOnReceiveDrag)
+		frame:SetScript("OnClick", DragLinkOnReceiveDrag)
+		frame:SetScript("OnEnter", DragLinkOnEnter)
+		frame:SetScript("OnLeave", DragLinkOnLeave)
+	
+		frame:EnableMouse()
+		frame:RegisterForDrag("LeftButton")
+		frame:RegisterForClicks("LeftButtonUp", "RightButtonUp")
+	
+		local linkIcon = frame:CreateTexture(nil, "OVERLAY")
+		linkIcon:SetWidth(self.iconWidth or WaterfallDragLink.defaultIconSize)
+		linkIcon:SetHeight(self.iconHeight or WaterfallDragLink.defaultIconSize)
+		linkIcon:SetPoint("LEFT",frame,"LEFT",0,0)
+		linkIcon:SetTexture(DragLinkGetTexture(self))
+		linkIcon:SetTexCoord(0,1,0,1)
+		linkIcon:Show()
+		self.linkIcon = linkIcon
+	
+		text:SetJustifyH("LEFT")
+		text:SetTextColor(1,1,1)
+	
+		frame:SetHeight(36)
+		frame:SetWidth(200)
+	
+		text:SetHeight(36)
+		text:SetPoint("LEFT",check,"RIGHT",0,0)
+
+		--Container Support
+		--local content = CreateFrame("Frame",nil,frame)
+		--self.content = content
+		
+		--AceGUI:RegisterAsContainer(self)
+		AceGUI:RegisterAsWidget(self)
+		return self
+	end
+	
+	AceGUI:RegisterWidgetType(Type,Constructor)
+	
+end
+
+
