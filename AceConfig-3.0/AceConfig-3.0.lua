@@ -37,7 +37,7 @@ function lib:RegisterOptionsTable(appName, options, slashcmd)
 		if not con then
 			con = LibStub("AceConsole-3.0")
 			con.RegisterChatCommand(self, slashcmd, function(input)
-						cfgcmd.HandleCommand(self, slashcmd, options, input)
+						cfgcmd.HandleCommand(self, slashcmd, appName, input)
 				end, 
 			true)
 		end
