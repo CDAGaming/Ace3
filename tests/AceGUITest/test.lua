@@ -387,12 +387,26 @@ local BagginsAce3Opts = {
 						set = function(info, key) Baggins:Print(key) key2 = key end,
 						get = function(info) return key2 end,
 					},
+					DragTest2 = {
+						type = 'input',
+						--dlgType = "DragTarget",
+						name = "Test Drag - Fallback to Text",
+						set = function(info, value) Baggins:Print(value) dragvalue = value end,
+						get = function(info) return dragvalue end,
+						order = 6
+					},
+					h = {
+						type = 'header',
+						name = 'Test Drag Control',
+						order = 7,
+					},
 					DragTest = {
 						type = 'input',
 						dlgType = "DragTarget",
 						name = "Test Drag",
 						set = function(info, value) Baggins:Print(value) dragvalue = value end,
 						get = function(info) return dragvalue end,
+						order = 10
 					},
 				}
 			},
