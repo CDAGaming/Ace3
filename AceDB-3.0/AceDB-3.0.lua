@@ -36,22 +36,22 @@ end
 -- and set in the host table.  These tables must be cleaned up by removeDefaults
 -- in order to ensure we don't write empty default tables.
 local function copyDefaults(dest, src)
-	for k,v in pairs(src) do
+	for k, v in pairs(src) do
 		if k == "*" or k == "**" then
 			if type(v) == "table" then
 				-- This is a metatable used for table defaults
 				local mt = {
-					-- This handles the lookup and creation of new ["*"] subtables
+					-- This handles the lookup and creation of new subtables
 					__index = function(t,k)
 							local tbl = {}
 							copyDefaults(tbl, v)
-							rawset(t,k,tbl)
+							rawset(t, k, tbl)
 							return tbl
 						end,
 				}
 				setmetatable(dest, mt)
 				-- handle already existing tables in the SV
-				for dk,dv in pairs(dest) do
+				for dk, dv in pairs(dest) do
 					-- ** values get populated to every entry, * tables only to entrys that dont exist in the src
 					if k == "**" or not rawget(src, dk) then
 						copyDefaults(dv, v)
