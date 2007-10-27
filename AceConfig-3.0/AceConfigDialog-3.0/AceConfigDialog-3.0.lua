@@ -2,7 +2,7 @@
 AceConfigDialog-3.0
 
 ]]
-
+local LibStub = LibStub
 local MAJOR, MINOR = "AceConfigDialog-3.0", 0
 local lib = LibStub:NewLibrary(MAJOR, MINOR)
 
@@ -15,6 +15,21 @@ lib.Status = lib.Status or {}
 local gui = LibStub("AceGUI-3.0")
 local reg = LibStub("AceConfigRegistry-3.0")
 local con = LibStub("AceConsole-3.0", true)
+
+local select = select
+local pairs = pairs
+local ipairs = ipairs
+local type = type
+local assert = assert
+local tinsert = tinsert
+local tremove = tremove
+local error = error
+local table = table
+local unpack = unpack
+local string = string
+local next = next
+local math = math
+
 --[[
 Group Types
   Tree 	- All Descendant Groups will all become nodes on the tree, direct child options will appear above the tree
@@ -34,7 +49,7 @@ Group Types
 ]]
 
 -- Recycling functions
-local new, del
+local new, del, copy
 --local newcount, delcount,createdcount = 0,0,0
 do
 	local pool = setmetatable({},{__mode='k'})
@@ -379,11 +394,11 @@ local function ActivateControl(widget, event, ...)
 		del(info)
 		
 		--full refresh of the frame, some controls dont cause this on all events
-		if widget.type == "ColorPicker" then
+		if option.type == "color" then
 			if event == "OnValueConfirmed" then
 				lib:Open(user.appName)
 			end
-		elseif widget.type == "Slider" then
+		elseif option.type == "range" then
 			if event == "OnMouseUp" then
 				lib:Open(user.appName)
 			end
@@ -677,7 +692,7 @@ local function FeedOptions(appName, options,container,rootframe,path,group,inlin
 					control:SetCallback("OnClick",ActivateControl)
 					
 				elseif v.type == "input" then
-					control = gui:Create("EditBox")
+					control = gui:Create(v.dlgType or "EditBox")
 					control:SetLabel(v.name)
 					control:SetCallback("OnEnterPressed",ActivateControl)
 					control:SetText(CallOptionsFunction("get",v, options, path, appName))
@@ -737,14 +752,14 @@ local function FeedOptions(appName, options,container,rootframe,path,group,inlin
 				elseif v.type == "color" then
 					control = gui:Create("ColorPicker")
 					control:SetLabel(v.name)
-					control:SetColor(CallOptionsFunction("get",v, options, path, appName, value))
+					control:SetColor(CallOptionsFunction("get",v, options, path, appName))
 					control:SetCallback("OnValueChanged",ActivateControl)
 					control:SetCallback("OnValueConfirmed",ActivateControl)
 					
 				elseif v.type == "keybinding" then
 					control = gui:Create("Keybinding")
 					control:SetLabel(v.name)
-					control:SetKey(CallOptionsFunction("get",v, options, path, appName, value))
+					control:SetKey(CallOptionsFunction("get",v, options, path, appName))
 					control:SetCallback("OnKeyChanged",ActivateControl)
 					
 				elseif v.type == "header" then
@@ -863,10 +878,10 @@ function lib:FeedGroup(appName,options,container,rootframe,path)
 	end
 	
 	container:SetLayout("flow")
-
+	local scroll
 	if (not hasChildGroups) or inline then
 		if container.type ~= "InlineGroup" then
-			local scroll = gui:Create("ScrollFrame")
+			scroll = gui:Create("ScrollFrame")
 			
 			scroll:SetLayout("flow")
 			scroll.width = "fill"
@@ -878,7 +893,7 @@ function lib:FeedGroup(appName,options,container,rootframe,path)
 	
 	FeedOptions(appName,options,container,rootframe,path,group,nil,groupDisabled)
 
-	if container.Type == "ScrollFrame" then
+	if scroll then
 		local status = self:GetStatusTable(appName, path)
 		if not status.scroll then
 			status.scroll = {}
