@@ -50,6 +50,11 @@ local function copyDefaults(dest, src)
 						end,
 				}
 				setmetatable(dest, mt)
+				if k == "**" then
+					for dk,dv in pairs(dest) do
+						copyDefaults(dv, v)
+					end
+				end
 			else
 				-- Values are not tables, so this is just a simple return
 				local mt = {__index = function() return v end}
