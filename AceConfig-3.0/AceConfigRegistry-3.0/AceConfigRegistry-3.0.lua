@@ -37,7 +37,7 @@ end
 function lib:RegisterOptionsTable(appName, options)
 	if type(options)=="table" then
 		lib.tables[appName] = function(uiType, uiName)
-			verifyGetterArgs(uiType, uiName) 
+			verifyGetterArgs(uiType, uiName)
 			return options 
 		end
 	elseif type(options)=="function" then
