@@ -963,7 +963,7 @@ function lib:FeedGroup(appName,options,container,rootframe,path)
 				end
 			end
 
-			select:SetGroup(status.groups.selected or firstgroup)
+			select:SetGroup(status.groups.selectedgroup or firstgroup)
 			
 			select.width = "fill"
 			select.height = "fill"

@@ -2209,12 +2209,8 @@ do
 				end
 				lines[i].text:SetText(text)
 				lines[i]:SetFrameLevel(self.frame:GetFrameLevel()+1001)
-				if type(value) == "string" then
-					lines[i].value = value
-				else
-					lines[i].value = text
-				end
-				if lines[i].value == self.editbox.value and self.getFunc then
+				lines[i].value = value
+				if lines[i].value == self.editbox.value then
 					lines[i].check:Show()
 				else
 					lines[i].check:Hide()
@@ -2225,21 +2221,6 @@ do
 			end
 			for k in pairs(ddsort) do
 				ddsort[k] = nil
-			end
-		elseif type(list) == "function" then
-			for i, text, value in list() do
-				if not lines[i] then
-					lines[i] = self:CreateLine()
-					if i == 1 then
-						lines[i]:SetPoint("TOP",self.pullout,"TOP",0,-5)
-					else
-						lines[i]:SetPoint("TOP",lines[i-1],"BOTTOM",0,0)
-					end
-				end
-				lines[i].text:SetText(text)
-				lines[i].value = value
-				lines[i]:Show()
-				totalheight = totalheight + 17
 			end
 		end
 		self.pullout:SetHeight(totalheight)
