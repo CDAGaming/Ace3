@@ -664,6 +664,10 @@ do
 		self.frame:ClearAllPoints()
 		self.frame:Hide()
 		self.dropdown.list = nil
+		self.status = nil
+		for k in pairs(self.localstatus) do
+			self.localstatus[k] = nil
+		end
 	end
 	
 	local function SetTitle(self,title)
@@ -672,6 +676,8 @@ do
 	
 
 	local function SelectedGroup(self,event,value)
+		local status = self.parentgroup.localstatus or self.parentgroup.status
+		status.selectedgroup = value
 		self.parentgroup:Fire("OnGroupSelected", value)
 	end
 	
@@ -687,6 +693,9 @@ do
 	
 	local function SetGroup(self,group)
 		self.dropdown:SetValue(group)
+		local status = self.localstatus or self.status
+		status.selectedgroup = group
+		self:Fire("OnGroupSelected", group)
 	end
 	
 	local function Constructor()
@@ -715,7 +724,7 @@ do
 		titletext:SetJustifyH("LEFT")
 		titletext:SetHeight(18)
 		
-	
+		self.localstatus = {}
 		self.titletext = titletext	
 		
 		local dropdown = AceGUI:Create("Dropdown")

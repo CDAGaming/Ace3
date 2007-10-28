@@ -578,6 +578,29 @@ local function BuildTabs(group, options, path, appName)
 	return tabs, text
 end
 
+local function BuildSelect(group, options, path, appName)
+	local groups = new()
+	local feedkeys = new()
+	local feedtmp = new()
+	BuildSortedOptionsTable(group, feedkeys, feedtmp)
+
+	for i, v in ipairs(feedtmp) do
+		local k = feedkeys[v]
+		if v.type == "group" then
+			local inline = pickfirstset(v.dialogInline,v.guiInline,v.inline, false)
+			local hidden = CheckOptionHidden(v, options, path, appName)
+			if not inline and not hidden then
+				groups[k] = v.name
+			end
+		end
+	end
+	
+	del(feedkeys)
+	del(feedtmp)
+	
+	return groups
+end
+
 local function BuildSubTree(group, tree, options, path, appName)
 	local feedkeys = new()
 	local feedtmp = new()
@@ -843,7 +866,7 @@ function lib:FeedGroup(appName,options,container,rootframe,path)
 	local group = options
 	--follow the path to get to the curent group
 	local inline
-	local grouptype, parenttype = nil, "none"
+	local grouptype, parenttype = options.childGroups, "none"
 	
 	local groupDisabled
 	
@@ -915,7 +938,7 @@ function lib:FeedGroup(appName,options,container,rootframe,path)
 			tab:SetStatusTable(status.groups)
 			tab.width = "fill"
 			tab.height = "fill"
-
+			
 			local tabs, text = BuildTabs(group, options, path, appName)
 			tab:SetTabs(tabs, text)
 
@@ -931,6 +954,17 @@ function lib:FeedGroup(appName,options,container,rootframe,path)
 				status.groups = {}
 			end
 			select:SetStatusTable(status.groups)
+			local grouplist = BuildSelect(group, options, path, appName)
+			select:SetGroupList(grouplist)
+			local firstgroup
+			for k, v in pairs(grouplist) do
+				if not firstgroup or k < firstgroup then
+					firstgroup = k
+				end
+			end
+
+			select:SetGroup(status.groups.selected or firstgroup)
+			
 			select.width = "fill"
 			select.height = "fill"
 			
