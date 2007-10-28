@@ -81,7 +81,10 @@ do
 					test = 2 
 				}, 
 				["player"] = { 
-				} 
+				},
+				["pet"] = {
+					test = 3
+				},
 			} 
 		} 
 	} 
@@ -107,7 +110,7 @@ do
 	local data = LibStub("AceDB-3.0"):New(bugdb, defaultTest) 
 	 
 	assert(data.profile.units["player"].test == 2)
-	assert(data.profile.units["pet"].test == 2)
+	assert(data.profile.units["pet"].test == 3)
 	assert(data.profile.units["focus"].test == 2)
 end
 
