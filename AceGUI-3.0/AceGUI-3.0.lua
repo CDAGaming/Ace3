@@ -676,7 +676,8 @@ do
 	
 
 	local function SelectedGroup(self,event,value)
-		local status = self.parentgroup.localstatus or self.parentgroup.status
+		local group = self.parentgroup
+		local status = group.status or group.localstatus
 		status.selectedgroup = value
 		self.parentgroup:Fire("OnGroupSelected", value)
 	end
@@ -693,7 +694,7 @@ do
 	
 	local function SetGroup(self,group)
 		self.dropdown:SetValue(group)
-		local status = self.localstatus or self.status
+		local status = self.status or self.localstatus
 		status.selectedgroup = group
 		self:Fire("OnGroupSelected", group)
 	end
@@ -711,8 +712,11 @@ do
 		self.SetGroup = SetGroup
 		self.SetStatusTable = SetStatusTable
 
+		self.localstatus = {}
+
 		self.frame = frame
 		frame.obj = self
+		
 		
 		frame:SetHeight(100)
 		frame:SetWidth(100)
@@ -724,7 +728,7 @@ do
 		titletext:SetJustifyH("LEFT")
 		titletext:SetHeight(18)
 		
-		self.localstatus = {}
+		
 		self.titletext = titletext	
 		
 		local dropdown = AceGUI:Create("Dropdown")
