@@ -101,7 +101,7 @@ end
 
 
 -----------------------------------------------------------------------
--- Test registering new handlers for an event while in a callback for that event
+-- ACE-69: Test registering new handlers for an event while in a callback for that event
 --
 -- Problem: for k,v in pairs(eventlist)  eventlist[somethingnew]=foo end
 -- This happens when we fire callback X, and the handler registers another handler for X
@@ -185,7 +185,54 @@ end
 
 
 -----------------------------------------------------------------------
--- TODO: TEST REENTRANCY (firing an event from inside a callback)
+-- ACE-69: Test reentrancy (firing an event from inside a callback) PLUS regging more callbacks from inside them!
+
+for REPEATS=1,20 do
+	local test={}
+	local reg = CH:New(test, "Reg", "Unreg", "UnregAll")
+	
+	local fires=0
+	local extraFires=0
+	
+	local function extrahandler()
+		extraFires = extraFires+1
+	end
+	
+	local function handler(n, event, arg)
+		fires=fires+1
+		assert(reg.recurse==arg, dump(reg.recurse, arg))	-- check up that the internal recursion counter is tracking correctly
+		
+		-- to make things even more interesting, we'll reg even more callbacks recursively (a lot of these should be overwrites)
+		test.Reg("extra"..n..","..arg, "EVENT", extrahandler)
+
+		if arg==n then
+			reg:Fire("EVENT", arg+1)	-- we'll end up with up to REPEATS levels of recursion
+		end
+	end
+	
+	for n=1,REPEATS do
+		test.Reg("handler"..n, "EVENT", handler, n)
+	end
+
+	-- Fire the event!
+	assert(reg.recurse==0)
+	reg:Fire("EVENT", 1)
+	assert(reg.recurse==0)
+	
+	assert(fires == REPEATS + (REPEATS*REPEATS), dump(fires, REPEATS + (REPEATS*REPEATS), REPEATS))
+	assert(extraFires==0)
+
+	-- Fire again! This time we should see extraFires
+	fires=0
+	assert(reg.recurse==0)
+	reg:Fire("EVENT", 1)
+	assert(reg.recurse==0)
+
+	assert(fires == REPEATS + (REPEATS*REPEATS), dump(fires, REPEATS + (REPEATS*REPEATS), REPEATS))
+	assert(extraFires== fires + fires*REPEATS)
+
+end
+
 
 
 -- We do not test the actual callback logic here. The AceEvent tests do that plenty.
