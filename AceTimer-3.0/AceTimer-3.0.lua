@@ -66,11 +66,14 @@ local function safecall(func, ...)
 	geterrorhandler()(err)
 end
 
+
 local lastint = floor(GetTime() * HZ)
+
 ----------------------------------------------------------------------
 -- OnUpdate handler
 --
 -- traverse buckets, always chasing "now", and fire timers that have expired
+
 local function OnUpdate()
 	local now = GetTime()
 	local nowint = floor(now * HZ)
@@ -137,11 +140,17 @@ end
 local function Reg(self, callback, delay, arg, repeating)
 	if type(callback) ~= "string" and type(callback) ~= "function" then 
 		local error_origin = repeating and "ScheduleRepeatingTimer" or "ScheduleTimer"
-		error("Usage: " .. error_origin .. "(callback, delay, arg): 'callback' - string or function expected.", 3)
+		error("Usage: " .. error_origin .. "(callback, delay, arg): 'callback' - function or method name expected.", 3)
 	end
-	if type(callback) == "string" and type(self[callback]) ~= "function" then 
-		local error_origin = repeating and "ScheduleRepeatingTimer" or "ScheduleTimer"
-		error("Usage: " .. error_origin .. "(callback, delay, arg): 'callback' - method not found on target object.", 3)
+	if type(callback) == "string" then
+		if type(self)~="table" then
+			local error_origin = repeating and "ScheduleRepeatingTimer" or "ScheduleTimer"
+			error("Usage: " .. error_origin .. "(\"methodName\", delay, arg): 'self' - must be a table.", 3)
+		end
+		if type(self[callback]) ~= "function" then 
+			local error_origin = repeating and "ScheduleRepeatingTimer" or "ScheduleTimer"
+			error("Usage: " .. error_origin .. "(\"methodName\", delay, arg): 'methodName' - method not found on target object.", 3)
+		end
 	end
 	
 	if delay < (1 / (HZ - 1)) then
@@ -204,6 +213,9 @@ end
 -- Returns true if a timer was cancelled
 
 function AceTimer:CancelTimer(handle)
+	if not handle then
+		error("CancelTimer(): 'handle' - must be non-nil", 2)
+	end
 	local selftimers = AceTimer.selfs[self]
 	local timer = selftimers and selftimers[handle]
 	if timer then
@@ -219,7 +231,12 @@ end
 --
 -- Cancels all timers registered to given 'self'
 function AceTimer:CancelAllTimers()
-	assert(self ~= AceTimer)
+	if not(type(self)=="string" or type(self)=="table") then
+		error("CancelAllTimers(): 'self' - must be a string or a table",2)
+	end
+	if self==AceTimer then
+		error("CancelAllTimers(): supply a meaningful 'self'", 2)
+	end
 	
 	local selftimers = AceTimer.selfs[self]
 	if selftimers then

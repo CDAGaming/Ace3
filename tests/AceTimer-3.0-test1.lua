@@ -1,6 +1,7 @@
 -- Test1: Tests basic functionality and upgrading of AceTimer
 
-dofile("AceTimer-3.0-utils.lua")
+dofile("wow_api.lua")
+dofile("LibStub.lua")
 
 local MAJOR = "AceTimer-3.0"
 
@@ -44,16 +45,24 @@ end
 
 t4s=0
 t5s=0
-function obj:Timer4(arg)
-	assert(arg=="t4s" or arg=="t5s")
+local function Timer4_5(arg)
+	assert(arg=="t4s" or arg=="t5s", dump(arg))
 	_G[arg] = _G[arg] + 1
 end
+function obj:Timer4(arg)
+	assert(self==obj)
+	Timer4_5(arg)
+end
 
+-- 3 repeating timers:
 timer1 = obj:ScheduleRepeatingTimer("Timer1", 1, "t1")
 timer2 = obj:ScheduleRepeatingTimer(Timer2, 2, "t2")
 timer3 = obj:ScheduleRepeatingTimer("Timer3", 3, "t3")	
+
+-- 2 single shot timers:
 timer4 = obj:ScheduleTimer("Timer4", 1, "t4s")
-timer5 = obj:ScheduleTimer("Timer4", 2, "t5s")	 -- same handler function as timer4!
+timer5 = obj.ScheduleTimer("myObj", Timer4_5, 2, "t5s")	-- string as self
+
 
 t3s = 0
 function obj:Timer3(arg) 	-- This should be the one to run, not the old Timer3
@@ -68,28 +77,28 @@ end
 -- the right amount of times
 
 
-FireUpdate(0)
+WoWAPI_FireUpdate(0)
 assert(t1s==0 and t2s==0 and t3s==0 and t4s==0 and t5s==0)
 
-FireUpdate(0.99)
+WoWAPI_FireUpdate(0.99)
 assert(t1s==0 and t2s==0 and t3s==0 and t4s==0 and t5s==0)
 
-FireUpdate(1.00)
-assert(t1s==1 and t2s==0 and t3s==0 and t4s==1 and t5s==0, t1s..t2s..t3s..t4s..t5s)
+WoWAPI_FireUpdate(1.00)
+assert(t1s==1 and t2s==0 and t3s==0 and t4s==1 and t5s==0, dump(t1s,t2s,t3s,t4s,t5s))
 
-FireUpdate(1.99)
+WoWAPI_FireUpdate(1.99)
 assert(t1s==1 and t2s==0 and t3s==0 and t4s==1 and t5s==0)
 
-FireUpdate(2.5)
+WoWAPI_FireUpdate(2.5)
 assert(t1s==2 and t2s==1 and t3s==0 and t4s==1 and t5s==1)
 
-FireUpdate(2.99)
+WoWAPI_FireUpdate(2.99)
 assert(t1s==2 and t2s==1 and t3s==0)
 
-FireUpdate(3.099)
+WoWAPI_FireUpdate(3.099)
 assert(t1s==3 and t2s==1, t2s and t3s==1, t3s)
 
-FireUpdate(6.000)
+WoWAPI_FireUpdate(6.000)
 assert(t3s==2)
 
 assert(t4s==1 and t5s==1)	-- make sure our single shot timers haven't run more than once
@@ -121,13 +130,13 @@ assert(type(obj.ScheduleTimer)=="function")	-- should have been replaced now
 
 t1s, t2s, t3s, t4s, t5s = 0,0,0,0,0
 
-FireUpdate(6.5)
+WoWAPI_FireUpdate(6.5)
 assert(t1s==0 and t2s==0 and t3s==0 and t4s==0 and t5s==0 and t6s==0)
 
-FireUpdate(7.7)
+WoWAPI_FireUpdate(7.7)
 assert(t1s==1 and t2s==0 and t3s==0 and t4s==0 and t5s==0 and t6s==1)
 
-FireUpdate(9.8)
+WoWAPI_FireUpdate(9.8)
 assert(t1s==2 and t2s==1 and t3s==1 and t4s==0 and t5s==0 and t6s==1)	-- NOTE: t1s will only fire ONCE now, since we had a >1.99s lag!
 
 
@@ -143,7 +152,7 @@ assert(not AceTimer:CancelTimer(timer1))	-- wrong self, shouldnt cancel anything
 
 assert(obj:CancelTimer(timer1))	-- right self - cancel timer1
 
-FireUpdate(10.01)
+WoWAPI_FireUpdate(10.01)
 assert(t1s==0 and t2s==1)	-- timer 2 should still work
 
 obj.Timer3 = function() 
@@ -152,11 +161,11 @@ obj.Timer3 = function()
 	assert(obj:CancelTimer(timer3))
 end
 
-FireUpdate(13.01)
+WoWAPI_FireUpdate(13.01)
 assert(t1s==0 and t2s==2 and t3s==1)
 assert(t3cancelled)
 
-FireUpdate(16.01)
+WoWAPI_FireUpdate(16.01)
 assert(t1s==0 and t2s==3 and t3s==1, t1s..t2s..t3s)
 assert(t3cancelled)
 
@@ -165,8 +174,8 @@ t1s, t2s, t3s, t4s, t5s = 0,0,0,0,0
 
 obj:CancelAllTimers()
 
-for i=100,120,0.2 do		-- 131 buckets / 11 = 11.9 seconds for a full loop
-	FireUpdate(i) -- long time in the future
+for i=17,120,0.2 do		-- 131 buckets / 11 = 11.9 seconds for a full loop
+	WoWAPI_FireUpdate(i) -- long time in the future
 end
 assert(t1s==0 and t2s==0 and t3s==0 and t4s==0 and t5s==0 and t6s==0)	-- nothing should have fired
 

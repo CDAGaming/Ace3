@@ -1,4 +1,5 @@
-dofile("AceTimer-3.0-utils.lua")
+dofile("wow_api.lua")
+dofile("LibStub.lua")
 
 local MAJOR = "AceTimer-3.0"
 
@@ -17,30 +18,30 @@ obj = {}
 
 ok,msg = pcall(AceTimer.ScheduleTimer, obj, "method", 4, "arg")	-- This should fail - method not defined
 assert(not ok)
-assert(msg == "Usage: ScheduleTimer(callback, delay, arg): 'callback' - method not found on target object.", msg)
+assert(msg == "Usage: ScheduleTimer(\"methodName\", delay, arg): 'methodName' - method not found on target object.", msg)
 
 
 obj.method = "hi, i'm NOT a function, i'm something else"
 
 ok,msg = pcall(AceTimer.ScheduleTimer, obj, "method", 4, "arg")	-- This should fail - obj["method"] is not a function
 assert(not ok)
-assert(msg == "Usage: ScheduleTimer(callback, delay, arg): 'callback' - method not found on target object.", msg)
+assert(msg == "Usage: ScheduleTimer(\"methodName\", delay, arg): 'methodName' - method not found on target object.", msg)
 
 
 ok,msg = pcall(AceTimer.ScheduleTimer, obj, nil, 4, "arg")	-- This should fail (method is nil)
 assert(not ok)
-assert(msg == "Usage: ScheduleTimer(callback, delay, arg): 'callback' - string or function expected.", msg)
+assert(msg == "Usage: ScheduleTimer(callback, delay, arg): 'callback' - function or method name expected.", msg)
 
 
 ok,msg = pcall(AceTimer.ScheduleTimer, obj, {}, 4, "arg")	-- This should fail (method is table)
 assert(not ok)
-assert(msg == "Usage: ScheduleTimer(callback, delay, arg): 'callback' - string or function expected.", msg)
+assert(msg == "Usage: ScheduleTimer(callback, delay, arg): 'callback' - function or method name expected.", msg)
 
 
 -- (Note: ScheduleRepeatingTimer here just to check naming)
 ok,msg = pcall(AceTimer.ScheduleRepeatingTimer, obj, 123, 4, "arg")	-- This should fail too (method is integer)
 assert(not ok)
-assert(msg == "Usage: ScheduleRepeatingTimer(callback, delay, arg): 'callback' - string or function expected.", msg)
+assert(msg == "Usage: ScheduleRepeatingTimer(callback, delay, arg): 'callback' - function or method name expected.", msg)
 
 
 
@@ -49,7 +50,7 @@ assert(msg == "Usage: ScheduleRepeatingTimer(callback, delay, arg): 'callback' -
 
 ok,msg = pcall(AceTimer.CancelAllTimers, AceTimer)
 assert(not ok)
-assert(string.match(msg, "^../AceTimer%-3.0/AceTimer%-3.0.lua:%d*: assertion failed!"), msg)
+assert(msg == "CancelAllTimers(): supply a meaningful 'self'", dump(msg))
 
 
 -------------------------------------------------------------------
@@ -60,7 +61,7 @@ obj.method = function() cnt=cnt+1 end
 
 AceTimer.ScheduleRepeatingTimer(obj, "method", 1, "arg")
 
-FireUpdate(2)	-- Border case: at this exact bucket, we should be able to convince the timer to fire twice even though it only gets a single onupdate
+WoWAPI_FireUpdate(2)	-- Border case: at this exact bucket, we should be able to convince the timer to fire twice even though it only gets a single onupdate
 assert(cnt==2, cnt)
 
 errors=0
@@ -72,7 +73,7 @@ function geterrorhandler()
 end
 
 obj.method = "this should cause errors"
-FireUpdate(4)
+WoWAPI_FireUpdate(4)
 
 assert(errors==2)  -- timer should have run twice
 

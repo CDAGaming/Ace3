@@ -94,7 +94,10 @@ function UnitRace(unit)
 end
 
 
-GetTime = os.clock
+_time = 0
+function GetTime()
+	return _time
+end
 
 function IsAddOnLoaded() return nil end
 
@@ -208,7 +211,10 @@ function WoWAPI_FireEvent(event,...)
 	end
 end
 
-function WoWAPI_FireUpdate()
+function WoWAPI_FireUpdate(forceNow)
+	if forceNow then
+		_time = forceNow
+	end
 	local now = GetTime()
 	for frame,props in pairs(frames) do
 		if props.isShow and props.scripts.OnUpdate then
