@@ -101,7 +101,7 @@ end
 
 
 -----------------------------------------------------------------------
--- ACE-69: Test registering new handlers for an event while in a callback for that event
+-- ACE-67: Test registering new handlers for an event while in a callback for that event
 --
 -- Problem: for k,v in pairs(eventlist)  eventlist[somethingnew]=foo end
 -- This happens when we fire callback X, and the handler registers another handler for X
@@ -185,7 +185,7 @@ end
 
 
 -----------------------------------------------------------------------
--- ACE-69: Test reentrancy (firing an event from inside a callback) PLUS regging more callbacks from inside them!
+-- ACE-67: Test reentrancy (firing an event from inside a callback) PLUS regging more callbacks from inside them!
 
 for REPEATS=1,20 do
 	local test={}
