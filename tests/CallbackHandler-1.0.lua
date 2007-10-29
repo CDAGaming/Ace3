@@ -5,6 +5,7 @@ dofile("../CallbackHandler-1.0/CallbackHandler-1.0.lua")
 local CH = assert(LibStub("CallbackHandler-1.0"))
 
 
+-----------------------------------------------------------------------
 -- test default names
 do
 	local test = {}
@@ -15,6 +16,8 @@ do
 	assert(test.UnregisterAllCallbacks)
 end
 
+
+-----------------------------------------------------------------------
 -- test custom names
 do
 	local test = {}
@@ -25,6 +28,8 @@ do
 	assert(test.UnregAll)
 end
 
+
+-----------------------------------------------------------------------
 -- test with unregall==false
 do
 	local test = {}
@@ -35,6 +40,8 @@ do
 	assert(test.UnregisterAllCallbacks == nil)
 end
 
+
+-----------------------------------------------------------------------
 -- test OnUsed / OnUnused
 do
 	local test = {}
@@ -91,6 +98,94 @@ do
 	assert(n==4 and lastOnUnused=="Thing2")
 	
 end
+
+
+-----------------------------------------------------------------------
+-- Test registering new handlers for an event while in a callback for that event
+--
+-- Problem: for k,v in pairs(eventlist)  eventlist[somethingnew]=foo end
+-- This happens when we fire callback X, and the handler registers another handler for X
+
+do
+	local test={}
+	local reg = CH:New(test, "Reg", "Unreg", "UnregAll")
+	local REPEATS = 1000  -- we get roughly 50% failure ratio, so 1000 tests WILL trigger it
+	
+	local hasRun = {}
+	local hasRunNoops = {}
+	
+	local function noop(noopName) 
+		hasRunNoops[noopName]=hasRunNoops[noopName]+1
+	end
+	
+	local rnd=math.random
+
+	local regMore=true
+	local function RegOne(name)
+		hasRun[name]=hasRun[name]+1
+		if regMore then
+			local noopName
+			repeat
+				noopName = tostring(rnd(1,99999999))
+			until not hasRunNoops[noopName] and not hasRun[noopName]
+			hasRunNoops[noopName]=0
+			test.Reg(noopName, "EVENT", noop, noopName)
+		end
+	end
+
+	for i=1,REPEATS do	
+		local name
+		repeat
+			name=tostring(rnd(1,99999999))
+		until not hasRun[name]
+		hasRun[name]=0
+		test.Reg(name, "EVENT", RegOne, name)
+	end
+	
+	-- Firing this event should lead to all 1000 callbacks running, and registering another 1000 callbacks
+	reg:Fire("EVENT")
+	
+	-- Test that they all ran once
+	local n=0
+	for k,v in pairs(hasRun) do
+		assert(v==1, dump(k,v).." should be ==1")
+		n=n+1
+	end
+	assert(n==REPEATS, dump(n))
+	
+	-- And that all the noops didnt run (they should have been delayed til the next fire)
+	local n=0
+	for k,v in pairs(hasRunNoops) do
+		assert(v==0, dump(k,v).." should be ==0")
+		n=n+1
+	end
+	assert(n==REPEATS, dump(n))
+	
+	
+	-- Now we run all of them again without registering more, so we should get 1000+1000 callbacks
+	regMore=false
+	reg:Fire("EVENT")
+	
+	-- Test that all main events ran another time (total 2)
+	local n=0
+	for k,v in pairs(hasRun) do
+		assert(v==2, dump(k,v).." should be ==2")
+		n=n+1
+	end
+	assert(n==REPEATS, dump(n))
+	
+	-- And that all the noops ran once
+	local n=0
+	for k,v in pairs(hasRunNoops) do
+		assert(v==1, dump(k,v).." should be ==1")
+		n=n+1
+	end
+	assert(n==REPEATS, dump(n))
+end
+
+
+-----------------------------------------------------------------------
+-- TODO: TEST REENTRANCY (firing an event from inside a callback)
 
 
 -- We do not test the actual callback logic here. The AceEvent tests do that plenty.

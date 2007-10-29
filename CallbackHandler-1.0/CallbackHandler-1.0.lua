@@ -43,12 +43,27 @@ function CallbackHandler:New(target, RegisterName, UnregisterName, UnregisterAll
 
 	-- Create the registry object
 	local events = setmetatable({}, meta)
-	local registry = { events=events }
+	local registry = { recurse=0, events=events }
 	
 	-- registry:Fire() - fires the given event/message into the registry
 	function registry:Fire(eventname, ...)
+		local oldrecurse = registry.recurse
+		registry.recurse = oldrecurse + 1
+
 		for _, method in pairs(events[eventname]) do
 			safecall(method, eventname, ...)
+		end
+
+		registry.recurse = oldrecurse
+		
+		if registry.insertQueue then
+			-- Something in one of our callbacks wanted to register more callbacks; they got queued
+			for eventname,callbacks in pairs(registry.insertQueue) do
+				for self,func in pairs(callbacks) do
+					events[eventname][self] = func
+				end
+			end
+			registry.insertQueue = nil
 		end
 	end
 
@@ -70,6 +85,8 @@ function CallbackHandler:New(target, RegisterName, UnregisterName, UnregisterAll
 			error("Usage: "..RegisterName.."(\"eventname\", \"methodname\"): 'methodname' - string or function expected.", 2)
 		end
 		
+		local regfunc 
+		
 		if type(method) == "string" then
 			-- self["method"] calling style
 			if type(self) ~= "table" then
@@ -82,9 +99,9 @@ function CallbackHandler:New(target, RegisterName, UnregisterName, UnregisterAll
 			
 			if select("#",...)>=1 then	-- this is not the same as testing for arg==nil!
 				local arg=select(1,...)
-				events[eventname][self] = function(...) self[method](self,arg,...) end
+				regfunc = function(...) self[method](self,arg,...) end
 			else
-				events[eventname][self] = function(...) self[method](self,...) end
+				regfunc = function(...) self[method](self,...) end
 			end
 		else
 			-- function ref with self=object or self="addonId"
@@ -94,10 +111,20 @@ function CallbackHandler:New(target, RegisterName, UnregisterName, UnregisterAll
 			
 			if select("#",...)>=1 then	-- this is not the same as testing for arg==nil!
 				local arg=select(1,...)
-				events[eventname][self] = function(...) method(arg,...) end
+				regfunc = function(...) method(arg,...) end
 			else
-				events[eventname][self] = method
+				regfunc = method
 			end
+		end
+		
+		
+		if registry.recurse<1 then
+			events[eventname][self] = regfunc
+		else
+			-- we're currently processing a callback in this registry, so delay the registration!
+			-- yes, we're a bit wasteful on garbage, but this is a fringe case, so we're picking low implementation overhead over garbage efficiency
+			registry.insertQueue = registry.insertQueue or setmetatable({},meta)
+			registry.insertQueue[eventname][self] = regfunc
 		end
 		
 		-- fire OnUsed callback?
