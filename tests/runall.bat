@@ -1,12 +1,12 @@
 @echo off
 echo.
-echo Running all -3.x test cases:
+echo Running all -?.x test cases:
 echo.
 
 setlocal
 if "%lua%"=="" set lua=lua
 
-for %%i in (*-3.*.lua) do call :runtest %%i
+for %%i in (*-?.*.lua) do call :runtest %%i
 
 
 echo.

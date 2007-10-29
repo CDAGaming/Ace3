@@ -1,12 +1,12 @@
 echo
-echo Running all -3.x test cases:
+echo Running all -?.x test cases:
 echo
 
 if [ -z $lua ]; then
 	lua=lua
 fi
 
-for i in *-3.*.lua; do 
+for i in *-?.*.lua; do 
 	echo ----- Running $i:
 	$lua $i
 done
