@@ -151,6 +151,9 @@ function CallbackHandler:New(target, RegisterName, UnregisterName, UnregisterAll
 				OnUnused(target, eventname)
 			end
 		end
+		if registry.insertQueue and rawget(registry.insertQueue, eventname) and registry.insertQueue[eventname][self] then
+			registry.insertQueue[eventname][self] = nil
+		end
 	end
 	
 	-- OPTIONAL: Unregister all callbacks for given selfs/addonIds
@@ -166,6 +169,13 @@ function CallbackHandler:New(target, RegisterName, UnregisterName, UnregisterAll
 			
 			for i=1,select("#",...) do
 				local self = select(i,...)
+				if registry.insertQueue then
+					for eventname, callbacks in pairs(registry.insertQueue) do
+						if callbacks[self] then
+							callbacks[self] = nil
+						end
+					end
+				end
 				for eventname, callbacks in pairs(events) do
 					if callbacks[self] then
 						callbacks[self] = nil

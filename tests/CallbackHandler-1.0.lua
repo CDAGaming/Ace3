@@ -234,6 +234,52 @@ for REPEATS=1,20 do
 end
 
 
+-----------------------------------------------------------------------
+-- ACE-67: Test that a recursively registered callback is properly removed
+
+for REPEATS=1,20 do
+	local test={}
+	local reg = CH:New(test, "Reg", "Unreg", "UnregAll")
+	
+	local extraFired=0
+	local function extra()
+		extraFired=extraFired+1
+	end
+
+	local fired=0
+	local function RegExtra()
+		fired = fired + 1
+		
+		local name=tostring(math.random(1,999999))
+		test.Reg(name,"EVENT",extra)
+		if fired==1 then
+			test.Unreg(name,"EVENT")	-- #1: test single unreg
+		elseif fired==2 then
+			test.UnregAll(name)			-- #2: test unregall
+		elseif fired==3 then
+			-- let it be regged
+		end
+	end
+
+	test.Reg("test","EVENT",RegExtra)
+	
+	reg:Fire("EVENT")
+	assert(fired==1)
+	assert(extraFired==0, dump(extraFired))
+	
+	reg:Fire("EVENT")
+	assert(fired==2)
+	assert(extraFired==0, dump(extraFired))
+
+	reg:Fire("EVENT")
+	assert(fired==3)
+	assert(extraFired==0, dump(extraFired))	-- there's an extra regged, but it hasn't fired yet
+	
+	reg:Fire("EVENT")
+	assert(fired==4)
+	assert(extraFired==1, dump(extraFired)) -- yeah ok now it fired
+	
+end
 
 -- We do not test the actual callback logic here. The AceEvent tests do that plenty.
 
