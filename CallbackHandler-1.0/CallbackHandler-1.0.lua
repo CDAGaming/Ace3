@@ -56,7 +56,7 @@ function CallbackHandler:New(target, RegisterName, UnregisterName, UnregisterAll
 
 		registry.recurse = oldrecurse
 		
-		if registry.insertQueue then
+		if registry.insertQueue and oldrecurse==0 then
 			-- Something in one of our callbacks wanted to register more callbacks; they got queued
 			for eventname,callbacks in pairs(registry.insertQueue) do
 				for self,func in pairs(callbacks) do
@@ -118,10 +118,12 @@ function CallbackHandler:New(target, RegisterName, UnregisterName, UnregisterAll
 		end
 		
 		
-		if registry.recurse<1 then
+		if events[eventname][self] or registry.recurse<1 then
+		-- if registry.recurse<1 then
+			-- we're overwriting an existing entry, or not currently recursing. just set it.
 			events[eventname][self] = regfunc
 		else
-			-- we're currently processing a callback in this registry, so delay the registration!
+			-- we're currently processing a callback in this registry, so delay the registration of this new entry!
 			-- yes, we're a bit wasteful on garbage, but this is a fringe case, so we're picking low implementation overhead over garbage efficiency
 			registry.insertQueue = registry.insertQueue or setmetatable({},meta)
 			registry.insertQueue[eventname][self] = regfunc
