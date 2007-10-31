@@ -165,8 +165,8 @@ end
 -- addon:SetDefaultModulePrototype( prototype )
 -- prototype (string or table) - the default prototype to use if none is specified on module creation
 function SetDefaultModulePrototype(self, prototype)
-	if type(prototype) ~= "string" and type(prototype) ~= "table" then
-		error(("Usage: SetDefaultModulePrototype(prototype): 'prototype' - string or table expected got '%s'."):format(type(prototype)), 2)
+	if type(prototype) ~= "table" then
+		error(("Usage: SetDefaultModulePrototype(prototype): 'prototype' - table expected got '%s'."):format(type(prototype)), 2)
 	end
 	self.defaultModulePrototype = prototype
 end
