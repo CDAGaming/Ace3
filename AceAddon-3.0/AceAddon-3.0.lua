@@ -107,6 +107,8 @@ function GetModule(self, name, silent)
 	return self.modules[name]
 end
 
+local function IsModuleTrue(self) return true end
+
 -- addon:NewModule( name, [prototype, [lib, lib, lib, ...] )
 -- name (string) - unique module object name for this addon
 -- prototype (object) - object to derive this module from, methods and values from this table will be mixed into the module, if a string is passed a lib is assumed
@@ -123,7 +125,7 @@ function NewModule(self, name, prototype, ...)
 	-- NewModule can only be called after the parent addon is present thus the modules will be initialized after their parent is.
 	local module = AceAddon:NewAddon(("%s_%s"):format(self.name or tostring(self), name))
 	
-	module.IsModule = function(self) return true end -- why recreate the function if it always returns true?
+	module.IsModule = IsModuleTrue
 	module:SetEnabledState(self.defaultModuleState)
 
 	if not prototype or type(prototype) == "string" then
