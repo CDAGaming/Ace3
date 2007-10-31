@@ -25,7 +25,7 @@ local function safecall(func, ...)
 end
 
 -- local functions that will be implemented further down
-local Embed, NewModule, GetModule, SetDefaultModuleState, SetDefaultModuleLibraries, SetEnabledState
+local Embed, NewModule, GetModule, SetDefaultModuleState, SetDefaultModuleLibraries, SetEnabledState, SetDefaultPrototype
 
 -- Addon metatable
 local function addontostring( self ) return self.name end 
@@ -126,6 +126,8 @@ function NewModule(self, name, prototype, ...)
 	module.IsModule = function(self) return true end -- why recreate the function if it always returns true?
 	module:SetEnabledState(self.defaultModuleState)
 	
+	prototype = prototype or self.defaultPrototype or nil
+	
 	if type(prototype) == "table" then
 		AceAddon:EmbedLibraries(module, ...)
 		local mt = getmetatable(module)
@@ -155,6 +157,15 @@ function SetDefaultModuleState(self, state)
 	self.defaultModuleState = state
 end
 
+-- addon:SetDefaultPrototype( prototype )
+-- prototype (string or table) - the default prototype to use if none is specified on module creation
+function SetDefaultPrototype(self, prototype)
+	if type(prototype) ~= "string" and type(prototype) ~= "table" then
+		error(("Usage: SetDefaultPrototype(prototype): 'prototype' - string or table expected got '%s'."):format(type(prototype)), 2)
+	end
+	self.defaultPrototype = prototype
+end
+
 -- addon:SetEnabledState ( state )
 -- state ( boolean ) - set the state of an addon or module  (enabled=true, disabled=false)
 --
@@ -174,6 +185,7 @@ local mixins = {
 	SetEnabledState = SetEnabledState,
 	IterateModules = IterateModules,
 	IterateEmbeds = IterateEmbeds,
+	SetDefaultPrototype = SetDefaultPrototype,
 }
 local function IsModule(self) return false end
 local pmixins = {
