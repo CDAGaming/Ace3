@@ -125,15 +125,17 @@ function NewModule(self, name, prototype, ...)
 	
 	module.IsModule = function(self) return true end -- why recreate the function if it always returns true?
 	module:SetEnabledState(self.defaultModuleState)
-	
-	prototype = prototype or self.defaultPrototype or nil
+
+	if not prototype or type(prototype) == "string" then
+		prototype = self.defaultModulePrototype or nil
+	end
 	
 	if type(prototype) == "table" then
 		AceAddon:EmbedLibraries(module, ...)
 		local mt = getmetatable(module)
 		mt.__index = prototype
 		setmetatable(module, mt)  -- More of a Base class type feel.
-	elseif prototype then
+	elseif type(prototype) == "string" then -- prototype variable is a lib
 		AceAddon:EmbedLibraries(module, prototype, ...)
 	end
 	
@@ -157,13 +159,13 @@ function SetDefaultModuleState(self, state)
 	self.defaultModuleState = state
 end
 
--- addon:SetDefaultPrototype( prototype )
+-- addon:SetDefaultModulePrototype( prototype )
 -- prototype (string or table) - the default prototype to use if none is specified on module creation
-function SetDefaultPrototype(self, prototype)
+function SetDefaultModulePrototype(self, prototype)
 	if type(prototype) ~= "string" and type(prototype) ~= "table" then
-		error(("Usage: SetDefaultPrototype(prototype): 'prototype' - string or table expected got '%s'."):format(type(prototype)), 2)
+		error(("Usage: SetDefaultModulePrototype(prototype): 'prototype' - string or table expected got '%s'."):format(type(prototype)), 2)
 	end
-	self.defaultPrototype = prototype
+	self.defaultModulePrototype = prototype
 end
 
 -- addon:SetEnabledState ( state )
@@ -182,10 +184,10 @@ local mixins = {
 	GetModule = GetModule,
 	SetDefaultModuleLibraries = SetDefaultModuleLibraries,
 	SetDefaultModuleState = SetDefaultModuleState,
+	SetDefaultModulePrototype = SetDefaultModulePrototype,
 	SetEnabledState = SetEnabledState,
 	IterateModules = IterateModules,
 	IterateEmbeds = IterateEmbeds,
-	SetDefaultPrototype = SetDefaultPrototype,
 }
 local function IsModule(self) return false end
 local pmixins = {
