@@ -128,20 +128,22 @@ function NewModule(self, name, prototype, ...)
 	module.IsModule = IsModuleTrue
 	module:SetEnabledState(self.defaultModuleState)
 
+	if type(prototype) == "string" then
+		AceAddon:EmbedLibraries(module, prototype, ...)
+	else
+		AceAddon:EmbedLibraries(module, ...)
+	end
+	AceAddon:EmbedLibraries(module, unpack(self.defaultModuleLibraries))
+
 	if not prototype or type(prototype) == "string" then
 		prototype = self.defaultModulePrototype or nil
 	end
 	
 	if type(prototype) == "table" then
-		AceAddon:EmbedLibraries(module, ...)
 		local mt = getmetatable(module)
 		mt.__index = prototype
 		setmetatable(module, mt)  -- More of a Base class type feel.
-	elseif type(prototype) == "string" then -- prototype variable is a lib
-		AceAddon:EmbedLibraries(module, prototype, ...)
 	end
-	
-	AceAddon:EmbedLibraries(module, unpack(self.defaultModuleLibraries))
 	
 	safecall(self.OnModuleCreated, self, module) -- Was in Ace2 and I think it could be a cool thing to have handy.
 	self.modules[name] = module
