@@ -20,9 +20,8 @@ local function copyTable(src, dest)
 	if not dest then dest = {} end
 	for k,v in pairs(src) do
 		if type(v) == "table" then
-			-- try to index new key first so that the metatable creates the defaults, if set
-			local newv = (type(dest[k]) == "table") and dest[k] or {}
-			v = copyTable(v, newv)
+			-- try to index the key first so that the metatable creates the defaults, if set, and use that table
+			v = copyTable(v, (type(dest[k]) == "table") and dest[k])
 		end
 		if type(k) == "table" then
 			k = copyTable(k)
