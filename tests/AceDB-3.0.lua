@@ -191,10 +191,11 @@ do
 end
 
 do
-	local testdb = LibStub("AceDB-3.0"):New("testdbtable", {profile = { test = 2}})
+	local testdb = LibStub("AceDB-3.0"):New("testdbtable", {profile = { test = 2, test3 = { a=1}}})
 	assert(testdb.profile.test == 2) --true
 	testdb.profile.test = 3
 	testdb.profile.test2 = 4
+	testdb.profile.test3.b = 2
 	assert(testdb.profile.test == 3) --true
 	assert(testdb.profile.test2 == 4) --true
 	local firstprofile = testdb:GetCurrentProfile()
@@ -203,4 +204,5 @@ do
 	testdb:CopyProfile(firstprofile)
 	assert(testdb.profile.test == 3) --false, the value is 2
 	assert(testdb.profile.test2 == 4) --true 
+	assert(testdb.profile.test3.a == 1)
 end
