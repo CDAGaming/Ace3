@@ -16,7 +16,8 @@ local DBObjectLib = {}
 ---------------------------------------------------------------------------]]
 
 -- Simple shallow copy for copying defaults
-local function copyTable(dest, src)
+local function copyTable(src, dest)
+	if not dest then dest = {} end
 	for k,v in pairs(src) do
 		if type(k) == "table" then
 			k = copyTable(k)
@@ -26,6 +27,7 @@ local function copyTable(dest, src)
 		end
 		dest[k] = v
 	end
+	return dest
 end
 
 -- Called to add defaults to a section of the database
@@ -382,14 +384,14 @@ function DBObjectLib:CopyProfile(name)
 	if name == self.keys.profile then
 		error("Cannot have the same source and destination profiles.", 3)
 	end
-
+	
 	-- Reset the profile before copying
 	self:ResetProfile()
 	
 	local profile = self.profile
 	local source = self.sv.profiles[name]
 	
-	copyTable(profile, source)
+	copyTable(source, profile)
 	
 	-- Callback: OnProfileCopied, database, sourceProfileKey
 	self.callbacks:Fire("OnProfileCopied", self, name)
