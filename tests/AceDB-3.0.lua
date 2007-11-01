@@ -189,3 +189,18 @@ do
 	assert(rawget(db.profile.autoSendRules.Cairthas.include, "ptSets"))
 	assert(rawget(db.profile.autoSendRules.Cairthas.include, "items"))
 end
+
+do
+	local testdb = LibStub("AceDB-3.0"):New("testdbtable", {profile = { test = 2}})
+	assert(testdb.profile.test == 2) --true
+	testdb.profile.test = 3
+	testdb.profile.test2 = 4
+	assert(testdb.profile.test == 3) --true
+	assert(testdb.profile.test2 == 4) --true
+	local firstprofile = testdb:GetCurrentProfile()
+	testdb:SetProfile("newprofile")
+	assert(testdb.profile.test == 2) --true
+	testdb:CopyProfile(firstprofile)
+	assert(testdb.profile.test == 3) --false, the value is 2
+	assert(testdb.profile.test2 == 4) --true 
+end
