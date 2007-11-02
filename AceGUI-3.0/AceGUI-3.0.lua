@@ -2507,7 +2507,8 @@ do
 				self:Fire("OnValueChanged", newvalue)
 			end
 			if self.value then
-				this.obj.valuetext:SetText(math.floor(self.value*10)/10)
+				--this.obj.valuetext:SetText(math.floor(self.value*10)/10)
+				this.obj.editbox:SetText(math.floor(self.value*100)/100)
 			end
 		end
 	end
@@ -2524,19 +2525,27 @@ do
 			self.label:SetTextColor(.5,.5,.5)
 			self.hightext:SetTextColor(.5,.5,.5)
 			self.lowtext:SetTextColor(.5,.5,.5)
-			self.valuetext:SetTextColor(.5,.5,.5)
+			--self.valuetext:SetTextColor(.5,.5,.5)
+			self.editbox:SetTextColor(.5,.5,.5)
+			self.editbox:EnableMouse(false)
+			self.editbox:ClearFocus()
 		else
 			self.slider:EnableMouse(true)
 			self.label:SetTextColor(1,.82,0)
 			self.hightext:SetTextColor(1,1,1)
 			self.lowtext:SetTextColor(1,1,1)
-			self.valuetext:SetTextColor(1,1,1)
+			--self.valuetext:SetTextColor(1,1,1)
+			self.editbox:SetTextColor(1,1,1)
+			self.editbox:EnableMouse(true)
 		end
 	end
 	
 	local function SetValue(self, value)
+		self.slider.setup = true
 		self.slider:SetValue(value)
 		self.value = value
+		self.editbox:SetText(math.floor(self.value*100)/100)
+		self.slider.setup = nil
 	end
 	
 	local function SetLabel(self, text)
@@ -2554,6 +2563,19 @@ do
 		self.hightext:SetText(max or 100)
 		frame:SetValueStep(step or 1)
 		frame.setup = nil
+	end
+	
+	local function EditBox_OnEscapePressed(this)
+		this:ClearFocus()
+	end
+	
+	local function EditBox_OnEnterPressed(this)
+		local self = this.obj
+		local value = this:GetText()
+		value = tonumber(value)
+		if value then
+			self:Fire("OnMouseUp",value)
+		end
 	end
 	
 	local SliderBackdrop  = {
@@ -2586,16 +2608,18 @@ do
 		slider:SetScript("OnMouseUp", Slider_OnMouseUp)
 		slider.obj = self
 		slider:SetOrientation("HORIZONTAL")
-		slider:SetHeight(17)
-		slider:SetHitRectInsets(0,0,-10,-10)
+		slider:SetHeight(15)
+		slider:SetHitRectInsets(0,0,-10,0)
 		slider:SetBackdrop(SliderBackdrop)
 		
+		
+
 		
 		local label = frame:CreateFontString(nil,"OVERLAY","GameFontNormal")
 		label:SetPoint("TOPLEFT",frame,"TOPLEFT",0,0)
 		label:SetPoint("TOPRIGHT",frame,"TOPRIGHT",0,0)
 		label:SetJustifyH("CENTER")
-		label:SetHeight(18)
+		label:SetHeight(15)
 		self.label = label
 	
 		self.lowtext = slider:CreateFontString(nil,"ARTWORK","GameFontHighlightSmall")
@@ -2604,16 +2628,30 @@ do
 		self.hightext = slider:CreateFontString(nil,"ARTWORK","GameFontHighlightSmall")
 		self.hightext:SetPoint("TOPRIGHT",slider,"BOTTOMRIGHT",-2,3)
 	
-		self.valuetext = slider:CreateFontString(nil,"ARTWORK","GameFontHighlightSmall")
-		self.valuetext:SetPoint("TOP",slider,"BOTTOM",0,3)
+	
+		local editbox = CreateFrame("EditBox",nil,frame)
+		editbox:SetAutoFocus(false)
+		editbox:SetFontObject(GameFontHighlightSmall)
+		editbox:SetPoint("TOP",slider,"BOTTOM",0,0)
+		editbox:SetHeight(14)
+		editbox:SetWidth(100)
+		editbox:SetJustifyH("CENTER")
+		editbox:EnableMouse(true)
+		editbox:SetScript("OnEscapePressed",EditBox_OnEscapePressed)
+		editbox:SetScript("OnEnterPressed",EditBox_OnEnterPressed)
+		self.editbox = editbox
+		editbox.obj = self
+		
+		--self.valuetext = slider:CreateFontString(nil,"ARTWORK","GameFontHighlightSmall")
+		--self.valuetext:SetPoint("TOP",slider,"BOTTOM",0,3)
 	
 		slider:SetThumbTexture("Interface\\Buttons\\UI-SliderBar-Button-Horizontal")
 	
 		frame:SetWidth(200)
 		frame:SetHeight(44)
 		slider:SetPoint("TOP",label,"BOTTOM",0,0)
-		slider:SetPoint("LEFT",frame,"LEFT",0,0)
-		slider:SetPoint("RIGHT",frame,"RIGHT",0,0)
+		slider:SetPoint("LEFT",frame,"LEFT",3,0)
+		slider:SetPoint("RIGHT",frame,"RIGHT",-3,0)
 	
 
 		slider:SetValue(self.value or 0)
@@ -2749,6 +2787,8 @@ do
 	local function ColorSwatch_OnClick(this)
 		local self = this.obj
 		if not self.disabled then
+			ColorPickerFrame:SetFrameStrata("DIALOG")
+			
 			ColorPickerFrame.func = function()
 				local r,g,b = ColorPickerFrame:GetColorRGB()
 				local a = 1 - OpacitySliderFrame:GetValue()
