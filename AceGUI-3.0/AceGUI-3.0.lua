@@ -160,7 +160,15 @@ do
 		end,
 		
 		PerformLayout = function(self)
-			if self.LayoutFunc and not self.LayoutPaused then
+			if self.LayoutPaused then
+				return
+			end
+			for k, v in ipairs(self.children) do
+				if v.PerformLayout then
+					v:PerformLayout()
+				end
+			end
+			if self.LayoutFunc then
 				self.LayoutFunc(self.content, self.children)
 			end
 		end,
@@ -319,6 +327,8 @@ do
 		
 		status.width = this:GetWidth()
 		status.height = this:GetHeight()
+		status.top = this:GetTop()
+		status.left = this:GetLeft()
 	end
 	
 	local function closeOnClick(this)
@@ -334,6 +344,8 @@ do
 		frame:StopMovingOrSizing()
 		local self = frame.obj
 		local status = self.status or self.localstatus
+		status.width = frame:GetWidth()
+		status.height = frame:GetHeight()
 		status.top = frame:GetTop()
 		status.left = frame:GetLeft()
 	end
@@ -1528,6 +1540,7 @@ do
 	end
 	
 	local function SetScroll(self, value)
+		
 		local status = self.status or self.localstatus
 		
 		local frame, child = self.scrollframe, self.content
@@ -1542,8 +1555,7 @@ do
 		child:ClearAllPoints()
 		child:SetPoint("TOPLEFT",frame,"TOPLEFT",0,offset)
 		child:SetPoint("TOPRIGHT",frame,"TOPRIGHT",0,offset)
-		child.offset = offset
-
+		status.offset = offset
 		status.scrollvalue = value
 	end
 	
@@ -1564,16 +1576,16 @@ do
 		end
 	end
 	
+	
 	local function FixScroll(self)
-		if self.noFixScroll then return end
+		local status = self.status or self.localstatus
 		local frame, child = self.scrollframe, self.content
 		local height, viewheight = frame:GetHeight(), child:GetHeight()
-		local offset = child.offset
+		local offset = status.offset
 		if not offset then
 			offset = 0
 		end
 		local curvalue = self.scrollbar:GetValue()
-
 		if viewheight < height then
 			self.scrollbar:Hide()
 			self.scrollbar:SetValue(0)
@@ -1589,11 +1601,11 @@ do
 				child:ClearAllPoints()
 				child:SetPoint("TOPLEFT",frame,"TOPLEFT",0,offset)
 				child:SetPoint("TOPRIGHT",frame,"TOPRIGHT",0,offset)
-				child.offset = offset
+				status.offset = offset
 			end
 		end
 	end
-	
+
 	local function OnMouseWheel(this,value)
 		this.obj:MoveScroll(value)
 	end
@@ -1602,12 +1614,18 @@ do
 		this.obj:SetScroll(value)
 	end
 	
+	local function FixScrollOnUpdate(this)
+		this:SetScript("OnUpdate", nil)
+		this.obj:FixScroll()
+	end
 	local function OnSizeChanged(this)
+		--this:SetScript("OnUpdate", FixScrollOnUpdate)
 		this.obj:FixScroll()
 	end
 	
 	local function LayoutFinished(self,width,height)
 		self.content:SetHeight(height or 0 + 20)
+		self:FixScroll()
 	end
 	
 	-- called to set an external table to store status in
@@ -1617,7 +1635,6 @@ do
 		if not status.scrollvalue then
 			status.scrollvalue = 0
 		end
-		self:SetScroll(status.scrollvalue)
 	end
 	
 	
@@ -3112,6 +3129,7 @@ AceGUI:RegisterLayout("Fill",
 		if children[1] then
 			children[1].frame:SetAllPoints(content)
 			children[1].frame:Show()
+			
 			if content.obj.LayoutFinished then
 				content.obj:LayoutFinished(nil, children[1].frame:GetHeight())
 			end
@@ -3121,7 +3139,6 @@ AceGUI:RegisterLayout("Fill",
 	
 AceGUI:RegisterLayout("Flow",
 	 function(content, children)
-	 
 	 	--used height so far
 	 	local height = 0
 	 	--width used in the current row

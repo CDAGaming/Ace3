@@ -30,6 +30,13 @@ local string = string
 local next = next
 local math = math
 
+local function safecall(func, ...)
+	local success, err = pcall(func, ...)
+	if success then return err end
+	if not err:find("%.lua:%d+:") then err = (debugstack():match("\n(.-: )in.-\n") or "") .. err end 
+	geterrorhandler()(err)
+end
+
 --[[
 Group Types
   Tree 	- All Descendant Groups will all become nodes on the tree, direct child options will appear above the tree
@@ -50,7 +57,7 @@ Group Types
 
 -- Recycling functions
 local new, del, copy
---local newcount, delcount,createdcount = 0,0,0
+--newcount, delcount,createdcount,cached = 0,0,0
 do
 	local pool = setmetatable({},{__mode='k'})
 	function new()
@@ -78,6 +85,13 @@ do
 		end	
 		pool[t] = true
 	end
+--	function cached()
+--		local n = 0
+--		for k in pairs(pool) do
+--			n = n + 1
+--		end
+--		return n
+--	end
 end
 
 -- picks the first non-nil value and returns it
@@ -193,6 +207,11 @@ local function CleanUserData(widget, event)
 		widget.tablist = nil
 		widget.text = nil
 	end
+	
+	if widget.type == "DropdownGroup" then
+		del(widget.dropdown.list)
+		widget.dropdown.list = nil
+	end
 end
 
 --[[
@@ -263,7 +282,7 @@ local function confirmPopup(message, func, info, ...)
 	t.button1 = ACCEPT
 	t.button2 = CANCEL
 	t.OnAccept = function()
-		func(info, unpack(t))
+		safecall(func, info, unpack(t))
 		del(info)
 	end
 	t.OnCancel = function()
@@ -322,25 +341,26 @@ local function ActivateControl(widget, event, ...)
 	info.arg = option.arg
 	
 	local validated = true
-	
+
 	if widget.type ~= "Button" then
 		if type(validate) == "string" then
 		if handler and handler[validate] then
-			validated = handler[validate](handler, info, ...)
+			validated = safecall(handler[validate], handler, info, ...)
 		else
 			error("Method doesn't exist in handler")
 		end
 		elseif type(validate) == "function" then
-			validated = validate(info, ...)
+			validated = safecall(validate, info, ...)
 		end		
 	end
-	
+
 	if validated then
+
 		local confirmText = option.confirmText
 		--call confirm func/method
 		if type(confirm) == "string" then
 			if handler and handler[confirm] then
-				confirm = handler[confirm](handler, info)
+				confirm = safecall(handler[confirm],handler, info)
 				if type(confirm) == "string" then
 					confirmText = confirm
 					confirm = true
@@ -349,7 +369,7 @@ local function ActivateControl(widget, event, ...)
 				error("Method doesn't exist in handler")
 			end
 		elseif type(confirm) == "function" then
-			confirm = confirm(info)
+			confirm = safecall(confirm,info)
 			if type(confirm) == "string" then
 				confirmText = confirm
 				confirm = true
@@ -379,20 +399,20 @@ local function ActivateControl(widget, event, ...)
 				return
 			end
 		end
-		
+
 		--call the function 
 		if type(func) == "string" then
 			if handler and handler[func] then
-				handler[func](handler, info, ...)
+				safecall(handler[func],handler, info, ...)
 			else
 				error("Method doesn't exist in handler")
 			end
 		elseif type(func) == "function" then
-			func(info, ...)
+			safecall(func,info, ...)
 		end	
+
 		
-		del(info)
-		
+
 		--full refresh of the frame, some controls dont cause this on all events
 		if option.type == "color" then
 			if event == "OnValueConfirmed" then
@@ -405,7 +425,9 @@ local function ActivateControl(widget, event, ...)
 		else
 			lib:Open(user.appName)
 		end
+		
 	end
+	del(info)
 end
 
 local function ActivateSlider(widget, event, value)
@@ -905,18 +927,20 @@ function lib:FeedGroup(appName,options,container,rootframe,path)
 	if (not hasChildGroups) or inline then
 		if container.type ~= "InlineGroup" then
 			scroll = gui:Create("ScrollFrame")
-			
 			scroll:SetLayout("flow")
 			scroll.width = "fill"
 			scroll.height = "fill"
+			container:SetLayout("fill")
 			container:AddChild(scroll)
 			container = scroll
 		end
 	end
 	
-	FeedOptions(appName,options,container,rootframe,path,group,nil,groupDisabled)
 
+	FeedOptions(appName,options,container,rootframe,path,group,nil,groupDisabled)
+	
 	if scroll then
+		container:PerformLayout()
 		local status = self:GetStatusTable(appName, path)
 		if not status.scroll then
 			status.scroll = {}
