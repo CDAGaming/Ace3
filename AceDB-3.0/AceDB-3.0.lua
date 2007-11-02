@@ -4,6 +4,11 @@ local AceDB, oldminor = LibStub:NewLibrary(ACEDB_MAJOR, ACEDB_MINOR)
 
 if not AceDB then return end -- No upgrade needed
 
+local type = type
+local pairs, next = pairs, next
+local rawget, rawset = rawget, rawset
+local setmetatable = setmetatable
+
 AceDB.db_registry = setmetatable(AceDB.db_registry or {}, {__mode = "k"})
 AceDB.frame = AceDB.frame or CreateFrame("Frame")
 
@@ -113,25 +118,24 @@ local function removeDefaults(db, defaults, blocker)
 	setmetatable(db, nil)
 end
 
--- This is called when a table section is first accessed, to set up the
--- defaults
+-- This is called when a table section is first accessed, to set up the defaults
 local function initSection(db, section, svstore, key, defaults)
 	local sv = rawget(db, "sv")
-
+	
 	local tableCreated
 	if not sv[svstore] then sv[svstore] = {} end
 	if not sv[svstore][key] then
 		sv[svstore][key] = {}
 		tableCreated = true
 	end
-
+	
 	local tbl = sv[svstore][key]
-
+	
 	if defaults then
 		copyDefaults(tbl, defaults)
 	end
 	rawset(db, section, tbl)
-
+	
 	return tableCreated, tbl
 end
 
@@ -170,15 +174,22 @@ local dbmt = {
 		end
 }
 
+local preserve_keys = {
+	["callbacks"] = true,
+	["RegisterCallback"] = true,
+	["UnregisterCallback"] = true,
+	["UnregisterAllCallbacks"] = true
+}
+
 -- Actual database initialization function
 local function initdb(sv, defaults, defaultProfile, olddb)
 	-- Generate the database keys for each section
-	local charKey = string.format("%s - %s", UnitName("player"), GetRealmName())
 	local realmKey = GetRealmName()
-	local classKey = select(2, UnitClass("player"))
-	local raceKey = select(2, UnitRace("player"))
+	local charKey = UnitName("player") .. " - " .. realmKey
+	local _, classKey = UnitClass("player")
+	local _, raceKey = UnitRace("player")
 	local factionKey = UnitFactionGroup("player")
-	local factionrealmKey = string.format("%s - %s", factionKey, realmKey)
+	local factionrealmKey = factionKey .. " - " .. realmKey
 	
 	-- Make a container for profile keys
 	if not sv.profileKeys then sv.profileKeys = {} end
@@ -204,14 +215,16 @@ local function initdb(sv, defaults, defaultProfile, olddb)
 	
 	-- This allows us to use this function to reset an entire database
 	-- Clear out the old database
-	local callbacks
 	if olddb then
-		callbacks = olddb.callbacks
-		for k,v in pairs(olddb) do olddb[k] = nil end
+		for k,v in pairs(olddb) do if not preserve_keys[k] then olddb[k] = nil end end
 	end
 	
 	-- Give this database the metatable so it initializes dynamically
 	local db = setmetatable(olddb or {}, dbmt)
+	
+	if not rawget(db, "callbacks") then 
+		db.callbacks = CallbackHandler:New(db)
+	end
 	
 	-- Copy methods locally into the database object, to avoid hitting
 	-- the metatable when calling methods
@@ -219,8 +232,6 @@ local function initdb(sv, defaults, defaultProfile, olddb)
 	for name, func in pairs(DBObjectLib) do
 		db[name] = func
 	end
-	
-	db.callbacks = callbacks or CallbackHandler:New(db)
 	
 	-- Set some properties in the database object
 	db.profiles = sv.profiles
@@ -235,10 +246,11 @@ local function initdb(sv, defaults, defaultProfile, olddb)
 	return db
 end
 
+-- handle PLAYER_LOGOUT
+-- strip all defaults from all databases
 local function logoutHandler(frame, event)
 	if event == "PLAYER_LOGOUT" then
 		for db in pairs(AceDB.db_registry) do
-			-- TODO: rename callback to something better
 			db.callbacks:Fire("OnDatabaseShutdown", db)
 			for section, key in pairs(db.keys) do
 				if db.defaults[section] and rawget(db, section) then
@@ -264,7 +276,7 @@ AceDB.frame:SetScript("OnEvent", logoutHandler)
 -- that are currently set, and then setting the new defaults.
 function DBObjectLib:RegisterDefaults(defaults)
 	if defaults and type(defaults) ~= "table" then
-		error("Usage: AceDBObject:RegisterDefaults(defaults): 'defaults' - table or nil expected.", 3)
+		error("Usage: AceDBObject:RegisterDefaults(defaults): 'defaults' - table or nil expected.", 2)
 	end
 	
 	-- Remove any currently set defaults
@@ -294,7 +306,7 @@ end
 -- supplied named profile
 function DBObjectLib:SetProfile(name)
 	if type(name) ~= "string" then
-		error("Usage: AceDBObject:SetProfile(name): 'name' - string expected.", 3)
+		error("Usage: AceDBObject:SetProfile(name): 'name' - string expected.", 2)
 	end
 	
 	local oldProfile = self.profile
@@ -319,7 +331,7 @@ end
 -- You can optionally supply a table to re-use for this purpose.
 function DBObjectLib:GetProfiles(tbl)
 	if tbl and type(tbl) ~= "table" then
-		error("Usage: AceDBObject:GetProfiles(tbl): 'tbl' - table or nil expected.", 3)
+		error("Usage: AceDBObject:GetProfiles(tbl): 'tbl' - table or nil expected.", 2)
 	end
 
 	-- Clear the container table
@@ -357,11 +369,15 @@ end
 -- Deletes a named profile.  This profile must not be the active profile.
 function DBObjectLib:DeleteProfile(name)
 	if type(name) ~= "string" then
-		error("Usage: AceDBObject:DeleteProfile(name): 'name' - string expected.", 3)
+		error("Usage: AceDBObject:DeleteProfile(name): 'name' - string expected.", 2)
 	end
 	
 	if self.keys.profile == name then
-		error("Cannot delete the active profile in an AceDBObject.", 3)
+		error("Cannot delete the active profile in an AceDBObject.", 2)
+	end
+	
+	if not rawget(self.sv.profiles, name) then
+		error("Cannot delete profile '" .. name .. "'. It does not exist.", 2)
 	end
 	
 	self.sv.profiles[name] = nil
@@ -376,11 +392,15 @@ end
 -- settings.
 function DBObjectLib:CopyProfile(name)
 	if type(name) ~= "string" then
-		error("Usage: AceDBObject:CopyProfile(name): 'name' - string expected.", 3)
+		error("Usage: AceDBObject:CopyProfile(name): 'name' - string expected.", 2)
 	end
 	
 	if name == self.keys.profile then
-		error("Cannot have the same source and destination profiles.", 3)
+		error("Cannot have the same source and destination profiles.", 2)
+	end
+	
+	if not rawget(self.sv.profiles, name) then
+		error("Cannot copy profile '" .. name .. "'. It does not exist.", 2)
 	end
 	
 	-- Reset the profile before copying
@@ -421,7 +441,7 @@ end
 -- profile.
 function DBObjectLib:ResetDB(defaultProfile)
 	if defaultProfile and type(defaultProfile) ~= "string" then
-		error("Usage: AceDBObject:ResetDB(defaultProfile): 'defaultProfile' - string or nil expected.", 3)
+		error("Usage: AceDBObject:ResetDB(defaultProfile): 'defaultProfile' - string or nil expected.", 2)
 	end
 	
 	local sv = self.sv
@@ -450,10 +470,10 @@ end
 -- it cannot control its profile individually
 function DBObjectLib:RegisterNamespace(name, defaults)
 	if type(name) ~= "string" then
-		error("Usage: AceDBObject:RegisterNamespace(name, defaults): 'name' - string expected.", 3)
+		error("Usage: AceDBObject:RegisterNamespace(name, defaults): 'name' - string expected.", 2)
 	end
 	if defaults and type(defaults) ~= "table" then
-		error("Usage: AceDBObject:RegisterNamespace(name, defaults): 'defaults' - table or nil expected.", 3)
+		error("Usage: AceDBObject:RegisterNamespace(name, defaults): 'defaults' - table or nil expected.", 2)
 	end
 	
 	local sv = self.sv
@@ -494,15 +514,15 @@ function AceDB:New(tbl, defaults, defaultProfile)
 	end
 	
 	if type(tbl) ~= "table" then
-		error("Usage: AceDB:New(tbl, defaults, defaultProfile): 'tbl' - table expected.", 3)
+		error("Usage: AceDB:New(tbl, defaults, defaultProfile): 'tbl' - table expected.", 2)
 	end
 	
 	if defaults and type(defaults) ~= "table" then
-		error("Usage: AceDB:New(tbl, defaults, defaultProfile): 'defaults' - table expected.", 3)
+		error("Usage: AceDB:New(tbl, defaults, defaultProfile): 'defaults' - table expected.", 2)
 	end
 	
 	if defaultProfile and type(defaultProfile) ~= "string" then
-		error("Usage: AceDB:New(tbl, defaults, defaultProfile): 'defaultProfile' - string expected.", 3)
+		error("Usage: AceDB:New(tbl, defaults, defaultProfile): 'defaultProfile' - string expected.", 2)
 	end
 	
 	return initdb(tbl, defaults, defaultProfile)
