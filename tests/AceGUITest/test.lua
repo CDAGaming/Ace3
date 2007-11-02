@@ -318,7 +318,7 @@ end
 
 local p
 
-local testing = { color1 = {1,1,1,1}, color2 = {0,0,0,1} }
+local testing = { color1 = {r=1,g=1,b=1,a=1}, color2 = {r=0,g=0,b=0,a=1} }
 
 local key1, key2 = "", ""
 local testedit = "Testing inherited set/get"
@@ -338,7 +338,7 @@ local BagginsAce3Opts = {
 				type = 'group',
 				order = 1,
 				desc = "Test Controls",
-				validate = function(info, ...) Baggins:Print("Validating ", ...) return true end,
+				validate = function(info, ...) return true end,
 				args = {
 					Test = {
 						type = 'input',
@@ -363,35 +363,35 @@ local BagginsAce3Opts = {
 						type = 'color',
 						name = "Test Color",
 						order = 2,
-						set = function(info, r,g,b,a) Baggins:Print(r,g,b,a) testing.color1 = {r,g,b,a} end,
-						get = function(info) return unpack(testing.color1) end,
+						set = function(info, r,g,b,a) local c = testing.color1 c.r,c.g,c.b,c.a = r,g,b,a end,
+						get = function(info) c = testing.color1 return c.r,c.g,c.b,c.a end,
 					},
 					Color2 = {
 						type = 'color',
 						name = "Test Color 2",
 						order = 3,
-						set = function(info, r,g,b,a) Baggins:Print(r,g,b,a) testing.color2 = {r,g,b,a} end,
-						get = function(info) return unpack(testing.color2) end,
+						set = function(info, r,g,b,a) local c = testing.color2 c.r,c.g,c.b,c.a = r,g,b,a end,
+						get = function(info) c = testing.color2 return c.r,c.g,c.b,c.a end,
 					},
 					Key1 = {
 						type = 'keybinding',
 						name = "Test Keybind",
 						order = 4,
-						set = function(info, key) Baggins:Print(key) key1 = key end,
+						set = function(info, key)  key1 = key end,
 						get = function(info) return key1 end,
 					},
 					Key2 = {
 						type = 'keybinding',
 						name = "Test Keybind 2",
 						order = 4,
-						set = function(info, key) Baggins:Print(key) key2 = key end,
+						set = function(info, key) key2 = key end,
 						get = function(info) return key2 end,
 					},
 					DragTest2 = {
 						type = 'input',
 						--dlgType = "DragTarget",
 						name = "Test Drag - Fallback to Text",
-						set = function(info, value) Baggins:Print(value) dragvalue = value end,
+						set = function(info, value) dragvalue = value end,
 						get = function(info) return dragvalue end,
 						order = 6
 					},
@@ -404,7 +404,7 @@ local BagginsAce3Opts = {
 						type = 'input',
 						dlgType = "DragTarget",
 						name = "Test Drag",
-						set = function(info, value) Baggins:Print(value) dragvalue = value end,
+						set = function(info, value) dragvalue = value end,
 						get = function(info) return dragvalue end,
 						order = 10
 					},
