@@ -360,7 +360,7 @@ function lib:HandleCommand(slashcmd, appName, input)
 	if not optgetter then
 		error([[Usage: HandleCommand("slashcmd", "appName", "input"): 'appName' - no options table "]]..tostring(appName)..[[" has been registered]], 2)
 	end
-	local options = assert( optgetter("slash", MAJOR) )
+	local options = assert( optgetter("cmd", MAJOR) )
 	
 	local info = {   -- Don't try to recycle this, it gets handed off to confirmation callbacks and whatnot
 		[0] = slashcmd,
