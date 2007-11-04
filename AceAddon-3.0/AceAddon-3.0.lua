@@ -6,7 +6,7 @@ if not AceAddon then return end -- No Upgrade needed.
 
 AceAddon.frame = AceAddon.frame or CreateFrame("Frame", "AceAddon30Frame") -- Our very own frame
 AceAddon.addons = AceAddon.addons or {} -- addons in general
-AceAddon.statuses = AceAddon.statues or {} -- statuses of addon.
+AceAddon.statuses = AceAddon.statuses or {} -- statuses of addon.
 AceAddon.initializequeue = AceAddon.initializequeue or {} -- addons that are new and not initialized
 AceAddon.enablequeue = AceAddon.enablequeue or {} -- addons that are initialized and waiting to be enabled
 AceAddon.embeds = AceAddon.embeds or setmetatable({}, {__index = function(tbl, key) tbl[key] = {} return tbl[key] end }) -- contains a list of libraries embedded in an addon
