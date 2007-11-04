@@ -34,7 +34,8 @@ end
 -- Recycling functions
 local new, del
 do
-	local objPools = {}
+	AceGUI.objPools = AceGUI.objPools or {}
+	local objPools = AceGUI.objPools
 	--Returns a new instance, if none are available either returns a new table or calls the given contructor
 	function new(type,constructor,...)
 		if not type then
@@ -64,8 +65,6 @@ do
 		tinsert(objPools[type],obj)
 	end
 end
-
-AceGUI.new, AceGUI.del = new, del
 
 
 -------------------

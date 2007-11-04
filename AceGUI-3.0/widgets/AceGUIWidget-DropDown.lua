@@ -196,6 +196,17 @@ do
 		end
 	end
 	
+	local function fixlevels(parent,...)
+		local i = 1
+		local child = select(i, ...)
+		while child do
+			child:SetFrameLevel(parent:GetFrameLevel()+1)
+			fixlevels(child, child:GetChildren())
+			i = i + 1
+			child = select(i, ...)
+		end
+	end
+	
 	local ddsort = {}
 	local function BuildPullout(self)
 		local list = self.list
@@ -235,6 +246,7 @@ do
 			end
 		end
 		self.pullout:SetHeight(totalheight)
+		fixlevels(self.pullout,self.pullout:GetChildren())
 	end
 
 	local function ClearPullout(self)

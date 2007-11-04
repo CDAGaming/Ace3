@@ -1,7 +1,26 @@
 local AceGUI = LibStub("AceGUI-3.0")
 
--- TODO: this causes upgrading issues! Maybe use our own recycling?
-local new, del = AceGUI.new, AceGUI.del
+
+-- Recycling functions
+local new, del
+do
+	local pool = setmetatable({},{__mode='k'})
+	function new()
+		local t = next(pool)
+		if t then
+			pool[t] = nil
+			return t
+		else
+			return {}
+		end
+	end
+	function del(t)
+		for k in pairs(t) do
+			t[k] = nil
+		end	
+		pool[t] = true
+	end
+end
 
 ---------------------
 -- Common Elements --
