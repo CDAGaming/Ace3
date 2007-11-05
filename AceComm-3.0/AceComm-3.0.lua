@@ -194,7 +194,7 @@ function AceComm:ReceiveMultipart(prefix, message, distribution, sender,
 		incomplete_data[data_key] = nil
 	else
 		-- Unknown!
-		error("AceComm:ReceiveMultipart unknown messagetype.")
+		-- No erroring on data received from others! /mikk : error("AceComm:ReceiveMultipart unknown messagetype.")
 	end
 end
 
