@@ -121,14 +121,21 @@ end
 
 -- 254 is the max length of prefix + text that can be sent in one message
 function AceComm.SendCommMessage(addon, prefix, text, distribution, target)
+	assert(type(prefix) == "string",
+	       "Usage: SendCommMessage(prefix, text, distribution [, target]): 'prefix' - string expected.")
+	assert(type(text) == "string",
+	       "Usage: SendCommMessage(prefix, text, distribution [, target]): 'text' - string expected.")
+	assert(type(distribution) == "string",
+	       "Usage: SendCommMessage(prefix, text, distribution [, target]): 'distribution' - string expected.")
+	if distribution == "WHISPER" then
+		assert(type(target) == "string",
+		       "Usage: SendCommMessage(prefix, text, distribution [, target]): 'target' - string expected when distribution is 'WHISPER'.")
+	end
+
 	local prefix_len = #prefix
 	local text_len = #text
 	local meta_len = 2
 	local chunk_size = 253 - prefix_len - meta_len
-
-	assert(type(prefix) == "string")
-	assert(type(text) == "string")
-	assert(type(distribution) == "string")
 	
 	if text_len < chunk_size + meta_len then
 		-- fits all in one message
