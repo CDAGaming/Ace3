@@ -183,18 +183,23 @@ function AceComm:ReceiveMultipart(prefix, message, distribution, sender,
 		incomplete_data[data_key] = data
 	elseif messagetype == "multipart_continue" then
 		-- Continue multipart message
-		assert(data ~= nil)
+		if data == nil then
+			return -- out of sequence, ignore
+		end
 		data = data .. message
 		incomplete_data[data_key] = data
 	elseif messagetype == "multipart_end" then
 		-- End multipart message
-		assert(data ~= nil)
+		if data == nil then
+			return -- out of sequence, ignore
+		end
 		data = data .. message
 		self:MessageCompleted(prefix, data, distribution, sender)
 		incomplete_data[data_key] = nil
 	else
-		-- Unknown!
-		-- No erroring on data received from others! /mikk : error("AceComm:ReceiveMultipart unknown messagetype.")
+		-- This can only be reached if self.__prefixes contains bad
+		-- data.
+		error("AceComm:ReceiveMultipart unknown messagetype.")
 	end
 end
 
