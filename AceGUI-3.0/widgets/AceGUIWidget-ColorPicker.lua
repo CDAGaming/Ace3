@@ -1,39 +1,4 @@
 local AceGUI = LibStub("AceGUI-3.0")
-
----------------------
--- Common Elements --
----------------------
-
-local FrameBackdrop = {
-	bgFile="Interface\\DialogFrame\\UI-DialogBox-Background",
-	edgeFile="Interface\\DialogFrame\\UI-DialogBox-Border", 
-	tile = true, tileSize = 32, edgeSize = 32, 
-	insets = { left = 8, right = 8, top = 8, bottom = 8 }
-}
-
-local PaneBackdrop  = {
-
-	bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
-	edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
-	tile = true, tileSize = 16, edgeSize = 16,
-	insets = { left = 3, right = 3, top = 5, bottom = 3 }
-}
-
-local ControlBackdrop  = {
-	bgFile = "Interface\\Tooltips\\UI-Tooltip-Background",
-	edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
-	tile = true, tileSize = 16, edgeSize = 16,
-	insets = { left = 3, right = 3, top = 3, bottom = 3 }
-}
-
-local function Control_OnEnter(this)
-	this.obj:Fire("OnEnter")
-end
-
-local function Control_OnLeave(this)
-	this.obj:Fire("OnLeave")
-end
-
 -------------
 -- Widgets --
 -------------
@@ -79,7 +44,15 @@ do
 		self.a = a or 1
 		self.colorSwatch.texture:SetTexture(r,g,b)
 	end
+
 	
+	local function Control_OnEnter(this)
+		this.obj:Fire("OnEnter")
+	end
+
+	local function Control_OnLeave(this)
+		this.obj:Fire("OnLeave")
+	end
 
 	local function ColorCallback(self,r,g,b,a,isAlpha)
 		self:SetColor(r,g,b,a)
