@@ -1,29 +1,5 @@
 local AceGUI = LibStub("AceGUI-3.0")
 
--------------
--- Widgets --
--------------
---[[
-	Widgets must provide the following functions
-		Aquire() - Called when the object is aquired, should set everything to a default hidden state
-		Release() - Called when the object is Released, should remove any anchors and hide the Widget
-		
-	And the following members
-		frame - the frame or derivitive object that will be treated as the widget for size and anchoring purposes
-		type - the type of the object, same as the name given to :RegisterWidget()
-		
-	Widgets contain a table called userdata, this is a safe place to store data associated with the wigdet
-	It will be cleared automatically when a widget is released
-	Placing values directly into a widget object should be avoided
-	
-	If the Widget can act as a container for other Widgets the following
-		content - frame or derivitive that children will be anchored to
-		
-	The Widget can supply the following Optional Members
-
-
-]]
-
 ----------------
 -- Main Frame --
 ----------------
@@ -33,7 +9,6 @@ local AceGUI = LibStub("AceGUI-3.0")
 
 ]]
 do
-
 	local FrameBackdrop = {
 		bgFile="Interface\\DialogFrame\\UI-DialogBox-Background",
 		edgeFile="Interface\\DialogFrame\\UI-DialogBox-Border", 
@@ -49,14 +24,12 @@ do
 	}
 
 	local function frameOnClose(this)
-		local self = this.obj
-		self:Fire("OnClose")
+		this.obj:Fire("OnClose")
 	end
 	
 	local function frameOnSizeChanged(this)
 		local self = this.obj
 		local status = self.status or self.localstatus
-		
 		status.width = this:GetWidth()
 		status.height = this:GetHeight()
 		status.top = this:GetTop()
@@ -283,7 +256,6 @@ do
 		sizer_e:SetScript("OnMouseDown",sizereOnMouseDown)
 		sizer_e:SetScript("OnMouseUp", sizerOnMouseUp)
 		self.sizer_e = sizer_e
-	
 	
 		--Container Support
 		local content = CreateFrame("Frame",nil,frame)

@@ -1,30 +1,5 @@
 local AceGUI = LibStub("AceGUI-3.0")
 
-
--------------
--- Widgets --
--------------
---[[
-	Widgets must provide the following functions
-		Aquire() - Called when the object is aquired, should set everything to a default hidden state
-		Release() - Called when the object is Released, should remove any anchors and hide the Widget
-		
-	And the following members
-		frame - the frame or derivitive object that will be treated as the widget for size and anchoring purposes
-		type - the type of the object, same as the name given to :RegisterWidget()
-		
-	Widgets contain a table called userdata, this is a safe place to store data associated with the wigdet
-	It will be cleared automatically when a widget is released
-	Placing values directly into a widget object should be avoided
-	
-	If the Widget can act as a container for other Widgets the following
-		content - frame or derivitive that children will be anchored to
-		
-	The Widget can supply the following Optional Members
-
-
-]]
-
 --------------------------
 -- Slider  	            --
 --------------------------
@@ -165,10 +140,7 @@ do
 		slider:SetHeight(15)
 		slider:SetHitRectInsets(0,0,-10,0)
 		slider:SetBackdrop(SliderBackdrop)
-		
-		
-
-		
+			
 		local label = frame:CreateFontString(nil,"OVERLAY","GameFontNormal")
 		label:SetPoint("TOPLEFT",frame,"TOPLEFT",0,0)
 		label:SetPoint("TOPRIGHT",frame,"TOPRIGHT",0,0)
@@ -196,9 +168,6 @@ do
 		self.editbox = editbox
 		editbox.obj = self
 		
-		--self.valuetext = slider:CreateFontString(nil,"ARTWORK","GameFontHighlightSmall")
-		--self.valuetext:SetPoint("TOP",slider,"BOTTOM",0,3)
-	
 		slider:SetThumbTexture("Interface\\Buttons\\UI-SliderBar-Button-Horizontal")
 	
 		frame:SetWidth(200)
@@ -211,11 +180,6 @@ do
 		slider:SetValue(self.value or 0)
 		slider:SetScript("OnValueChanged",Slider_OnValueChanged)
 	
-		--Container Support
-		--local content = CreateFrame("Frame",nil,frame)
-		--self.content = content
-		
-		--AceGUI:RegisterAsContainer(self)
 		AceGUI:RegisterAsWidget(self)
 		return self
 	end
