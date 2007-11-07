@@ -25,10 +25,12 @@ local CreateFrame = CreateFrame
 local UIParent = UIParent
 
 local function safecall(func, ...)
-	local success, err = pcall(func, ...)
-	if success then return err end
-	if not err:find("%.lua:%d+:") then err = (debugstack():match("\n(.-: )in.-\n") or "") .. err end 
-	geterrorhandler()(err)
+	if type(func) == "function" then
+		local success, err = pcall(func, ...)
+		if success then return err end
+		if not err:find("%.lua:%d+:") then err = (debugstack():match("\n(.-: )in.-\n") or "") .. err end 
+		geterrorhandler()(err)
+	end
 end
 
 -- Recycling functions
@@ -46,11 +48,7 @@ do
 		end
 		local newObj = tremove(objPools[type])
 		if not newObj then
-			if constructor then
-				newObj = constructor(...)
-			else
-				newObj = {}
-			end
+			newObj = constructor and constructor(...) or {}
 		end
 		return newObj
 	end
@@ -77,22 +75,16 @@ function AceGUI:Create(type)
 	if reg[type] then
 		local widget = new(type,reg[type])
 		widget:Aquire()
-		if widget.ResumeLayout then
-			widget:ResumeLayout()
-		end
+		safecall(widget.ResumeLayout, widget)
 		return widget
 	end
 end
 
 -- Releases a widget Object
 function AceGUI:Release(widget)
-	if widget.PauseLayout then
-		widget:PauseLayout()
-	end
+	safecall( widget.PauseLayout, widget )
 	widget:Fire("OnRelease")
-	if widget.ReleaseChildren then
-		widget:ReleaseChildren()
-	end
+	safecall( widget.ReleaseChildren, widget )
 	for k in pairs(widget.userdata) do
 		widget.userdata[k] = nil
 	end
@@ -166,13 +158,9 @@ do
 				return
 			end
 			for k, v in ipairs(self.children) do
-				if v.PerformLayout then
-					v:PerformLayout()
-				end
+				safecall( v.PerformLayout, v )
 			end
-			if self.LayoutFunc then
-				self.LayoutFunc(self.content, self.children)
-			end
+			safecall( self.LayoutFunc,self.content, self.children)
 		end,
 		
 		--call this function to layout, makes sure layed out objects get a frame to get sizes etc
@@ -329,10 +317,7 @@ AceGUI:RegisterLayout("List",
 			end
 			
 		end
-		
-		if content.obj.LayoutFinished then
-			content.obj:LayoutFinished(nil, height)
-		end
+		safecall( content.obj.LayoutFinished, content.obj, nil, height )
 	 end
 	)
 	
@@ -342,10 +327,7 @@ AceGUI:RegisterLayout("Fill",
 		if children[1] then
 			children[1].frame:SetAllPoints(content)
 			children[1].frame:Show()
-			
-			if content.obj.LayoutFinished then
-				content.obj:LayoutFinished(nil, children[1].frame:GetHeight())
-			end
+			safecall( content.obj.LayoutFinished, content.obj, nil, children[1].frame:GetHeight() )
 		end
 	 end
 	)
@@ -401,9 +383,6 @@ AceGUI:RegisterLayout("Flow",
 				break
 			end
 		end
-		
-		if content.obj.LayoutFinished then
-			content.obj:LayoutFinished(nil, height)
-		end
+		safecall( content.obj.LayoutFinished, content.obj, nil, height )		
 	 end
 	)
