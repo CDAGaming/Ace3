@@ -175,6 +175,10 @@ function IsLoggedIn()
 	return false
 end
 
+function GetFramerate()
+	return 60
+end
+
 time = os.clock
 
 strmatch = string.match
@@ -191,8 +195,9 @@ function hooksecurefunc(func_name, post_hook_func)
 	local orig_func = _G[func_name]
 
 	_G[func_name] = function (...)
-				orig_func(...)
-				return post_hook_func(...)
+				local ret = { orig_func(...) }		-- yeahyeah wasteful, see if i care, it's a test framework
+				post_hook_func(...)
+				return unpack(ret)
 			end
 end
 
@@ -205,6 +210,10 @@ function WoWAPI_FireEvent(event,...)
 	for frame, props in pairs(frames) do
 		if props.events[event] then
 			if props.scripts["OnEvent"] then
+				for i=1,select('#',...) do
+					_G["arg"..i] = select(i,...)
+				end
+				_G.event=event
 				props.scripts["OnEvent"](frame,event,...)
 			end
 		end
@@ -218,6 +227,7 @@ function WoWAPI_FireUpdate(forceNow)
 	local now = GetTime()
 	for frame,props in pairs(frames) do
 		if props.isShow and props.scripts.OnUpdate then
+			_G.arg1=now-props.timer
 			props.scripts.OnUpdate(frame,now-props.timer)
 			props.timer = now
 		end
