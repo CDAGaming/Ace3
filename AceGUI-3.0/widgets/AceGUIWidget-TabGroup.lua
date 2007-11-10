@@ -151,6 +151,13 @@ do
 	
 	local function SelectTab(self, id)
 		local status = self.status or self.localstatus
+		if not self.tablist[id] then
+			if id == 1 then
+				return
+			else
+				id = 1
+			end
+		end
 		for i, v in ipairs(self.tabs) do
 			v:SetSelected(v.id == id)
 		end

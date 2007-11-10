@@ -435,6 +435,8 @@ local function ActivateSlider(widget, event, value)
 	local min, max, step = option.min or 0, option.max or 100, option.step
 	if step then
 		value = math.floor((value - min) / step + 0.5) * step + min
+	else
+		value = math.max(math.min(value,max),min)
 	end
 	ActivateControl(widget,event,value)
 end
@@ -737,7 +739,7 @@ local function FeedOptions(appName, options,container,rootframe,path,group,inlin
 					control:SetCallback("OnClick",ActivateControl)
 					
 				elseif v.type == "input" then
-					control = gui:Create(v.dlgType or "EditBox")
+					control = gui:Create("EditBox")
 					control:SetLabel(v.name)
 					control:SetCallback("OnEnterPressed",ActivateControl)
 					control:SetText(CallOptionsFunction("get",v, options, path, appName))

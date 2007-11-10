@@ -8,7 +8,9 @@ local con = LibStub("AceConsole-3.0",true)
 
 AceGUI.WidgetRegistry = AceGUI.WidgetRegistry or {}
 AceGUI.LayoutRegistry = AceGUI.LayoutRegistry or {}
-
+AceGUI.WidgetBase = AceGUI.WidgetBase or {}
+AceGUI.WidgetContainerBase = AceGUI.WidgetContainerBase or {}
+ 
 -- local upvalues
 local WidgetRegistry = AceGUI.WidgetRegistry
 local LayoutRegistry = AceGUI.LayoutRegistry
@@ -115,27 +117,27 @@ do
 		end
 	end
 	
-	local WidgetBase = {
-		SetParent = function(self, parent)
-			local frame = self.frame
-			frame:SetParent(nil)
-			frame:SetParent(parent)
-			fixlevels(frame,frame:GetChildren())
-		end,
-		
-		SetCallback = function(self, name, func)
-			if type(func) == "function" then
-				self.events[name] = func
-			end
-		end,
-		
-		Fire = function(self, name, ...)
-			if self.events[name] then
-				safecall(self.events[name], self, name, ...)
-			end
+	local WidgetBase = AceGUI.WidgetBase 
+	
+	WidgetBase.SetParent = function(self, parent)
+		local frame = self.frame
+		frame:SetParent(nil)
+		frame:SetParent(parent)
+		fixlevels(frame,frame:GetChildren())
+	end
+	
+	WidgetBase.SetCallback = function(self, name, func)
+		if type(func) == "function" then
+			self.events[name] = func
 		end
-		
-	}
+	end
+	
+	WidgetBase.Fire = function(self, name, ...)
+		if self.events[name] then
+			safecall(self.events[name], self, name, ...)
+		end
+	end
+
 	
 		
 	local function LayoutOnUpdate(this)
@@ -143,51 +145,51 @@ do
 		this.obj:PerformLayout()
 	end
 	
-	local WidgetContainerBase = {
+	local WidgetContainerBase = AceGUI.WidgetContainerBase
 		
-		PauseLayout = function(self)
-			self.LayoutPaused = true
-		end,
-		
-		ResumeLayout = function(self)
-			self.LayoutPaused = nil
-		end,
-		
-		PerformLayout = function(self)
-			if self.LayoutPaused then
-				return
-			end
-			for k, v in ipairs(self.children) do
-				safecall( v.PerformLayout, v )
-			end
-			safecall( self.LayoutFunc,self.content, self.children)
-		end,
-		
-		--call this function to layout, makes sure layed out objects get a frame to get sizes etc
-		DoLayout = function(self)
-			self:PerformLayout()
-			self.frame:SetScript("OnUpdate", LayoutOnUpdate)
-		end,
-		
-		AddChild = function(self, child)
-			tinsert(self.children,child)
-			child:SetParent(self.content)
-			child.frame:Show()
-			self:DoLayout()
-		end,
-		
-		ReleaseChildren = function(self)
-			local children = self.children
-			for i in ipairs(children) do
-				AceGUI:Release(children[i])
-				children[i] = nil
-			end
-		end,
-		
-		SetLayout = function(self, Layout)
-			self.LayoutFunc = AceGUI:GetLayout(Layout)
-		end,
-	}
+	WidgetContainerBase.PauseLayout = function(self)
+		self.LayoutPaused = true
+	end
+	
+	WidgetContainerBase.ResumeLayout = function(self)
+		self.LayoutPaused = nil
+	end
+	
+	WidgetContainerBase.PerformLayout = function(self)
+		if self.LayoutPaused then
+			return
+		end
+		for k, v in ipairs(self.children) do
+			safecall(v.PerformLayout, v)
+		end
+		safecall( self.LayoutFunc,self.content, self.children)
+	end
+	
+	--call this function to layout, makes sure layed out objects get a frame to get sizes etc
+	WidgetContainerBase.DoLayout = function(self)
+		self:PerformLayout()
+		self.frame:SetScript("OnUpdate", LayoutOnUpdate)
+	end
+	
+	WidgetContainerBase.AddChild = function(self, child)
+		tinsert(self.children,child)
+		child:SetParent(self.content)
+		child.frame:Show()
+		self:DoLayout()
+	end
+	
+	WidgetContainerBase.ReleaseChildren = function(self)
+		local children = self.children
+		for i in ipairs(children) do
+			AceGUI:Release(children[i])
+			children[i] = nil
+		end
+	end
+	
+	WidgetContainerBase.SetLayout = function(self, Layout)
+		self.LayoutFunc = AceGUI:GetLayout(Layout)
+	end
+
 	
 	local function ContentResize(this)
 		if this.lastwidth ~= this:GetWidth() then
@@ -228,15 +230,21 @@ function AceGUI:RegisterWidgetType(Name, Constructor)
 	assert(type(Constructor) == "function")
 	WidgetRegistry[Name] = Constructor
 end
+
 -- Registers a Layout Function
 function AceGUI:RegisterLayout(Name, LayoutFunc)
-	assert(type(Name) == "string" and type(LayoutFunc) == "function")
-	LayoutRegistry[Name:upper()] = LayoutFunc
+	assert(type(LayoutFunc) == "function")
+	if type(Name) == "string" then
+		Name = Name:upper()
+	end
+	LayoutRegistry[Name] = LayoutFunc
 end
 
 function AceGUI:GetLayout(Name)
-	assert(type(Name) == "string")
-	return LayoutRegistry[Name:upper()]
+	if type(Name) == "string" then
+		Name = Name:upper()
+	end
+	return LayoutRegistry[Name]
 end
 
 --[[ Widget Template
