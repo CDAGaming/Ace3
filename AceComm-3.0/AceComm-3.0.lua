@@ -188,7 +188,18 @@ end
 -- Embed CallbackHandler
 ----------------------------------------
 
-function AceComm:OnPrefixUsed(prefix)
+if not AceComm.callbacks then
+	-- ensure that 'prefix to watch' table is consistent with registered
+	-- callbacks
+	AceComm.__prefixes = {}
+
+	AceComm.callbacks = CallbackHandler:New(AceComm,
+						"_RegisterComm",
+						"UnregisterComm",
+						"UnregisterAllComm")
+end
+
+function AceComm.callbacks:OnUsed(target, prefix)
 	AceComm.multipart_origprefixes[prefix.."\001"] = prefix
 	AceComm.multipart_reassemblers[prefix.."\001"] = "OnReceiveMultipartFirst"
 	
@@ -199,7 +210,7 @@ function AceComm:OnPrefixUsed(prefix)
 	AceComm.multipart_reassemblers[prefix.."\003"] = "OnReceiveMultipartLast"
 end
 
-function AceComm:OnPrefixUnused(prefix)
+function AceComm.callbacks:OnUnused(target, prefix)
 	AceComm.multipart_origprefixes[prefix.."\001"] = nil
 	AceComm.multipart_reassemblers[prefix.."\001"] = nil
 	
@@ -209,22 +220,6 @@ function AceComm:OnPrefixUnused(prefix)
 	AceComm.multipart_origprefixes[prefix.."\003"] = nil
 	AceComm.multipart_reassemblers[prefix.."\003"] = nil
 end
-
-
-if not AceComm.callbacks then
-	-- ensure that 'prefix to watch' table is consistent with registered
-	-- callbacks
-	AceComm.__prefixes = {}
-
-	AceComm.callbacks = CallbackHandler:New(AceComm,
-						"_RegisterComm",
-						"UnregisterComm",
-						"UnregisterAllComm",	
-						-- HACKJOB to avoid ACE-80:
-						function(...) AceComm.OnPrefixUsed(...) end,
-						function(...) AceComm.OnPrefixUnused(...) end)
-end
-
 
 ----------------------------------------
 -- Event driver

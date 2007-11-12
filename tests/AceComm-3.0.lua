@@ -111,7 +111,7 @@ if not NOCTL then
 		end
 		if t>midpos and not sampledmid then
 			sampledmid=true
-			assert(#received > MSGS*1.33 and #received < MSGS*1.5, #received)	-- would be around 1 if we sent the same amount of data in each message, but we send less around the start
+			assert(#received > MSGS*1.33 and #received < MSGS*1.5, dump(#received, MSGS*1.33, MSGS*1.5))	-- would be around 1 if we sent the same amount of data in each message, but we send less around the start
 		end
 		if t>midpos and t<latepos then
 			-- prefix2 should have slightly less data transferred since the prefix name itself is longer and uses more bandwidth compared to useful data

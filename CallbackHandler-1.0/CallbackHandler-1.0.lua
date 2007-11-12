@@ -26,10 +26,10 @@ end
 --   RegisterName      - name of the callback registration API, default "RegisterCallback"
 --   UnregisterName    - name of the callback unregistration API, default "UnregisterCallback"
 --   UnregisterAllName - name of the API to unregister all callbacks, default "UnregisterAllCallbacks". false == don't publish this API.
---   OnUsed            - optional function to be called with params (target, eventname) when the first callback is added to an event
---   OnUnused          - optional function to be called with params (target, eventname) when the last callback is removed from an event
 
 function CallbackHandler:New(target, RegisterName, UnregisterName, UnregisterAllName, OnUsed, OnUnused)
+	-- TODO: Remove this after beta has gone out
+	assert(not OnUsed and not OnUnused, "ACE-80: OnUsed/OnUnused are deprecated. Callbacks are now done to registry.OnUsed and registry.OnUnused")
 
 	RegisterName = RegisterName or "RegisterCallback"
 	UnregisterName = UnregisterName or "UnregisterCallback"
@@ -38,7 +38,7 @@ function CallbackHandler:New(target, RegisterName, UnregisterName, UnregisterAll
 	end
 
 	-- we declare all objects and exported APIs inside this closure to quickly gain access 
-	-- to e.g. function names, OnUsed callback, "target" parameter, etc
+	-- to e.g. function names, the "target" parameter, etc
 
 
 	-- Create the registry object
@@ -130,8 +130,8 @@ function CallbackHandler:New(target, RegisterName, UnregisterName, UnregisterAll
 		end
 		
 		-- fire OnUsed callback?
-		if OnUsed and first then		
-			OnUsed(target, eventname)
+		if registry.OnUsed and first then		
+			registry.OnUsed(registry, target, eventname)
 		end
 		
 	end
@@ -147,8 +147,8 @@ function CallbackHandler:New(target, RegisterName, UnregisterName, UnregisterAll
 		if rawget(events, eventname) and events[eventname][self] then
 			events[eventname][self] = nil
 			-- Fire OnUnused callback?
-			if OnUnused and not next(events[eventname]) then
-				OnUnused(target, eventname)
+			if registry.OnUnused and not next(events[eventname]) then
+				registry.OnUnused(registry, target, eventname)
 			end
 		end
 		if registry.insertQueue and rawget(registry.insertQueue, eventname) and registry.insertQueue[eventname][self] then
@@ -180,8 +180,8 @@ function CallbackHandler:New(target, RegisterName, UnregisterName, UnregisterAll
 					if callbacks[self] then
 						callbacks[self] = nil
 						-- Fire OnUnused callback?
-						if OnUnused and not next(callbacks) then
-							OnUnused(target, eventname)
+						if registry.OnUnused and not next(callbacks) then
+							registry.OnUnused(registry, target, eventname)
 						end
 					end
 				end

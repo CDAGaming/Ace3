@@ -9,7 +9,7 @@ local CH = assert(LibStub("CallbackHandler-1.0"))
 -- test default names
 do
 	local test = {}
-	CH:New(test, nil, nil, nil, OnUsed, OnUnused)
+	CH:New(test, nil, nil, nil)
 
 	assert(test.RegisterCallback)
 	assert(test.UnregisterCallback)
@@ -21,7 +21,7 @@ end
 -- test custom names
 do
 	local test = {}
-	CH:New(test, "Reg", "Unreg", "UnregAll", OnUsed, OnUnused)
+	CH:New(test, "Reg", "Unreg", "UnregAll")
 
 	assert(test.Reg)
 	assert(test.Unreg)
@@ -33,7 +33,7 @@ end
 -- test with unregall==false
 do
 	local test = {}
-	CH:New(test, "Reg", "Unreg", false, OnUsed, OnUnused)
+	CH:New(test, "Reg", "Unreg", false)
 
 	assert(test.Reg)
 	assert(test.Unreg)
@@ -48,22 +48,24 @@ do
 
 	local n=0
 	
+	local reg = CH:New(test, "Reg", "Unreg", "UnregAll")
+	
 	local lastOnUsed
-	local function OnUsed(self, event)
-		assert(self==test)
+	function reg:OnUsed(target, event)
+		assert(self==reg)
+		assert(target==test)
 		lastOnUsed=event
 		n=n+1
 	end
 	
 	local lastOnUnused
-	local function OnUnused(self, event)
-		assert(self==test)
+	function reg:OnUnused(target, event)
+		assert(self==reg)
+		assert(target==test)
 		lastOnUnused=event
 		n=n+1
 	end
-		
-
-	local reg = CH:New(test, "Reg", "Unreg", "UnregAll", OnUsed, OnUnused)
+	
 	
 	local function func() end
 	
