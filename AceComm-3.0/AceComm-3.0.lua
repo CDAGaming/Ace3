@@ -1,99 +1,260 @@
 --[[ $Id$ ]]
 
---[[ AceComm-3.0 proof-of-concept
+--[[ AceComm-3.0
+
+TODO: Time out old data rotting around from dead senders? Not a HUGE deal since the number of possible sender names is somewhat limited.
+
 ]]
 
-local MAJOR, MINOR = "AceComm-3.0", 0
+local MAJOR, MINOR = "AceComm-3.0", 2
 	
-local AceComm, oldminor = LibStub:NewLibrary(MAJOR, MINOR)
+local AceComm,oldminor = LibStub:NewLibrary(MAJOR, MINOR)
 
 if not AceComm then return end
 
 local CallbackHandler = LibStub:GetLibrary("CallbackHandler-1.0")
+local CTL = assert(ChatThrottleLib, "AceComm-3.0 requires ChatThrottleLib")
 
-local CTL = ChatThrottleLib
-local single_prio = "NORMAL"
-local multipart_prio = "BULK"
-
-local pairs = pairs
-local ceil = math.ceil
 local strsub = string.sub
+local strfind = string.find
+local format = string.format
+local tinsert = table.insert
+local tconcat = table.concat
 
-AceComm.frame = AceComm.frame or CreateFrame("Frame", "AceComm30Frame")
 AceComm.embeds = AceComm.embeds or {}
-AceComm.__incomplete_data = AceComm.__incomplete_data or {}
-AceComm.__prefixes = AceComm.__prefixes or {}
-AceComm.__original_prefix = AceComm.__original_prefix or {}
+
+AceComm.multipart_origprefixes = multipart_origprefixes or {} -- e.g. "Prefix\001"="Prefix", "Prefix\002"="Prefix"
+AceComm.multipart_reassemblers = multipart_reassemblers or {} -- e.g. "Prefix\001"="OnReceiveMultipartFirst"
+
+-- the multipart message spool: indexed by a combination of sender+distribution+
+AceComm.multipart_spool = AceComm.multipart_spool or {} 
+
+
+-----------------------------------------------------------------------
+-- API RegisterComm(prefix, method)
+-- - prefix       (string) A printable character (\032-\255) classification of the message (typically AddonName or AddonNameEvent)
+-- - method       Callback to call on message reception: Function reference, or method name (string) to call on self. Defaults to "OnCommReceived"
+
+function AceComm:RegisterComm(prefix, method)
+	if method == nil then
+		method = "OnCommReceived"
+	end
+
+	return AceComm._RegisterComm(self, prefix, method)	-- created by CallbackHandler
+end
+
+
+-----------------------------------------------------------------------
+-- API SendCommMessage(prefix, text, distribution, target, prio)
+-- - prefix       (string) A printable character (\032-\255) classification of the message (typically AddonName or AddonNameEvent)
+-- - text         (string) Data to send, nils (\000) not allowed. Any length.
+-- - distribution (string) Addon channel, e.g. "RAID", "GUILD", etc; see SendAddonMessage API
+-- - target       (string) Destination for some distributions; see SendAddonMessage API
+-- - prio         (string) OPTIONAL: ChatThrottleLib priority, "BULK", "NORMAL" or "ALERT". Defaults to "NORMAL".
+
+function AceComm:SendCommMessage(prefix, text, distribution, target, prio)
+	prio = prio or "NORMAL"	-- pasta's reference implementation had different prio for singlepart and multipart, but that's a very bad idea since that can easily lead to out-of-sequence delivery!
+	if not( type(prefix)=="string" and
+			type(text)=="string" and
+			type(distribution)=="string" and
+			(target==nil or type(target)=="string") and
+			(prio=="BULK" or prio=="NORMAL" or prio=="ALERT") 
+		) then
+		error('Usage: SendCommMessage(addon, "prefix", "text", "distribution"[, "target"[, "prio"]])', 2)
+	end
+	
+	if strfind(prefix, "[\001-\003]") then
+		error("SendCommMessage: Characters \\001--\\003) in prefix are reserved for AceComm metadata", 2)
+	end
+
+
+	local textlen = #text
+	local maxtextlen = 254 - #prefix	-- 254 is the max length of prefix + text that can be sent in one message
+	local queueName = prefix..distribution..(target or "")
+
+	if textlen <= maxtextlen then
+		-- fits all in one message
+		CTL:SendAddonMessage(prio or "NORMAL", prefix, text, distribution, target, queueName)
+	else
+		maxtextlen = maxtextlen - 1	-- 1 extra byte for part indicator in suffix
+
+		-- first part
+		local chunk = strsub(text, 1, maxtextlen)
+		CTL:SendAddonMessage(prio or "NORMAL", prefix.."\001", chunk, distribution, target, queueName)
+
+		-- continuation
+		local pos = 1+maxtextlen
+		local prefix2 = prefix.."\002"
+
+		while pos+maxtextlen <= textlen do
+			chunk = strsub(text, pos, pos+maxtextlen-1)
+			CTL:SendAddonMessage(prio or "NORMAL", prefix2, chunk, distribution, target, queueName)
+			pos = pos + maxtextlen
+		end
+		
+		-- final part
+		chunk = strsub(text, pos)
+		CTL:SendAddonMessage(prio or "NORMAL", prefix.."\003", chunk, distribution, target, queueName)
+	end
+end
+
 
 ----------------------------------------
--- abbreviated prefix metadata for quick lookup in CHAT_MSG_ADDON
+-- Message receiving
 ----------------------------------------
 
-local message_types = {
-	["\001A"] = "multipart_begin",
-	["\001B"] = "multipart_continue",
-	["\001C"] = "multipart_end",
-}
+do
+	local compost = setmetatable({}, {__mode=="k"})
+	local function new()
+		local t = next(compost)
+		if t then 
+			compost[t]=nil
+			for i=#t,3,-1 do	-- faster than pairs loop. don't even nil out 1/2 since they'll be overwritten
+				t[i]=nil
+			end
+			return t
+		end
+		
+		return {}
+	end
+	
+	local function lostdatawarning(prefix,sender,where)
+		DEFAULT_CHAT_FRAME:AddMessage(MAJOR..": Warning: lost network data regarding '"..tostring(prefix).."' from '"..tostring(sender).."' (in "..where..")")
+	end
 
-local message_type_rev = {
-	["multipart_begin"] = "\001A",
-	["multipart_continue"] = "\001B",
-	["multipart_end"] = "\001C",
-}
+	function AceComm:OnReceiveMultipartFirst(prefix, message, distribution, sender)
+		local key = prefix.."\t"..distribution.."\t"..sender	-- a unique stream is defined by the prefix + distribution + sender
+		local spool = AceComm.multipart_spool
+		
+		if spool[key] then 
+			lostdatawarning(prefix,sender,"First")
+			-- continue and overwrite
+		end
+		
+		spool[key] = message	-- plain string for now
+	end
+
+	function AceComm:OnReceiveMultipartNext(prefix, message, distribution, sender)
+		local key = prefix.."\t"..distribution.."\t"..sender	-- a unique stream is defined by the prefix + distribution + sender
+		local spool = AceComm.multipart_spool
+		local olddata = spool[key]
+		
+		if not olddata then
+			lostdatawarning(prefix,sender,"Next")
+			return
+		end
+
+		if type(olddata)~="table" then
+			-- ... but what we have is not a table. So make it one. (Pull a composted one if available)
+			local t = new()
+			t[1] = olddata		-- add old data as first string
+			t[2] = message      -- and new message as second string
+			spool[key] = t		-- and put the table in the spool instead of the old string
+		else
+			tinsert(olddata, message)
+		end
+	end
+
+	function AceComm:OnReceiveMultipartLast(prefix, message, distribution, sender)
+		local key = prefix.."\t"..distribution.."\t"..sender	-- a unique stream is defined by the prefix + distribution + sender
+		local spool = AceComm.multipart_spool
+		local olddata = spool[key]
+		
+		if not olddata then
+			lostdatawarning(prefix,sender,"End")
+			return
+		end
+
+		spool[key] = nil
+		
+		if type(olddata)=="table" then
+			-- if we've received a "next", the spooled data will be a table for rapid & garbage-free tconcat
+			tinsert(olddata, message)
+			AceComm.callbacks:Fire(prefix, tconcat(olddata, ""), distribution, sender)
+			compost[olddata]=true
+		else
+			-- if we've only received a "first", the spooled data will still only be a string
+			AceComm.callbacks:Fire(prefix, olddata..message, distribution, sender)
+		end
+	end
+end
+
+
+
+
 
 
 ----------------------------------------
--- Callbacks
+-- Embed CallbackHandler
 ----------------------------------------
+
+function AceComm:OnPrefixUsed(prefix)
+	AceComm.multipart_origprefixes[prefix.."\001"] = prefix
+	AceComm.multipart_reassemblers[prefix.."\001"] = "OnReceiveMultipartFirst"
+	
+	AceComm.multipart_origprefixes[prefix.."\002"] = prefix
+	AceComm.multipart_reassemblers[prefix.."\002"] = "OnReceiveMultipartNext"
+	
+	AceComm.multipart_origprefixes[prefix.."\003"] = prefix
+	AceComm.multipart_reassemblers[prefix.."\003"] = "OnReceiveMultipartLast"
+end
+
+function AceComm:OnPrefixUnused(prefix)
+	AceComm.multipart_origprefixes[prefix.."\001"] = nil
+	AceComm.multipart_reassemblers[prefix.."\001"] = nil
+	
+	AceComm.multipart_origprefixes[prefix.."\002"] = nil
+	AceComm.multipart_reassemblers[prefix.."\002"] = nil
+	
+	AceComm.multipart_origprefixes[prefix.."\003"] = nil
+	AceComm.multipart_reassemblers[prefix.."\003"] = nil
+end
+
 
 if not AceComm.callbacks then
 	-- ensure that 'prefix to watch' table is consistent with registered
 	-- callbacks
 	AceComm.__prefixes = {}
 
-	function AceComm:PrefixUsed(prefix)
-		local prefixes = self.__prefixes
-		local original_prefix = self.__original_prefix
-		prefixes[prefix] = true
-		for k, v in pairs(message_types) do
-			local p = prefix .. k
-			prefixes[p] = v
-			original_prefix[p] = prefix
-		end
-	end
-
-	function AceComm:PrefixUnused(prefix)
-		local prefixes = self.__prefixes
-		local original_prefix = self.__original_prefix
-		prefixes[prefix] = nil
-		for k, v in pairs(message_types) do
-			local p = prefix .. k
-			prefixes[p] = nil
-			original_prefix[p] = nil
-		end
-	end
-
 	AceComm.callbacks = CallbackHandler:New(AceComm,
 						"_RegisterComm",
 						"UnregisterComm",
-						"UnregisterAllComm",
-						AceComm.PrefixUsed,
-						AceComm.PrefixUnused)
-
-	AceComm.MessageCompleted = AceComm.callbacks.Fire
-end
-
-function AceComm.RegisterComm(addon, prefix, method)
-	if method == nil then
-		method = "OnCommReceived"
-	end
-
-	return AceComm._RegisterComm(addon, prefix, method)
+						"UnregisterAllComm",	
+						-- HACKJOB to avoid ACE-80:
+						function(...) AceComm.OnPrefixUsed(...) end,
+						function(...) AceComm.OnPrefixUnused(...) end)
 end
 
 
 ----------------------------------------
--- Mixins
+-- Event driver
+----------------------------------------
+
+local function OnEvent(this, event, ...)
+	if event == "CHAT_MSG_ADDON" then
+		local prefix,message,distribution,sender = ...
+		local reassemblername = AceComm.multipart_reassemblers[prefix]
+		if reassemblername then
+			-- multipart: reassemble
+			local aceCommReassemblerFunc = AceComm[reassemblername]
+			aceCommReassemblerFunc(AceComm,AceComm.multipart_origprefixes[prefix],message,distribution,sender)
+		else
+			-- single part: fire it off immediately
+			AceComm.callbacks:Fire(prefix, message, distribution, sender)
+		end
+	else
+		assert(false, "Received "..tostring(event).." event?!")
+	end
+end
+
+AceComm.frame = AceComm.frame or CreateFrame("Frame", "AceComm30Frame")
+AceComm.frame:SetScript("OnEvent", OnEvent)
+AceComm.frame:UnregisterAllEvents()
+AceComm.frame:RegisterEvent("CHAT_MSG_ADDON")
+
+
+----------------------------------------
+-- Base library stuff
 ----------------------------------------
 
 local mixins = {
@@ -113,138 +274,6 @@ end
 function AceComm:OnEmbedDisable(target)
 	target:UnregisterAllComm()
 end
-
-
-----------------------------------------
--- Message sending
-----------------------------------------
-
--- 254 is the max length of prefix + text that can be sent in one message
-function AceComm.SendCommMessage(addon, prefix, text, distribution, target)
-	assert(type(prefix) == "string",
-	       "Usage: SendCommMessage(prefix, text, distribution [, target]): 'prefix' - string expected.")
-	assert(type(text) == "string",
-	       "Usage: SendCommMessage(prefix, text, distribution [, target]): 'text' - string expected.")
-	assert(type(distribution) == "string",
-	       "Usage: SendCommMessage(prefix, text, distribution [, target]): 'distribution' - string expected.")
-	if distribution == "WHISPER" then
-		assert(type(target) == "string",
-		       "Usage: SendCommMessage(prefix, text, distribution [, target]): 'target' - string expected when distribution is 'WHISPER'.")
-	end
-
-	local prefix_len = #prefix
-	local text_len = #text
-	local meta_len = 2
-	local chunk_size = 253 - prefix_len - meta_len
-	
-	if text_len < chunk_size + meta_len then
-		-- fits all in one message
-		CTL:SendAddonMessage(single_prio, prefix, text, distribution,
-				     target)
-	else
-		local chunks = ceil(text_len / chunk_size)
-		-- string offsets
-		local chunk_begin = 1
-		local chunk_end = 1 + chunk_size
-		-- first part
-		local real_prefix = prefix .. message_type_rev["multipart_begin"]
-		local chunk = strsub(text, chunk_begin, chunk_end)
-		chunk_begin = chunk_end + 1
-		chunk_end = chunk_begin + chunk_size
-		CTL:SendAddonMessage(multipart_prio, real_prefix, chunk,
-				     distribution, target)
-		
-		-- continuation
-		real_prefix = prefix .. message_type_rev["multipart_continue"]
-		for i = 2, chunks - 1, 1 do
-			chunk = strsub(text, chunk_begin, chunk_end)
-			chunk_begin = chunk_end + 1
-			chunk_end = chunk_begin + chunk_size
-			CTL:SendAddonMessage(multipart_prio, real_prefix, chunk,
-					     distribution, target)
-		end
-		
-		-- end
-		real_prefix = prefix .. message_type_rev["multipart_end"]
-		chunk = strsub(text, chunk_begin, chunk_end)
-		CTL:SendAddonMessage(multipart_prio, real_prefix, chunk,
-				     distribution, target)
-	end
-end
-
-
-----------------------------------------
--- Message receiving
-----------------------------------------
-
-function AceComm:ReceiveMultipart(prefix, message, distribution, sender,
-				 messagetype)
-	-- a unique stream is defined by the prefix + distribution + sender
-	local data_key = ("%s\t%s\t%s"):format(prefix, distribution, sender)
-	local incomplete_data = self.__incomplete_data
-	local data = incomplete_data[data_key]
-
-	if messagetype == "multipart_begin" then
-		-- Begin multipart message
-		data = message
-		incomplete_data[data_key] = data
-	elseif messagetype == "multipart_continue" then
-		-- Continue multipart message
-		if data == nil then
-			return -- out of sequence, ignore
-		end
-		data = data .. message
-		incomplete_data[data_key] = data
-	elseif messagetype == "multipart_end" then
-		-- End multipart message
-		if data == nil then
-			return -- out of sequence, ignore
-		end
-		data = data .. message
-		self:MessageCompleted(prefix, data, distribution, sender)
-		incomplete_data[data_key] = nil
-	else
-		-- This can only be reached if self.__prefixes contains bad
-		-- data.
-		error("AceComm:ReceiveMultipart unknown messagetype.")
-	end
-end
-
-
-function AceComm:CHAT_MSG_ADDON(prefix, message, distribution, sender)
-	-- ignore messages from ourself
-	--if sender == player_name then return end
-
-	--local prefix, layer, options =
-	--	strmatch(prefix, "^([^\001-\031]+)([\001-\031]?)(.*)")
-
-	local messagetype = self.__prefixes[prefix]
-
-	if not messagetype then
-		-- not a prefix registered with us
-		return
-	elseif messagetype == true then
-		-- single-part message
-		self:MessageCompleted(prefix, message, distribution, sender)
-	else
-		-- multi-part message
-		self:ReceiveMultipart(self.__original_prefix[prefix], message,
-				      distribution, sender, messagetype)
-	end
-end
-
--- Event Handling
-function AceComm.OnEvent(this, event, ...)
-	if event == "CHAT_MSG_ADDON" then
-		AceComm:CHAT_MSG_ADDON(...)
-	else
-		error("Something strange happened to AceComm's event frame.")
-	end
-end
-
-AceComm.frame:SetScript("OnEvent", AceComm.OnEvent)
-AceComm.frame:UnregisterAllEvents()
-AceComm.frame:RegisterEvent("CHAT_MSG_ADDON")
 
 -- Update embeds
 for target, v in pairs(AceComm.embeds) do
