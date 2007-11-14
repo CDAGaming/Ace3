@@ -38,17 +38,9 @@ do
 		this.obj:Fire("OnLeave")
 	end
 	
-	local function UglyScrollLeft(this)
-		this:HighlightText(0,1);
-		this:Insert(" "..strsub(this:GetText(),1,1));
-		this:HighlightText(0,1);
-		this:Insert("");
-		this:SetScript("OnUpdate", nil);
-	end
-	
 	local function SetText(self, text)
 		self.editbox:SetText(text)
-		self.editbox:SetScript("OnUpdate",UglyScrollLeft)
+		self.editbox:SetCursorPosition(0)
 	end
 	
 	local function SetValue(self, value)
@@ -56,7 +48,7 @@ do
 			self.editbox:SetText(self.list[value] or "")
 		end
 		self.editbox.value = value
-		self.editbox:SetScript("OnUpdate",UglyScrollLeft)
+		self.editbox:SetCursorPosition(0)
 	end
 	
 	local function SetList(self, list)

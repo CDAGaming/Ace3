@@ -93,10 +93,10 @@ do
 		if viewheight < height then
 			self.scrollbar:Hide()
 			self.scrollbar:SetValue(0)
-			self.scrollframe:SetPoint("BOTTOMRIGHT",self.frame,"BOTTOMRIGHT",0,0)
+			--self.scrollframe:SetPoint("BOTTOMRIGHT",self.frame,"BOTTOMRIGHT",0,0)
 		else
 			self.scrollbar:Show()
-			self.scrollframe:SetPoint("BOTTOMRIGHT",self.frame,"BOTTOMRIGHT",-16,0)
+			--self.scrollframe:SetPoint("BOTTOMRIGHT",self.frame,"BOTTOMRIGHT",-16,0)
 			local value = (offset / (viewheight - height) * 1000)
 			if value > 1000 then value = 1000 end
 			self.scrollbar:SetValue(value)
@@ -183,7 +183,7 @@ do
 		
 		scrollframe:SetScrollChild(content)
 		scrollframe:SetPoint("TOPLEFT",frame,"TOPLEFT",0,0)
-		scrollframe:SetPoint("BOTTOMRIGHT",frame,"BOTTOMRIGHT",0,0)
+		scrollframe:SetPoint("BOTTOMRIGHT",self.frame,"BOTTOMRIGHT",-16,0)
 		scrollframe:EnableMouseWheel(true)
 		scrollframe:SetScript("OnMouseWheel", OnMouseWheel)
 		scrollframe:SetScript("OnSizeChanged", OnSizeChanged)
