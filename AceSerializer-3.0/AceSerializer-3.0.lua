@@ -11,35 +11,41 @@ local gsub=string.gsub
 local gmatch=string.gmatch
 local pcall=pcall
 
+-----------------------------------------------------------------------
+-- Serialization functions
 
 local function SerializeStringHelper(ch)	-- Used by SerializeValue for strings
+	-- We use \126 ("~") as an escape character for all nonprints plus a few more
 	local n = strbyte(ch)
 	if n<=32 then 			-- nonprint + space
 		return "\126"..strchar(n+64)
-	elseif n==94 then		-- unit separator
+	elseif n==94 then		-- value separator 
 		return "\126\125"
-	elseif n==126 then		-- our escape character
+	elseif n==126 then		-- our own escape character
 		return "\126\124"
-	elseif n==127 then		-- nonprint (delete)
+	elseif n==127 then		-- nonprint (DEL)
 		return "\126\123"
 	else
-		assert(false)
+		assert(false)	-- can't be reached if caller uses a sane regex
 	end
 end
 
-local function SerializeValue(v, res, nres)
 
+local function SerializeValue(v, res, nres)
+	-- We use "^" as a value separator, followed by one byte for type indicator
 	local t=type(v)
 	
-	if t=="string" then
+	if t=="string" then		-- ^S = string (escaped to remove nonprints, "^"s, etc)
 		res[nres+1] = "^S"
 		res[nres+2] = gsub(v,"[%c \94\126\127]", SerializeStringHelper)
 		nres=nres+2
-	elseif t=="number" then
+	
+	elseif t=="number" then	-- ^N = number (just tostring()ed)
 		res[nres+1] = "^N"
-		res[nres+2] = tonumber(v)
+		res[nres+2] = tostring(v)
 		nres=nres+2
-	elseif t=="table" then
+	
+	elseif t=="table" then	-- ^T...^t = table (list of key,value pairs)
 		nres=nres+1
 		res[nres] = "^T"
 		for k,v in pairs(v) do
@@ -48,16 +54,19 @@ local function SerializeValue(v, res, nres)
 		end
 		nres=nres+1
 		res[nres] = "^t"
-	elseif t=="boolean" then
+	
+	elseif t=="boolean" then	-- ^B = true, ^b = false
 		nres=nres+1
 		if v then
 			res[nres] = "^B"	-- true
 		else
 			res[nres] = "^b"	-- false
 		end
-	elseif t=="nil" then
+	
+	elseif t=="nil" then		-- ^Z = nil (zero, "N" was taken :P)
 		nres=nres+1
 		res[nres] = "^Z"
+	
 	else
 		error(MAJOR..": Cannot serialize a value of type '"..t.."'")	-- can't produce error on right level, this is wildly recursive
 	end
@@ -90,6 +99,10 @@ function AceSerializer:Serialize(...)
 end
 
 
+-----------------------------------------------------------------------
+-- Deserialization functions
+
+
 local function DeserializeStringHelper(escape)
 	if escape<"~\123" then
 		return strchar(strbyte(escape,2,2)-64)
@@ -104,6 +117,15 @@ local function DeserializeStringHelper(escape)
 	return ""
 end
 
+-- DeserializeValue: worker function for :Deserialize()
+-- It works in two modes:
+--   Main (top-level) mode: Deserialize a list of values and return them all
+--   Recursive (table) mode: Deserialize only a single value (_may_ of course be another table with lots of subvalues in it)
+--
+-- The function _always_ works recursively due to having to build a list of values to return
+--
+-- Callers are expected to pcall(DeserializeValue) to trap errors
+
 local function DeserializeValue(iter,single,ctl,data)
 
 	if not single then
@@ -115,6 +137,7 @@ local function DeserializeValue(iter,single,ctl,data)
 	end	
 
 	if ctl=="^^" then
+		-- ignore extraneous data
 		return
 	end
 
@@ -141,8 +164,14 @@ local function DeserializeValue(iter,single,ctl,data)
 			ctl,data = iter()
 			if ctl=="^t" then break end	-- ignore ^t's data
 			k = DeserializeValue(iter,true,ctl,data)
+			if not k then 
+				error("Invalid AceSerializer table format (no table end marker)")
+			end
 			ctl,data = iter()
 			v = DeserializeValue(iter,true,ctl,data)
+			if not v then
+				error("Invalid AceSerializer table format (no table end marker)")
+			end
 			res[k]=v
 		end
 	else
@@ -160,9 +189,9 @@ end
 -----------------------------------------------------------------------
 -- API Deserialize(str)
 -- 
--- Takes serialized data, ignoring all control characters and whitespace.
+-- Accepts serialized data, ignoring all control characters and whitespace.
 --
--- Returns true followed by a list of values OR false followed by a message
+-- Returns true followed by a list of values, OR false followed by a message
 --
 
 function AceSerializer:Deserialize(str)

@@ -110,14 +110,14 @@ end
 x(AceSer:Deserialize("^1^^"))	-- empty data -> ok
 
 -- Simple datatypes:
-local ok, r1,r2,r3 = AceSer:Deserialize("^1^Sone^Stwo^^")	-- two strings -> ok
-assert(ok and r1=="one" and r2=="two" and r3==nil, dump(ok,r1,r2,r3))
+local ok, r1,r2,r3 = assert(AceSer:Deserialize("^1^Sone^Stwo^^"))	-- two strings -> ok
+assert(r1=="one" and r2=="two" and r3==nil, dump(ok,r1,r2,r3))
 
-local ok, r1,r2,r3 = AceSer:Deserialize("^1^B^b^^")	-- true, false -> ok
-assert(ok and r1==true and r2==false and r3==nil)
+local ok, r1,r2,r3 = assert(AceSer:Deserialize("^1^B^b^^"))	-- true, false -> ok
+assert(r1==true and r2==false and r3==nil)
 
-local ok, r1,r2,r3 = AceSer:Deserialize("^1^Z^N5^^")	-- nil, 5 -> ok
-assert(ok and r1==nil and r2==5 and r3==nil, dump(ok,r1,r2,r3))
+local ok, r1,r2,r3 = assert(AceSer:Deserialize("^1^Z^N5^^"))	-- nil, 5 -> ok
+assert(r1==nil and r2==5 and r3==nil, dump(ok,r1,r2,r3))
 
 local ok, r1,r2,r3 = AceSer:Deserialize("^1^Nblurgh^^") -- invalid number -> error
 assert(not ok and strmatch(r1,"Invalid serialized number"), r1)
@@ -141,13 +141,35 @@ assert(k.theindex=="isatable")
 assert(v.thevalue==2)
 assert(r2=="end")
 
+-- Table error testing:
+local ok,res = AceSer:Deserialize("^1^T")
+assert(not ok and strmatch(res, "misses AceSerializer terminator"))
+
+local ok,res = AceSer:Deserialize("^1^T^^")
+assert(not ok and strmatch(res, "no table end marker"))
+
+local ok,res = AceSer:Deserialize("^1^T^Sa")
+assert(not ok and strmatch(res, "misses AceSerializer terminator"))
+
+local ok,res = AceSer:Deserialize("^1^T^Sa^^")
+assert(not ok and strmatch(res, "no table end marker"))
+
+local ok,res = AceSer:Deserialize("^1^T^Sa^Sb")
+assert(not ok and strmatch(res, "misses AceSerializer terminator"))
+
+local ok,res = AceSer:Deserialize("^1^T^Sa^Sb^^")
+assert(not ok and strmatch(res, "no table end marker"))
+
+assert(AceSer:Deserialize("^1^T^Sa^Sb^t^^"))
+
+
 
 -----------------------------------------------------------------------
 -- Wild combos
 
 local ser = AceSer:Serialize(
 	"firstval",
-	2,
+	123e-17,
 	true,
 	false,
 	nil,
@@ -163,10 +185,9 @@ local ser = AceSer:Serialize(
 	"\001\032\127^~fin!^^"
 )
 
-local ok,r1,r2,r3,r4,r5,r6,r7,r8 = AceSer:Deserialize(ser)
-assert(ok, r1)
+local ok,r1,r2,r3,r4,r5,r6,r7,r8 = assert(AceSer:Deserialize(ser))
 assert(r1=="firstval")
-assert(r2==2)
+assert(r2==1.23e-15)
 assert(r3==true)
 assert(r4==false)
 assert(r5==nil)
