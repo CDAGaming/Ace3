@@ -926,7 +926,9 @@ function lib:FeedGroup(appName,options,container,rootframe,path)
 	
 	container:SetLayout("flow")
 	local scroll
-	if (not hasChildGroups) or inline then
+	
+	--Add a scrollframe if we are not going to add a group control, this is the inverse of the conditions for that later on
+	if (not (hasChildGroups and not inline)) or (grouptype ~= "tab" and grouptype ~= "select" and parenttype == "tree") then
 		if container.type ~= "InlineGroup" then
 			scroll = gui:Create("ScrollFrame")
 			scroll:SetLayout("flow")
@@ -938,7 +940,6 @@ function lib:FeedGroup(appName,options,container,rootframe,path)
 		end
 	end
 	
-
 	FeedOptions(appName,options,container,rootframe,path,group,nil,groupDisabled)
 	
 	if scroll then
