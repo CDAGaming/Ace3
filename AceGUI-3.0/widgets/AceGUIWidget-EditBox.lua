@@ -56,14 +56,6 @@ do
 		end
 	end
 	
-	local function UglyScrollLeft(this)
-	  this:HighlightText(0,1);
-	  this:Insert(" "..strsub(this:GetText(),1,1));
-	  this:HighlightText(0,1);
-	  this:Insert("");
-	  this:SetScript("OnUpdate", nil);
-	end
-	
 	local function EditBox_OnTextChanged(this)
 		local self = this.obj
 		local value = this:GetText()
@@ -88,7 +80,7 @@ do
 	local function SetText(self, text)
 		self.lasttext = text
 		self.editbox:SetText(text)
-		self.editbox:SetScript("OnUpdate", UglyScrollLeft);
+		self.editbox:SetCursorPosition(0)
 	end
 	
 	local function SetWidth(self, width)

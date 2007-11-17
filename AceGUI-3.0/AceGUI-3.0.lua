@@ -159,15 +159,15 @@ do
 		if self.LayoutPaused then
 			return
 		end
-		for k, v in ipairs(self.children) do
-			safecall(v.PerformLayout, v)
-		end
+--		for k, v in ipairs(self.children) do
+--			safecall(v.PerformLayout, v)
+--		end
 		safecall(self.LayoutFunc,self.content, self.children)
 	end
 	
 	--call this function to layout, makes sure layed out objects get a frame to get sizes etc
 	WidgetContainerBase.DoLayout = function(self)
-		--self:PerformLayout(true)
+		self:PerformLayout(true)
 		self.frame:SetScript("OnUpdate", LayoutOnUpdate)
 	end
 	
