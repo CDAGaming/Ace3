@@ -122,7 +122,8 @@ do
 	WidgetBase.SetParent = function(self, parent)
 		local frame = self.frame
 		frame:SetParent(nil)
-		frame:SetParent(parent)
+		frame:SetParent(parent.content)
+		self.parent = parent
 		fixlevels(frame,frame:GetChildren())
 	end
 	
@@ -173,7 +174,7 @@ do
 	
 	WidgetContainerBase.AddChild = function(self, child)
 		tinsert(self.children,child)
-		child:SetParent(self.content)
+		child:SetParent(self)
 		child.frame:Show()
 		self:DoLayout()
 	end

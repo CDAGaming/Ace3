@@ -59,6 +59,9 @@ do
 
 	local function LayoutFinished(self, width, height)
 		self.frame:SetHeight((height or 0) + 40)
+		if self.parent then
+			self.parent:DoLayout()
+		end
 	end
 	
 	
