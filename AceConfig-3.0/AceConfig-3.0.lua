@@ -8,7 +8,7 @@ Also automatically adds "config", "enable" and "disable" commands to options tab
 
 ]]
 
-local MAJOR, MINOR = "AceConfig-3.0", 0
+local MAJOR, MINOR = "AceConfig-3.0", 1
 local lib = LibStub:NewLibrary(MAJOR, MINOR)
 
 if not lib then return end
@@ -19,27 +19,19 @@ local cfgcmd = LibStub("AceConfigCmd-3.0")
 local cfgdlg = LibStub("AceConfigDialog-3.0")
 --TODO: local cfgdrp = LibStub("AceConfigDropdown-3.0")
 
-local con -- AceConsole, LoD
-
 
 ---------------------------------------------------------------------
 -- :RegisterOptionsTable(appName, options, slashcmd, persist)
 --
 -- - appName - (string) application name
 -- - options - table or function ref, see AceConfigRegistry
--- - slashcmd - slash command (string) or nil to not create a slash command
+-- - slashcmd - slash command (string), or nil to NOT create a slash command
 
 function lib:RegisterOptionsTable(appName, options, slashcmd)
 	local ok,msg = pcall(cfgreg.RegisterOptionsTable, self, appName, options)
 	if not ok then error(msg, 2) end
 	
 	if slashcmd then
-		if not con then
-			con = LibStub("AceConsole-3.0")
-			con.RegisterChatCommand(self, slashcmd, function(input)
-						cfgcmd.HandleCommand(self, slashcmd, appName, input)
-				end, 
-			true)
-		end
+		cfgcmd:CreateChatCommand(slashcmd, appName)
 	end
 end

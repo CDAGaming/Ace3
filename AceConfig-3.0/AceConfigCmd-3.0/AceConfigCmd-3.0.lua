@@ -4,23 +4,23 @@ AceConfigCmd-3.0
 
 Handles commandline optionstable access
 
-REQUIRES: AceConsole-3.0 (loaded on demand)
+REQUIRES: AceConsole-3.0 for command registration (loaded on demand)
 
 ]]
 
 -- TODO: handle disabled / hidden
--- TODO: implement :ShowHelp()
 -- TODO: implement handlers for all types
 -- TODO: plugin args
 
 
-local MAJOR, MINOR = "AceConfigCmd-3.0", 0
+local MAJOR, MINOR = "AceConfigCmd-3.0", 1
 local lib = LibStub:NewLibrary(MAJOR, MINOR)
 
 if not lib then return end
 
 local cfgreg = LibStub("AceConfigRegistry-3.0")
-local con = LibStub("AceConsole-3.0")
+local AceConsole -- LoD
+local AceConsoleName = "AceConsole-3.0"
 
 
 local L = setmetatable({}, {	-- TODO: replace with proper locale
@@ -28,8 +28,9 @@ local L = setmetatable({}, {	-- TODO: replace with proper locale
 })
 
 
-function lib:ShowHelp(slashcmd, options)
-	error("TODO: implement")
+
+local function print(msg)
+	(SELECTED_CHAT_FRAME or DEFAULT_CHAT_FRAME):AddMessage(msg)
 end
 
 
@@ -48,7 +49,7 @@ end
 
 local function err(info,inputpos,msg )
 	local cmdstr=" "..strsub(info.input, 1, inputpos-1)
-	error(MAJOR..": /" ..info.slashcmd ..cmdstr ..": "..(msg or "malformed options table"), 2)
+	error(MAJOR..": /" ..info[0] ..cmdstr ..": "..(msg or "malformed options table"), 2)
 end
 
 
@@ -56,9 +57,7 @@ end
 
 local function usererr(info,inputpos,msg )
 	local cmdstr=strsub(info.input, 1, inputpos-1);
-	(SELECTED_CHAT_FRAME or DEFAULT_CHAT_FRAME):AddMessage(
-	  "/" ..info.slashcmd .. " "..cmdstr ..": "..(msg or "malformed options table")
-	)
+	print("/" ..info[0] .. " "..cmdstr ..": "..(msg or "malformed options table"))
 end
 
 
@@ -95,9 +94,7 @@ local function do_final(info, inputpos, tab, methodtype, ...)
 			return
 		end
 	end
-	if info.confirm then
-		con.Print(MAJOR, "TODO: Confirm for commandline? Or not? See ACE-60")
-	end
+	-- console ignores .confirm
 	
 	callmethod(info,inputpos,tab,methodtype, ...)
 end
@@ -121,9 +118,14 @@ local function getparam(info, inputpos, tab, depth, paramname, types, errormsg)
 end
 
 
--- iterateatgs(tab) - iterate t.args and t.plugins.*
+-- iterateargs(tab) - custom iterator that iterates both t.args and t.plugins.*
+local dummytable={}
 
 local function iterateargs(tab)
+	if not tab.plugins then 
+		return pairs(tab.args) 
+	end
+	
 	local argtabkey,argtab=next(tab.plugins)
 	local v
 	
@@ -142,6 +144,17 @@ local function iterateargs(tab)
 		end
 	end
 end
+
+
+
+
+local function showhelp(info, inputpos, tab)
+	print(info.appName..": arguments to /"..info[0].." "..strsub(info.input,1,inputpos-1)..":")
+	for k,v in iterateargs(tab) do
+		print("  "..k.." - "..(v.desc or v.name or ""))
+	end
+end
+
 
 
 
@@ -184,11 +197,12 @@ local function handle(info, inputpos, tab, depth, retfalse)
 		if tab.plugins and type(tab.plugins)~="table" then err(info,inputpos) end
 		
 		-- grab next arg from input
-		local arg,nextpos = con:GetArgs(info.input, 1, inputpos)
+		local _,nextpos,arg = string.find(info.input, " *([^ ]+) *", inputpos)
 		if not arg then
-			lib:ShowHelp(tab, info.slashcmd, strsub(info.input, 1, inputpos))
+			showhelp(info, inputpos, tab)
 			return
 		end
+		nextpos=nextpos+1
 		
 		-- loop .args and try to find a key with a matching name
 		for k,v in pairs(tab.args) do
@@ -362,9 +376,9 @@ function lib:HandleCommand(slashcmd, appName, input)
 	end
 	local options = assert( optgetter("cmd", MAJOR) )
 	
-	local info = {   -- Don't try to recycle this, it gets handed off to confirmation callbacks and whatnot
+	local info = {   -- Don't try to recycle this, it gets handed off to callbacks and whatnot
 		[0] = slashcmd,
-		slashcmd = slashcmd,
+		appName = appName,
 		options = options,
 		input = input,
 		self = self,
@@ -372,4 +386,25 @@ function lib:HandleCommand(slashcmd, appName, input)
 	}
 	
 	handle(info, 1, options, 0)  -- (info, inputpos, table, depth)
+end
+
+
+
+-----------------------------------------------------------------------
+-- CreateChatCommand(slashcmd, appName)
+--
+-- Utility function to create a slash command handler.
+-- Also registers tab completion with AceTab
+-- 
+-- slashcmd (string) - the slash command WITHOUT leading slash (only used for error output)
+-- appName (string) - the application name as given to AceConfigRegistry:RegisterOptionsTable()
+
+function lib:CreateChatCommand(slashcmd, appName)
+	if not AceConsole then
+		AceConsole = LibStub(AceConsoleName)
+		AceConsole.RegisterChatCommand(self, slashcmd, function(input)
+					lib.HandleCommand(self, slashcmd, appName, input)	-- upgradable
+			end, 
+		true)
+	end
 end
