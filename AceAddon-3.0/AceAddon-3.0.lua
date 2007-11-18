@@ -150,6 +150,26 @@ function NewModule(self, name, prototype, ...)
 	return module
 end
 
+-- addon:EnableModule( name )
+-- name (string) - unique module object name
+--
+-- Enables the Module if possible.
+function EnableModule(self, name)
+	local module = self:GetModule( name )
+	module:SetEnabledState(true)
+	AceAddon:EnableAddon(module)
+end
+
+-- addon:DisableModule( name )
+-- name (string) - unique module object name
+--
+-- Disables the Module if possible.
+function DisableModule(self, name)
+	local module = self:GetModule( name )
+	module:SetEnabledState(false)
+	AceAddon:DisableAddon(module)
+end
+
 -- addon:SetDefaultModuleLibraries( [lib, lib, lib, ...]  )
 -- [lib] (string) - libs to embed in every module
 function SetDefaultModuleLibraries(self, ...)
@@ -185,6 +205,8 @@ local function IterateEmbeds(self) return pairs(AceAddon.embeds[self]) end
 local mixins = {
 	NewModule = NewModule,
 	GetModule = GetModule,
+	EnableModule = EnableModule,
+	DisableModule = DisableModule,
 	SetDefaultModuleLibraries = SetDefaultModuleLibraries,
 	SetDefaultModuleState = SetDefaultModuleState,
 	SetDefaultModulePrototype = SetDefaultModulePrototype,
@@ -235,6 +257,7 @@ end
 -- calls OnEnable on the addon object if available
 -- calls OnEmbedEnable on embedded libs in the addon object if available
 function AceAddon:EnableAddon(addon)
+	if type(addon) == "string" then addon = AceAddon:GetAddon(addon) end
 	if self.statuses[addon.name] or not addon.enabledState then return false end
 	-- TODO: handle 'first'? Or let addons do it on their own?
 	safecall(addon.OnEnable, addon)
@@ -253,11 +276,12 @@ function AceAddon:EnableAddon(addon)
 end
 
 -- AceAddon:DisableAddon( addon )
--- addon (object) - addon to disable
+-- addon (object|string) - addon to disable
 --
 -- calls OnDisable on the addon object if available
 -- calls OnEmbedDisable on embedded libs in the addon object if available
 function AceAddon:DisableAddon(addon)
+	if type(addon) == "string" then addon = AceAddon:GetAddon(addon) end
 	if not self.statuses[addon.name] then return false end
 	safecall( addon.OnDisable, addon )
 	for k, libname in ipairs(self.embeds[addon]) do

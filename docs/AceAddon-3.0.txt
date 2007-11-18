@@ -92,6 +92,12 @@ addon:NewModule( name, [prototype, [lib, lib, lib, ...] )
 returns the addon object when succesful
 Modules of an AceAddon are AceAddon objects themselves and thus have the same API.
 
+addon:EnableModule( name )
+	name (string) - unique module object name to enable
+
+addon:DisableModule( name )
+	name (string) - unique module object name to disable
+
 addon:IsModule()
 returns true or false depending on wether the addon is a module or not.
 
