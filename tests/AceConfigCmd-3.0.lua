@@ -92,6 +92,7 @@ local opts = {
 creg:RegisterOptionsTable("testapp", opts)
 
 assert(creg:GetOptionsTable("testapp")("cmd","foo-1") == opts)
+assert(creg:GetOptionsTable("testapp","cmd","foo-1") == opts)
 
 
 -- User error handler

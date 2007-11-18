@@ -64,9 +64,23 @@ end
 ---------------------------------------------------------------------
 -- :GetOptionsTable(appName)
 -- - appName - which addon to retreive the options table of
+-- Optional:
+-- - uiType - "cmd", "dropdown", "dialog"
+-- - uiName - e.g. "MyLib-1.0"
 --
--- Returns a function reference
+-- If only appName is given, a function is returned which you
+-- can call with (uiType,uiName) to get the table.
+-- If uiType&uiName are given, the table is returned.
 
-function lib:GetOptionsTable(appName)
-	return lib.tables[appName]
+function lib:GetOptionsTable(appName, ...)
+	local f = lib.tables[appName]
+	if not f then
+		return nil
+	end
+	
+	if select("#",...)<1 then
+		return f	-- return the function
+	else
+		return f(...)	-- get the table for us
+	end
 end
