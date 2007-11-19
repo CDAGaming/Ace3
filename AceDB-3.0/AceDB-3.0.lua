@@ -385,7 +385,7 @@ function DBObjectLib:DeleteProfile(name)
 	self.callbacks:Fire("OnProfileDeleted", self, name)
 end
 
--- DBObject:CopyProfile(name, force)
+-- DBObject:CopyProfile(name)
 -- name (string) - The name of the profile to be copied into the current profile
 --
 -- Copies a named profile into the current profile, overwriting any conflicting
