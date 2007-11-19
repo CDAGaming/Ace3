@@ -342,7 +342,15 @@ local function ActivateControl(widget, event, ...)
 	
 	local validated = true
 
-	if widget.type ~= "Button" then
+	if option.type == "input" then
+		if type(option.pattern)=="string" then
+			if not strmatch(..., option.pattern) then
+				validated = false
+			end
+		end
+	end
+	
+	if validated and option.type ~= "execute" then
 		if type(validate) == "string" then
 		if handler and handler[validate] then
 			validated = safecall(handler[validate], handler, info, ...)
@@ -355,7 +363,6 @@ local function ActivateControl(widget, event, ...)
 	end
 
 	if validated then
-
 		local confirmText = option.confirmText
 		--call confirm func/method
 		if type(confirm) == "string" then

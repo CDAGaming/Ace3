@@ -362,7 +362,6 @@ AceGUI:RegisterLayout("Flow",
 				-- anchor the first control to the top left
 				frame:SetPoint("TOPLEFT",content,"TOPLEFT",0,0)
 				rowheight = frame:GetHeight() or 0
-				height = height + rowheight
 				rowstart = frame
 				usedwidth = frame:GetWidth()
 			else
@@ -370,9 +369,9 @@ AceGUI:RegisterLayout("Flow",
 				-- if a control is "fill" it will be on a row of its own full width
 				if usedwidth == 0 or ((frame:GetWidth() or 0) + usedwidth > width) or child.width == "fill" then
 					frame:SetPoint("TOPLEFT",rowstart,"TOPLEFT",0,-rowheight)
+					height = height + rowheight
 					rowstart = frame
 					rowheight = frame:GetHeight() or 0
-					height = height + rowheight
 					usedwidth = frame:GetWidth()
 				-- put the control on the current row, adding it to the width and checking if the height needs to be increased
 				else
@@ -381,7 +380,7 @@ AceGUI:RegisterLayout("Flow",
 					usedwidth = frame:GetWidth() + usedwidth
 				end
 			end
-
+			
 			if child.width == "fill" then
 				frame:SetPoint("RIGHT",content,"RIGHT")
 				usedwidth = 0
@@ -392,6 +391,7 @@ AceGUI:RegisterLayout("Flow",
 				break
 			end
 		end
+		height = height + rowheight
 		safecall( content.obj.LayoutFinished, content.obj, nil, height )		
 	 end
 	)
