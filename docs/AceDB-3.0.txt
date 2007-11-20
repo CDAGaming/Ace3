@@ -39,6 +39,11 @@ db.char.firstValue = 1
 
 [/code]
 
+You can access all datatypes in the same way:
+DBObject.<datatype>.key = value
+
+
+
 AceDB-3.0 API:
 
 AceDB:New( tbl[, defaults[, defaultprofile]] )
