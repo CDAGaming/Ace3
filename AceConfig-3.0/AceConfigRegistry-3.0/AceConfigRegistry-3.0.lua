@@ -71,8 +71,9 @@ local basekeys={
 	icon=optstring,
 	iconCoords=opttable,
 	handler=opttable,
-	get=optmethod,
-	set=optmethod,
+	get=optmethodfalse,
+	set=optmethodfalse,
+	func=optmethodfalse,
 	arg={["*"]=true}
 }
 
@@ -88,11 +89,11 @@ local typedkeys={
 		childGroups=optstring,
 	},
 	execute={
-		func={
-			["function"]=true,
-			["string"]=true, 
-			_="methodname or funcref"
-		},
+--		func={
+--			["function"]=true,
+--			["string"]=true, 
+--			_="methodname or funcref"
+--		},
 	},
 	input={
 		pattern=optstring,
