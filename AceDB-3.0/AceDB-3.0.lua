@@ -174,6 +174,16 @@ local dbmt = {
 		end
 }
 
+local function validateDefaults(defaults, keyTbl, offset)
+	if not defaults then return end
+	offset = offset or 0
+	for k in pairs(defaults) do
+		if not keyTbl[k] or k == "profiles" then
+			error(("Usage: AceDBObject:RegisterDefaults(defaults): '%s' is not a valid datatype."):format(k), 3 + offset)
+		end
+	end
+end
+
 local preserve_keys = {
 	["callbacks"] = true,
 	["RegisterCallback"] = true,
@@ -212,6 +222,8 @@ local function initdb(sv, defaults, defaultProfile, olddb)
 		["global"] = true,
 		["profiles"] = true,
 	}
+	
+	validateDefaults(defaults, keyTbl, 1)
 	
 	-- This allows us to use this function to reset an entire database
 	-- Clear out the old database
@@ -278,6 +290,8 @@ function DBObjectLib:RegisterDefaults(defaults)
 	if defaults and type(defaults) ~= "table" then
 		error("Usage: AceDBObject:RegisterDefaults(defaults): 'defaults' - table or nil expected.", 2)
 	end
+	
+	validateDefaults(defaults, self.keys)
 	
 	-- Remove any currently set defaults
 	for section,key in pairs(self.keys) do
