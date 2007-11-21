@@ -346,6 +346,7 @@ local BagginsAce3Opts = {
 						name = 'Testing',
 						desc = 'Testing',
 						arg = "Test",
+						pattern = "%d+",
 					},
 					TestMulti = {
 						type = "multiselect",
@@ -402,7 +403,7 @@ local BagginsAce3Opts = {
 					},
 					DragTest = {
 						type = 'input',
-						dlgType = "DragTarget",
+						--dlgType = "DragTarget",
 						name = "Test Drag",
 						set = function(info, value) dragvalue = value end,
 						get = function(info) return dragvalue end,
@@ -430,6 +431,7 @@ local BagginsAce3Opts = {
 				type = "header",
 				order = 90,
 				dialogHidden=true,
+				name = '',
 			},
 			Items = {
 				name = "Items",
@@ -473,6 +475,7 @@ local BagginsAce3Opts = {
 							spacer = {
 								type = 'header',
 								order = 90,
+								name = '',
 							},
 							CompressEmptySlots = {
 								name = "Compress Empty Slots",
@@ -573,7 +576,7 @@ local BagginsAce3Opts = {
 					},
 					HideDuplicates = {
 						name = "Hide Duplicate Items",
-						type = "text",
+						type = "select",
 						desc = "Prevents items from appearing in more than one section/bag.",
 						order = 20,
 						get = function(info) return p.hideduplicates end,
@@ -582,7 +585,7 @@ local BagginsAce3Opts = {
 							Baggins:ResortSections()
 							Baggins:UpdateBags()
 						end,
-						validate = { 'global', 'bag', 'disabled' },
+						values = { 'global', 'bag', 'disabled' },
 					},
 					AlwaysReSort = {
 						name = "Always Resort",
@@ -597,6 +600,7 @@ local BagginsAce3Opts = {
 					spacer = {
 						type = 'header',
 						order = 25,
+						name = '',
 					},
 					HighlightNew = {
 						name = "Highlight New Items",
@@ -635,21 +639,21 @@ local BagginsAce3Opts = {
 					},
 					Type = {
 						name = "Layout Type",
-						type = 'text',
+						type = 'select',
 						order = 10,
 						desc = "Sets how all bags are laid out on screen.",
 						get = function(info) return p.layout end,
 						set = function(info, value) p.layout = value Baggins:UpdateLayout() end,
-						validate = { "auto", "manual" },
+						values = { "auto", "manual" },
 					},
 					LayoutAnchor = {
 						name = "Layout Anchor",
-						type = "text",
+						type = "select",
 						order = 15,
 						desc = "Sets which corner of the layout bounds the bags will be anchored to.",
 						get = function(info) return p.layoutanchor end,
 						set = function(info, value) p.layoutanchor =  value Baggins:LayoutBagFrames() end,
-						validate = { TOPRIGHT = "Top Right",
+						values = { TOPRIGHT = "Top Right",
 									TOPLEFT = "Top Left",
 									BOTTOMRIGHT = "Bottom Right",
 									BOTTOMLEFT = "Bottom Left" },
@@ -722,17 +726,15 @@ local BagginsAce3Opts = {
 						type = "group",
 						desc = "Which Bag to Show Money On",
 						order = 64,
-						pass = true,
 						inline = true,
 						get = function(info, key) return p.moneybag == key end,
 						set = function(info, key, value) p.moneybag = key Baggins:UpdateBags() end,
 						args = {
 							None = {
 								type = "toggle",
-								isRadio = true,
 								name = "None",
 								desc = "None",
-								passValue = 0,
+								arg = 0,
 								order = 1,
 							},
 						}
@@ -777,12 +779,12 @@ local BagginsAce3Opts = {
 					},
 					Sort = {
 						name = "Sort",
-						type = "text",
+						type = "select",
 						desc = "How items are sorted",
 						order = 100,
 						get = function(info) return p.sort end,
 						set = function(info, value) p.sort = value Baggins:UpdateBags() end,
-						validate = {'quality', 'name', 'type', 'slot' }
+						values = {'quality', 'name', 'type', 'slot' }
 					},
 					SortNewFirst = {
 						name = "Sort New First",
@@ -858,6 +860,7 @@ local BagginsAce3Opts = {
 					spacer = {
 						type = 'header',
 						order = 45,
+						name = '',
 					},
 					ShowAmmo = {
 						name = "Show Ammo Bags Count",
@@ -945,6 +948,7 @@ local BagginsAce3Opts = {
 					spacer = {
 						type = 'header',
 						order = 45,
+						name = '',
 					},
 					ShowAmmo = {
 						name = "Show Ammo Bags Count",
@@ -1036,6 +1040,7 @@ local BagginsAce3Opts = {
 					spacer = {
 						type = 'header',
 						order = 45,
+						name = '',
 					},
 					ShowAmmo = {
 						name = "Show Ammo Bags Count3",
@@ -1081,14 +1086,16 @@ local BagginsAce3Opts = {
 				type = 'header',
 				order = 150,
 				dialogHidden=true,
+				name = '',
 			},
 			Skin = {
 				name = "Bag Skin",
-				type = "text",
+				type = "select",
 				desc = "Select bag skin",
 				order = 160,
 				get = function(info) return p.skin end,
 				set = 'ApplySkin',
+				values = {}
 				--validate = Baggins:GetSkinList()
 			},
 			HideDefaultBank = {
@@ -1144,9 +1151,13 @@ local BagginsAce3Opts = {
 							desc = "Load a User Defined Profile",
 							inline = true,
 							order = 30,
-							pass = true,
 							func = function(info, name) local p = Baggins.db.account.profiles[name] if p then Baggins:ApplyProfile(p) end end,
-							args = {},
+							args = {
+								test = {
+									type = 'execute',
+									name = 'Test',
+								},	
+							},
 						},
 					},
 				},
@@ -1154,14 +1165,13 @@ local BagginsAce3Opts = {
 					name = "Save Profile",
 					type = "group",
 					desc = "Save a User Defined Profile",
-					pass = true,
 					order = 30,
 					func = function(info, name) Baggins:SaveProfile(name) end,
 					set = function(info, key, name) Baggins:SaveProfile(name) end,
 					get = false,
 					args = {
 						New = {
-							type = "text",
+							type = "input",
 							name = "New",
 							desc = "Create a new Profile",
 							usage = "<Name>",
@@ -1174,7 +1184,6 @@ local BagginsAce3Opts = {
 					name = "Delete Profile",
 					type = "group",
 					desc = "Delete a User Defined Profile",
-					pass = true,
 					order = 40,
 					func = function(info, name) Baggins:SaveProfile(name) end,
 					confirm = true,
