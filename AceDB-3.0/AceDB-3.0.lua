@@ -181,15 +181,15 @@ local preserve_keys = {
 	["UnregisterAllCallbacks"] = true
 }
 
+local realmKey = GetRealmName()
+local charKey = UnitName("player") .. " - " .. realmKey
+local _, classKey = UnitClass("player")
+local _, raceKey = UnitRace("player")
+local factionKey = UnitFactionGroup("player")
+local factionrealmKey = factionKey .. " - " .. realmKey
 -- Actual database initialization function
 local function initdb(sv, defaults, defaultProfile, olddb)
 	-- Generate the database keys for each section
-	local realmKey = GetRealmName()
-	local charKey = UnitName("player") .. " - " .. realmKey
-	local _, classKey = UnitClass("player")
-	local _, raceKey = UnitRace("player")
-	local factionKey = UnitFactionGroup("player")
-	local factionrealmKey = factionKey .. " - " .. realmKey
 	
 	-- Make a container for profile keys
 	if not sv.profileKeys then sv.profileKeys = {} end
