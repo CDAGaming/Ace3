@@ -98,6 +98,9 @@ addon:EnableModule( name )
 addon:DisableModule( name )
 	name (string) - unique module object name to disable
 
+addon:IsEnabled()
+return true or false depending on wether the addon is enabled or not.
+
 addon:IsModule()
 returns true or false depending on wether the addon is a module or not.
 

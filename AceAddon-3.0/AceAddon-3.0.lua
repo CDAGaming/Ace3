@@ -202,11 +202,13 @@ end
 
 local function IterateModules(self) return pairs(self.modules) end
 local function IterateEmbeds(self) return pairs(AceAddon.embeds[self]) end
+local function IsEnabled(self) return self.enabledState end
 local mixins = {
 	NewModule = NewModule,
 	GetModule = GetModule,
 	EnableModule = EnableModule,
 	DisableModule = DisableModule,
+	IsEnabled = IsEnabled,
 	SetDefaultModuleLibraries = SetDefaultModuleLibraries,
 	SetDefaultModuleState = SetDefaultModuleState,
 	SetDefaultModulePrototype = SetDefaultModulePrototype,
