@@ -154,7 +154,7 @@ function AceBucket:UnregisterBucket(handle)
 			AceTimer.CancelTimer(bucket, bucket.timer)
 		end
 		
-		AceBucket.buckts[handle] = nil
+		AceBucket.buckets[handle] = nil
 		-- store our bucket in the cache
 		bucketCache[bucket] = true
 	end
