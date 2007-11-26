@@ -313,16 +313,16 @@ local function onEvent(this, event, arg1)
 		for i = 1, #AceAddon.initializequeue do
 			local addon = AceAddon.initializequeue[i]
 			if event == "ADDON_LOADED" then addon.baseName = arg1 end
-			AceAddon:InitializeAddon(addon)
 			AceAddon.initializequeue[i] = nil
+			AceAddon:InitializeAddon(addon)
 			table.insert(AceAddon.enablequeue, addon)
 		end
 		
 		if IsLoggedIn() then
 			for i = 1, #AceAddon.enablequeue do
 				local addon = AceAddon.enablequeue[i]
-				AceAddon:EnableAddon(addon)
 				AceAddon.enablequeue[i] = nil
+				AceAddon:EnableAddon(addon)
 			end
 		end
 	end
