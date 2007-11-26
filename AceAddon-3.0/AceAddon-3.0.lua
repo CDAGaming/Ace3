@@ -150,24 +150,36 @@ function NewModule(self, name, prototype, ...)
 	return module
 end
 
+--addon:Enable()
+-- Enables the Addon if possible, return true or false depending on success
+function Enable(self)
+	addon:SetEnabledState(true)
+	return AceAddon:EnableAddon(self)
+end
+
+--addon:Disable()
+-- Disables the Addon if possible, return true or false depending on success
+function Disable(self)
+	addon:SetEnabledState(false)
+	return AceAddon:DisableAddon(self)
+end
+
 -- addon:EnableModule( name )
 -- name (string) - unique module object name
 --
--- Enables the Module if possible.
+-- Enables the Module if possible, return true or false depending on success
 function EnableModule(self, name)
 	local module = self:GetModule( name )
-	module:SetEnabledState(true)
-	AceAddon:EnableAddon(module)
+	return module:Enable()
 end
 
 -- addon:DisableModule( name )
 -- name (string) - unique module object name
 --
--- Disables the Module if possible.
+-- Disables the Module if possible, return true or false depending on success
 function DisableModule(self, name)
 	local module = self:GetModule( name )
-	module:SetEnabledState(false)
-	AceAddon:DisableAddon(module)
+	return module:Disable()
 end
 
 -- addon:SetDefaultModuleLibraries( [lib, lib, lib, ...]  )
@@ -206,6 +218,8 @@ local function IsEnabled(self) return self.enabledState end
 local mixins = {
 	NewModule = NewModule,
 	GetModule = GetModule,
+	Enable = Enable,
+	Disable = Disable,
 	EnableModule = EnableModule,
 	DisableModule = DisableModule,
 	IsEnabled = IsEnabled,
