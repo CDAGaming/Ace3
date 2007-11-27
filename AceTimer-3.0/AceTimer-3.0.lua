@@ -4,11 +4,6 @@
 	* In a typical system, we do more re-scheduling per second than there are timer pulses per second
 	* Regardless of timer implementation, we cannot guarantee timely delivery due to FPS restriction (may be as low as 10)
 
-	Not yet implemented assumptions:
-	* In a high FPS system (assume 50), one frame per addon (assume 50) means 2500 function calls per second.
-		PRO: Lower CPU load with 1 global frame
-		CON: Profiling?
-
 	This implementation:
 		CON: The smallest timer interval is constrained by HZ (currently 1/10s).
 		PRO: It will correctly fire any timer faster than HZ over a length of time, e.g. 0.11s interval -> 90 times over 10 seconds
@@ -19,15 +14,14 @@
 		CAUTION: The BUCKETS constant constrains how many timers can be efficiently handled. With too many hash collisions, performance will decrease.
 ]]
 
--- TODO: Strip full documentation onto a wiki page, and remove it from here imho
-
 local MAJOR, MINOR = "AceTimer-3.0", 0
 local AceTimer, oldminor = LibStub:NewLibrary(MAJOR, MINOR)
 
 if not AceTimer then return end -- No upgrade needed
 
-AceTimer.hash = AceTimer.hash or {}			-- Array of [0..BUCKET-1]={[timerobj]=time, [timerobj2]=time2, ...}
-AceTimer.selfs = AceTimer.selfs or {}		-- Array of [self]={[handle]=timerobj, [handle2]=timerobj2, ...}
+AceTimer.hash = AceTimer.hash or {}         -- Array of [0..BUCKET-1] = linked list of timers (using .next member)
+                                            -- Linked list gets around ACE-88 and ACE-90.
+AceTimer.selfs = AceTimer.selfs or {}       -- Array of [self]={[handle]=timerobj, [handle2]=timerobj2, ...}
 AceTimer.frame = AceTimer.frame or CreateFrame("Frame", "AceTimer30Frame")
 
 local pcall = pcall
@@ -36,8 +30,8 @@ local tostring = tostring
 local floor = floor
 local max = max
 
--- simple timer cache
-local timerCache = setmetatable({}, {__mode='k'})
+-- Simple ONE-SHOT timer cache. Much more efficient than a full compost for our purposes.
+local timerCache = nil
 
 --[[
 	Timers will not be fired more often than HZ-1 times per second. 
@@ -54,8 +48,8 @@ local HZ = 11
 local BUCKETS = 131
 
 local hash = AceTimer.hash
-for i=0,BUCKETS-1 do
-	hash[i] = hash[i] or {}
+for i=1,BUCKETS do
+	hash[i]=hash[i] or false	-- make it an integer-indexed array; it's faster than hashes
 end
 
 local function safecall(func, ...)
@@ -87,9 +81,14 @@ local function OnUpdate()
 	-- Happens on e.g. instance loads, but COULD happen on high local load situations also
 	for curint = (max(lastint, nowint - BUCKETS) + 1), nowint do -- loop until we catch up with "now", usually only 1 iteration
 		local curbucket = curint % BUCKETS
-		local curbuckettable = hash[curbucket]
-		
-		for timer, when in pairs(curbuckettable) do -- all timers in the current bucket
+		local nexttimer = hash[curbucket]
+		hash[curbucket]=false	-- false rather than nil to prevent the array from becoming a hash
+
+		while nexttimer do
+			local timer = nexttimer
+			nexttimer=timer.next
+			local when=timer.when
+			
 			if when < soon then
 				-- Call the timer func, either as a method on given object, or a straight function ref
 				local callback = timer.callback
@@ -102,27 +101,31 @@ local function OnUpdate()
 					timer.delay = nil -- don't reschedule it
 				end
 
-				-- remove from current bucket
-				curbuckettable[timer] = nil
-				
 				local delay=timer.delay	-- NOW make a local copy, can't do it earlier in case the timer cancelled itself in the callback
 				
 				if not delay then
 					-- single-shot timer (or cancelled)
 					AceTimer.selfs[timer.object][tostring(timer)] = nil
-					timerCache[timer] = true
+					timerCache = timer
 				else
 					-- repeating timer
 					local newtime = when + delay
 					if newtime < now then -- Keep lag from making us firing a timer unnecessarily. (Note that this still won't catch too-short-delay timers though.)
 						newtime = now + delay
 					end
+					timer.when = newtime
 					
 					-- add next timer execution to the correct bucket
-					hash[floor(newtime * HZ) % BUCKETS][timer] = newtime
+					local bucket = floor(newtime * HZ) % BUCKETS
+					timer.next = hash[bucket]
+					hash[bucket] = timer
 				end
-			end -- if when<soon
-		end -- for timer,when in pairs(curbuckettable)
+			else -- if when>=soon 
+				-- reinsert (yeah, somewhat expensive, but shouldn't be happening too often either due to hash distribution)
+				timer.next = hash[curbucket]
+				hash[curbucket] = timer
+			end -- if when<soon ... else
+		end -- while nexttimer do
 	end -- for curint=lastint,nowint
 	
 	lastint = nowint
@@ -160,16 +163,18 @@ local function Reg(self, callback, delay, arg, repeating)
 	-- Create and stuff timer in the correct hash bucket
 	local now = GetTime()
 	
-	-- check our timer cache for timers
-	local timer = next(timerCache)
-	if timer then
-		timerCache[timer] = nil
-	else
-		timer = {}
-	end
-	timer.object, timer.callback, timer.delay, timer.arg = self, callback, (repeating and delay), arg
+	local timer = timerCache or {}	-- Get new timer object (from cache if available)
+	timerCache = nil
 	
-	hash[floor((now+delay)*HZ) % BUCKETS][timer] = now + delay
+	timer.object = self
+	timer.callback = callback
+	timer.delay = (repeating and delay)
+	timer.arg = arg
+	timer.when = now + delay
+
+	local bucket = floor((now+delay)*HZ) % BUCKETS
+	timer.next = hash[bucket]
+	hash[bucket] = timer
 	
 	-- Insert timer in our self->handle->timer registry
 	local handle = tostring(timer)
@@ -268,6 +273,11 @@ for addon in pairs(AceTimer.embeds) do
 	AceTimer:Embed(addon)
 end
 
+-----------------------------------------------------------------------
+-- Debug tools (expose copies of internals to test suites)
+AceTimer.debug = AceTimer.debug or {}
+AceTimer.debug.HZ = HZ
+AceTimer.debug.BUCKETS = BUCKETS
 
 -----------------------------------------------------------------------
 -- Finishing touchups
