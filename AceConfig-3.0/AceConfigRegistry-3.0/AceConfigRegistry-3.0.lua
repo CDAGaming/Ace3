@@ -84,6 +84,7 @@ local typedkeys={
 		plugins=opttable,
 		inline=optbool,
 			cmdInline=optbool,
+			guiInline=optbool,
 			dropdownInline=optbool,
 			dialogInline=optbool,
 		childGroups=optstring,
