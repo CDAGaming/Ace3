@@ -49,7 +49,7 @@ local BUCKETS = 131
 
 local hash = AceTimer.hash
 for i=1,BUCKETS do
-	hash[i]=hash[i] or false	-- make it an integer-indexed array; it's faster than hashes
+	hash[i] = hash[i] or false	-- make it an integer-indexed array; it's faster than hashes
 end
 
 local function safecall(func, ...)
@@ -82,12 +82,12 @@ local function OnUpdate()
 	for curint = (max(lastint, nowint - BUCKETS) + 1), nowint do -- loop until we catch up with "now", usually only 1 iteration
 		local curbucket = curint % BUCKETS
 		local nexttimer = hash[curbucket]
-		hash[curbucket]=false	-- false rather than nil to prevent the array from becoming a hash
+		hash[curbucket] = false	-- false rather than nil to prevent the array from becoming a hash
 
 		while nexttimer do
 			local timer = nexttimer
-			nexttimer=timer.next
-			local when=timer.when
+			nexttimer = timer.next
+			local when = timer.when
 			
 			if when < soon then
 				-- Call the timer func, either as a method on given object, or a straight function ref
@@ -101,7 +101,7 @@ local function OnUpdate()
 					timer.delay = nil -- don't reschedule it
 				end
 
-				local delay=timer.delay	-- NOW make a local copy, can't do it earlier in case the timer cancelled itself in the callback
+				local delay = timer.delay	-- NOW make a local copy, can't do it earlier in case the timer cancelled itself in the callback
 				
 				if not delay then
 					-- single-shot timer (or cancelled)
