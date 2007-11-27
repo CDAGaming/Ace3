@@ -39,11 +39,11 @@ Unregisters the given command. Will silently fail if it does not exist.
 
 
 
-addon:GetArgs( string, numargs, startpos )
+addon:GetArgs( string[, numargs[, startpos]] )
 	string (string) - the raw argument string to parse for arguments
-	[numargs] (number) - How many arguments to get (default: 1)
-	[startpos] (number) - Where in the string to start scanning (default: 1)
+	numargs (number) - How many arguments to get (default: 1)
+	startpos (number) - Where in the string to start scanning (default: 1)
 Returns arg1, arg2, ..., nextposition
+Retreives space-separated arguments from the string. Quoted sections are recognized as a single argument, as are hyperlinks.
 Missing arguments will be returned as nils. 'nextposition' is returned as 1e9 at the end of the string.
 
-FIXME: This whole GetArgs func needs a more readable explanation.
