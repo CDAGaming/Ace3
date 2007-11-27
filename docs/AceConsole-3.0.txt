@@ -45,5 +45,5 @@ addon:GetArgs( string[, numargs[, startpos]] )
 	startpos (number) - Where in the string to start scanning (default: 1)
 Returns arg1, arg2, ..., nextposition
 Retreives space-separated arguments from the string. Quoted sections are recognized as a single argument, as are hyperlinks.
-Missing arguments will be returned as nils. 'nextposition' is returned as 1e9 at the end of the string.
+Missing arguments will be returned as nils. If the end of the string is encountered during scanning, 'nextposition' is returned as 1e9 (1 billion).
 
