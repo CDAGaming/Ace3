@@ -14,7 +14,7 @@ lib.Status = lib.Status or {}
 
 local gui = LibStub("AceGUI-3.0")
 local reg = LibStub("AceConfigRegistry-3.0")
-local con = LibStub("AceConsole-3.0", true)
+local con = LibStub("AceConsole-3.0")
 
 local select = select
 local pairs = pairs
@@ -34,7 +34,7 @@ local function safecall(func, ...)
 	local success, err = pcall(func, ...)
 	if success then return err end
 	if not err:find("%.lua:%d+:") then err = (debugstack():match("\n(.-: )in.-\n") or "") .. err end 
-	geterrorhandler()(err)
+	con:Print(lib, "Error in addon function", err)
 end
 
 --[[
@@ -209,8 +209,10 @@ local function CleanUserData(widget, event)
 	end
 	
 	if widget.type == "DropdownGroup" then
-		del(widget.dropdown.list)
-		widget.dropdown.list = nil
+		if widget.dropdown.list then
+			del(widget.dropdown.list)
+			widget.dropdown.list = nil
+		end
 	end
 end
 
