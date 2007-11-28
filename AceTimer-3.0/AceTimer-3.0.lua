@@ -143,16 +143,16 @@ end
 local function Reg(self, callback, delay, arg, repeating)
 	if type(callback) ~= "string" and type(callback) ~= "function" then 
 		local error_origin = repeating and "ScheduleRepeatingTimer" or "ScheduleTimer"
-		error("Usage: " .. error_origin .. "(callback, delay, arg): 'callback' - function or method name expected.", 3)
+		error(MAJOR..": " .. error_origin .. "(callback, delay, arg): 'callback' - function or method name expected.", 3)
 	end
 	if type(callback) == "string" then
 		if type(self)~="table" then
 			local error_origin = repeating and "ScheduleRepeatingTimer" or "ScheduleTimer"
-			error("Usage: " .. error_origin .. "(\"methodName\", delay, arg): 'self' - must be a table.", 3)
+			error(MAJOR..": " .. error_origin .. "(\"methodName\", delay, arg): 'self' - must be a table.", 3)
 		end
 		if type(self[callback]) ~= "function" then 
 			local error_origin = repeating and "ScheduleRepeatingTimer" or "ScheduleTimer"
-			error("Usage: " .. error_origin .. "(\"methodName\", delay, arg): 'methodName' - method not found on target object.", 3)
+			error(MAJOR..": " .. error_origin .. "(\"methodName\", delay, arg): 'methodName' - method not found on target object.", 3)
 		end
 	end
 	
@@ -218,8 +218,8 @@ end
 -- Returns true if a timer was cancelled
 
 function AceTimer:CancelTimer(handle)
-	if not handle then
-		error("CancelTimer(): 'handle' - must be non-nil", 2)
+	if type(handle)~="string" then
+		error(MAJOR..": CancelTimer(handle): 'handle' - expected a string", 2)	-- for now, anyway
 	end
 	local selftimers = AceTimer.selfs[self]
 	local timer = selftimers and selftimers[handle]
