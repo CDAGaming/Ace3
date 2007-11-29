@@ -74,13 +74,13 @@ function AceComm:SendCommMessage(prefix, text, distribution, target, prio)
 
 	if textlen <= maxtextlen then
 		-- fits all in one message
-		CTL:SendAddonMessage(prio or "NORMAL", prefix, text, distribution, target, queueName)
+		CTL:SendAddonMessage(prio, prefix, text, distribution, target, queueName)
 	else
 		maxtextlen = maxtextlen - 1	-- 1 extra byte for part indicator in suffix
 
 		-- first part
 		local chunk = strsub(text, 1, maxtextlen)
-		CTL:SendAddonMessage(prio or "NORMAL", prefix.."\001", chunk, distribution, target, queueName)
+		CTL:SendAddonMessage(prio, prefix.."\001", chunk, distribution, target, queueName)
 
 		-- continuation
 		local pos = 1+maxtextlen
@@ -88,13 +88,13 @@ function AceComm:SendCommMessage(prefix, text, distribution, target, prio)
 
 		while pos+maxtextlen <= textlen do
 			chunk = strsub(text, pos, pos+maxtextlen-1)
-			CTL:SendAddonMessage(prio or "NORMAL", prefix2, chunk, distribution, target, queueName)
+			CTL:SendAddonMessage(prio, prefix2, chunk, distribution, target, queueName)
 			pos = pos + maxtextlen
 		end
 		
 		-- final part
 		chunk = strsub(text, pos)
-		CTL:SendAddonMessage(prio or "NORMAL", prefix.."\003", chunk, distribution, target, queueName)
+		CTL:SendAddonMessage(prio, prefix.."\003", chunk, distribution, target, queueName)
 	end
 end
 
