@@ -165,7 +165,7 @@ end
 -- will unregister all bucketed events.
 function AceBucket:UnregisterAllBuckets()
 	-- hmm can we do this more efficient? (it is not done often so shouldn't matter much)
-	for handle, bucket in pairs(AceBucket.buckets)
+	for handle, bucket in pairs(AceBucket.buckets) do
 		if bucket.object == self then
 			AceBucket.UnregisterBucket(self, handle)
 		end
