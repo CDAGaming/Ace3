@@ -80,7 +80,7 @@ local function OnUpdate()
 	-- Pass through each bucket at most once
 	-- Happens on e.g. instance loads, but COULD happen on high local load situations also
 	for curint = (max(lastint, nowint - BUCKETS) + 1), nowint do -- loop until we catch up with "now", usually only 1 iteration
-		local curbucket = curint % BUCKETS
+		local curbucket = (curint % BUCKETS)+1
 		local nexttimer = hash[curbucket]
 		hash[curbucket] = false	-- false rather than nil to prevent the array from becoming a hash
 
@@ -116,7 +116,7 @@ local function OnUpdate()
 					timer.when = newtime
 					
 					-- add next timer execution to the correct bucket
-					local bucket = floor(newtime * HZ) % BUCKETS
+					local bucket = (floor(newtime * HZ) % BUCKETS) + 1
 					timer.next = hash[bucket]
 					hash[bucket] = timer
 				end
@@ -172,7 +172,7 @@ local function Reg(self, callback, delay, arg, repeating)
 	timer.arg = arg
 	timer.when = now + delay
 
-	local bucket = floor((now+delay)*HZ) % BUCKETS
+	local bucket = (floor((now+delay)*HZ) % BUCKETS) + 1
 	timer.next = hash[bucket]
 	hash[bucket] = timer
 	
