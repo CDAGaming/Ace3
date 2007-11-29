@@ -153,14 +153,14 @@ end
 --addon:Enable()
 -- Enables the Addon if possible, return true or false depending on success
 function Enable(self)
-	addon:SetEnabledState(true)
+	self:SetEnabledState(true)
 	return AceAddon:EnableAddon(self)
 end
 
 --addon:Disable()
 -- Disables the Addon if possible, return true or false depending on success
 function Disable(self)
-	addon:SetEnabledState(false)
+	self:SetEnabledState(false)
 	return AceAddon:DisableAddon(self)
 end
 
