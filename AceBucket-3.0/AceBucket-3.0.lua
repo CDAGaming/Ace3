@@ -160,12 +160,27 @@ function AceBucket:UnregisterBucket(handle)
 	end
 end
 
+-- AceBucket:UnregisterAllBuckets()
+-- 
+-- will unregister all bucketed events.
+function AceBucket:UnregisterAllBuckets()
+	-- hmm can we do this more efficient? (it is not done often so shouldn't matter much)
+	for handle, bucket in pairs(AceBucket.buckets)
+		if bucket.object == self then
+			AceBucket.UnregisterBucket(self, handle)
+		end
+	end
+end
+
+
+
 --- embedding and embed handling
 
 local mixins = {
 	"RegisterBucketEvent",
 	"RegisterBucketMessage", 
 	"UnregisterBucket",
+	"UnregisterAllBuckets",
 } 
 
 -- AceBucket:Embed( target )
@@ -177,6 +192,14 @@ function AceBucket:Embed( target )
 		target[v] = self[v]
 	end
 	self.embeds[target] = true
+end
+
+--AceBucket:OnEmbedDisable( target )
+-- target (object) - target object that AceBucket is embedded in.
+--
+-- Disables all buckets registered on the object
+function AceBucket:OnEmbedDisable( target )
+	target:UnregisterAllBuckets()
 end
 
 for addon in pairs(AceBucket.embeds) do

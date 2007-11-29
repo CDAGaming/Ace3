@@ -28,16 +28,19 @@ addon:RegisterBucketEvent( event, interval[, method] )
 	interval (number) - Throttling interval
 	[method] (string|func) - Method to call when the event is fired. A string method is called like addon[method]( event, [arg, ...] ).
 Will fire the event into the method with a table containing the first arguments of the event fired.
-		
-addon:UnregisterBucketEvent( event )
-	event (string) - Blizzard event to unregister.
+Returns a handle to the bucket.		
 
 addon:RegisterBucketMessage( message, inteval[, method] )
 	message (string) - Message to register for. 
 	interval (number) - Throttling interval
 	[method] (string|func) - Method to call when the message is fired. A string method is called like addon[method]( event, [arg, ...] ).
 Will fire the message into the method with a table containing the first arguments of the event fired.
+Returns a handle to the bucket
 
-addon:UnregisterBucketMessage( message )
-	message (string) - Message to unregister
+addon:UnregisterBucket( handle )
+	handle (string) - Bucket to unregister
+	
+addon:UnregisterAllBuckets()
+Unregisters all buckets for this object.
+
 
