@@ -23,8 +23,13 @@ local tconcat = table.concat
 
 AceComm.embeds = AceComm.embeds or {}
 
-AceComm.multipart_origprefixes = multipart_origprefixes or {} -- e.g. "Prefix\001"="Prefix", "Prefix\002"="Prefix"
-AceComm.multipart_reassemblers = multipart_reassemblers or {} -- e.g. "Prefix\001"="OnReceiveMultipartFirst"
+-- for my sanity and yours, let's give the message type bytes names
+local MSG_MULTI_FIRST = "\001"
+local MSG_MULTI_NEXT  = "\002"
+local MSG_MULTI_LAST  = "\003"
+
+AceComm.multipart_origprefixes = AceComm.multipart_origprefixes or {} -- e.g. "Prefix\001"="Prefix", "Prefix\002"="Prefix"
+AceComm.multipart_reassemblers = AceComm.multipart_reassemblers or {} -- e.g. "Prefix\001"="OnReceiveMultipartFirst"
 
 -- the multipart message spool: indexed by a combination of sender+distribution+
 AceComm.multipart_spool = AceComm.multipart_spool or {} 
@@ -80,11 +85,11 @@ function AceComm:SendCommMessage(prefix, text, distribution, target, prio)
 
 		-- first part
 		local chunk = strsub(text, 1, maxtextlen)
-		CTL:SendAddonMessage(prio, prefix.."\001", chunk, distribution, target, queueName)
+		CTL:SendAddonMessage(prio, prefix..MSG_MULTI_FIRST, chunk, distribution, target, queueName)
 
 		-- continuation
 		local pos = 1+maxtextlen
-		local prefix2 = prefix.."\002"
+		local prefix2 = prefix..MSG_MULTI_NEXT
 
 		while pos+maxtextlen <= textlen do
 			chunk = strsub(text, pos, pos+maxtextlen-1)
@@ -94,7 +99,7 @@ function AceComm:SendCommMessage(prefix, text, distribution, target, prio)
 		
 		-- final part
 		chunk = strsub(text, pos)
-		CTL:SendAddonMessage(prio, prefix.."\003", chunk, distribution, target, queueName)
+		CTL:SendAddonMessage(prio, prefix..MSG_MULTI_LAST, chunk, distribution, target, queueName)
 	end
 end
 
@@ -200,25 +205,25 @@ if not AceComm.callbacks then
 end
 
 function AceComm.callbacks:OnUsed(target, prefix)
-	AceComm.multipart_origprefixes[prefix.."\001"] = prefix
-	AceComm.multipart_reassemblers[prefix.."\001"] = "OnReceiveMultipartFirst"
+	AceComm.multipart_origprefixes[prefix..MSG_MULTI_FIRST] = prefix
+	AceComm.multipart_reassemblers[prefix..MSG_MULTI_FIRST] = "OnReceiveMultipartFirst"
 	
-	AceComm.multipart_origprefixes[prefix.."\002"] = prefix
-	AceComm.multipart_reassemblers[prefix.."\002"] = "OnReceiveMultipartNext"
+	AceComm.multipart_origprefixes[prefix..MSG_MULTI_NEXT] = prefix
+	AceComm.multipart_reassemblers[prefix..MSG_MULTI_NEXT] = "OnReceiveMultipartNext"
 	
-	AceComm.multipart_origprefixes[prefix.."\003"] = prefix
-	AceComm.multipart_reassemblers[prefix.."\003"] = "OnReceiveMultipartLast"
+	AceComm.multipart_origprefixes[prefix..MSG_MULTI_LAST] = prefix
+	AceComm.multipart_reassemblers[prefix..MSG_MULTI_LAST] = "OnReceiveMultipartLast"
 end
 
 function AceComm.callbacks:OnUnused(target, prefix)
-	AceComm.multipart_origprefixes[prefix.."\001"] = nil
-	AceComm.multipart_reassemblers[prefix.."\001"] = nil
+	AceComm.multipart_origprefixes[prefix..MSG_MULTI_FIRST] = nil
+	AceComm.multipart_reassemblers[prefix..MSG_MULTI_FIRST] = nil
 	
-	AceComm.multipart_origprefixes[prefix.."\002"] = nil
-	AceComm.multipart_reassemblers[prefix.."\002"] = nil
+	AceComm.multipart_origprefixes[prefix..MSG_MULTI_NEXT] = nil
+	AceComm.multipart_reassemblers[prefix..MSG_MULTI_NEXT] = nil
 	
-	AceComm.multipart_origprefixes[prefix.."\003"] = nil
-	AceComm.multipart_reassemblers[prefix.."\003"] = nil
+	AceComm.multipart_origprefixes[prefix..MSG_MULTI_LAST] = nil
+	AceComm.multipart_reassemblers[prefix..MSG_MULTI_LAST] = nil
 end
 
 ----------------------------------------
@@ -232,9 +237,10 @@ local function OnEvent(this, event, ...)
 		if reassemblername then
 			-- multipart: reassemble
 			local aceCommReassemblerFunc = AceComm[reassemblername]
-			aceCommReassemblerFunc(AceComm,AceComm.multipart_origprefixes[prefix],message,distribution,sender)
+			local origprefix = AceComm.multipart_origprefixes[prefix]
+			aceCommReassemblerFunc(AceComm, origprefix, message, distribution, sender)
 		else
-			-- single part: fire it off immediately
+			-- single part: fire it off immediately and let CallbackHandler decide if it's registered or not
 			AceComm.callbacks:Fire(prefix, message, distribution, sender)
 		end
 	else
