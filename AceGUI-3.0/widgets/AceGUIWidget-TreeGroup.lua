@@ -452,7 +452,7 @@ do
 		end
 	end
 	
-	function BuildUniqueValue(...)
+	local function BuildUniqueValue(...)
 		local n = select('#', ...)
 		if n == 1 then
 			return ...
