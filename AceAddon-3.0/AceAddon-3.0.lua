@@ -25,7 +25,7 @@ local function safecall(func, ...)
 end
 
 -- local functions that will be implemented further down
-local Enable, Disable, EnableModule, DisableModule, Embed, NewModule, GetModule, SetDefaultModuleState, SetDefaultModuleLibraries, SetEnabledState, SetDefaultPrototype
+local Enable, Disable, EnableModule, DisableModule, Embed, NewModule, GetModule, SetDefaultModuleState, SetDefaultModuleLibraries, SetEnabledState, SetDefaultModulePrototype
 
 -- used in the addon metatable
 local function addontostring( self ) return self.name end 
