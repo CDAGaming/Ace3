@@ -294,9 +294,11 @@ function DBObjectLib:RegisterDefaults(defaults)
 	validateDefaults(defaults, self.keys)
 	
 	-- Remove any currently set defaults
-	for section,key in pairs(self.keys) do
-		if self.defaults[section] and rawget(self, section) then
-			removeDefaults(self[section], self.defaults[section])
+	if self.defaults then
+		for section,key in pairs(self.keys) do
+			if self.defaults[section] and rawget(self, section) then
+				removeDefaults(self[section], self.defaults[section])
+			end
 		end
 	end
 	
