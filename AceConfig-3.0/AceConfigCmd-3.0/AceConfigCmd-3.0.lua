@@ -402,9 +402,9 @@ end
 function lib:CreateChatCommand(slashcmd, appName)
 	if not AceConsole then
 		AceConsole = LibStub(AceConsoleName)
-		AceConsole.RegisterChatCommand(self, slashcmd, function(input)
-					lib.HandleCommand(self, slashcmd, appName, input)	-- upgradable
-			end, 
-		true)
 	end
+	AceConsole.RegisterChatCommand(self, slashcmd, function(input)
+				lib.HandleCommand(self, slashcmd, appName, input)	-- upgradable
+		end,
+	true)
 end
