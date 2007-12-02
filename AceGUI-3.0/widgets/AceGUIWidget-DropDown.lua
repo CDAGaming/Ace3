@@ -39,7 +39,7 @@ do
 	end
 	
 	local function SetText(self, text)
-		self.editbox:SetText(text)
+		self.editbox:SetText(text or "")
 		self.editbox:SetCursorPosition(0)
 	end
 	

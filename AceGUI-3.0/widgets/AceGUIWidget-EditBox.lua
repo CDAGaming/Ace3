@@ -79,7 +79,7 @@ do
 	
 	local function SetText(self, text)
 		self.lasttext = text
-		self.editbox:SetText(text)
+		self.editbox:SetText(text or "")
 		self.editbox:SetCursorPosition(0)
 	end
 	
