@@ -422,17 +422,30 @@ local function ActivateControl(widget, event, ...)
 
 		
 
+		local iscustom = user.rootframe.userdata.iscustom
 		--full refresh of the frame, some controls dont cause this on all events
 		if option.type == "color" then
 			if event == "OnValueConfirmed" then
-				lib:Open(user.appName)
+				if iscustom then
+					lib:Open(user.appName, user.rootframe)
+				else
+					lib:Open(user.appName)
+				end
 			end
 		elseif option.type == "range" then
 			if event == "OnMouseUp" then
-				lib:Open(user.appName)
+				if iscustom then
+					lib:Open(user.appName, user.rootframe)
+				else
+					lib:Open(user.appName)
+				end
 			end
 		else
-			lib:Open(user.appName)
+			if iscustom then
+				lib:Open(user.appName, user.rootframe)
+			else
+				lib:Open(user.appName)
+			end
 		end
 		
 	end
@@ -1057,7 +1070,7 @@ function lib:Close(appName)
 	end
 end
 
-function lib:Open(appName)
+function lib:Open(appName, container)
 	if not old_CloseSpecialWindows then
 		old_CloseSpecialWindows = CloseSpecialWindows
 		CloseSpecialWindows = function()
@@ -1072,22 +1085,39 @@ function lib:Open(appName)
 	local options = app("dialog", MAJOR)
 	
 	local f
-	if not self.OpenFrames[appName] then
-		f = gui:Create("Frame")
-		self.OpenFrames[appName] = f
+	--if a container is given feed into that
+	if container then
+		f = container
+		f:ReleaseChildren()
+		f.userdata.appName = appName
+		f.userdata.iscustom = true
+		if f.SetTitle then
+			f:SetTitle(options.name or "")
+		end
+		local status = lib:GetStatusTable(appName)
+		if f.SetStatusTable then
+			f:SetStatusTable(status)
+		end
 	else
-		f = self.OpenFrames[appName]
+		if not self.OpenFrames[appName] then
+			f = gui:Create("Frame")
+			self.OpenFrames[appName] = f
+		else
+			f = self.OpenFrames[appName]
+		end
+		f:ReleaseChildren()
+		f:SetCallback("OnClose", FrameOnClose)
+		f.userdata.appName = appName
+		f:SetTitle(options.name or "")
+		local status = lib:GetStatusTable(appName)
+		f:SetStatusTable(status)
 	end
-	f:ReleaseChildren()
-	f:SetCallback("OnClose", FrameOnClose)
-	f.userdata.appName = appName
-	f:SetTitle(options.name or "")
-	local status = lib:GetStatusTable(appName)
-	f:SetStatusTable(status)
 
 	local path = new()
 	
 	self:FeedGroup(appName,options,f,f,path)
-	f:Show()
+	if f.Show then
+		f:Show()
+	end
 	del(path)
 end
