@@ -62,17 +62,36 @@ end
 function createHook(self, handler, orig, secure, failsafe)
 	local uid
 	local method = type(handler) == "string"
-	uid = function(...)
-		if actives[uid] then
-			if failsafe then orig(...) end -- failsafe?
-			if method then
-				return self[handler](self, ...)
-			else
-				return handler(...)
+	if failsafe and not secure then
+		-- failsafe hook creation
+		uid = function(...)
+			if actives[uid] then
+				local result = { orig(...) } -- failsafe
+				if method then
+					self[handler](self, ...)
+				else
+					handler(...)
+				end
+				return unpack(result)
+			else -- backup
+				return orig(...)
 			end
-		elseif not secure then -- backup on non secure
-			return orig(...)
 		end
+		-- /failsafe hook
+	else
+		-- all other hooks
+		uid = function(...)
+			if actives[uid] then
+				if method then
+					return self[handler](self, ...)
+				else
+					return handler(...)
+				end
+			elseif not secure then -- backup on non secure
+				return orig(...)
+			end
+		end
+		-- /hook
 	end
 	return uid
 end
@@ -175,7 +194,7 @@ function hook(self, obj, method, handler, script, secure, raw, forceSecure, usag
 		error(string.format("%s: Attempting to hook a non existing target", usage), 3)
 	end
 	
-	uid = createHook(self, handler, orig, secure, not raw)
+	uid = createHook(self, handler, orig, secure, not (raw or secure))
 	
 	if obj then
 		self.hooks[obj] = self.hooks[obj] or {}
