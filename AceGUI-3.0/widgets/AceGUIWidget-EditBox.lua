@@ -29,6 +29,14 @@ do
 		insets = { left = 3, right = 3, top = 3, bottom = 3 }
 	}
 	
+	local function Control_OnEnter(this)
+		this.obj:Fire("OnEnter")
+	end
+	
+	local function Control_OnLeave(this)
+		this.obj:Fire("OnLeave")
+	end
+	
 	local function EditBox_OnEscapePressed(this)
 		this:ClearFocus()
 	end
@@ -124,6 +132,9 @@ do
 		frame:SetHeight(44)
 		frame:SetWidth(200)
 
+		editbox:SetScript("OnEnter",Control_OnEnter)
+		editbox:SetScript("OnLeave",Control_OnLeave)
+		
 		editbox:SetAutoFocus(false)
 		editbox:SetFontObject(ChatFontNormal)
 		editbox:SetScript("OnEscapePressed",EditBox_OnEscapePressed)
