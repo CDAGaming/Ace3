@@ -66,16 +66,13 @@ function createHook(self, handler, orig, secure, failsafe)
 		-- failsafe hook creation
 		uid = function(...)
 			if actives[uid] then
-				local result = { orig(...) } -- failsafe
 				if method then
 					self[handler](self, ...)
 				else
 					handler(...)
 				end
-				return unpack(result)
-			else -- backup
-				return orig(...)
 			end
+			return orig(...)
 		end
 		-- /failsafe hook
 	else
