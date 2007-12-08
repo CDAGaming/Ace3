@@ -532,6 +532,7 @@ local function CheckOptionDisabled(option, options, path, appName)
 	local group = options
 	local handler
 	
+	handler = group.handler or handler
 	for i, option in ipairs(path) do
 		group = GetSubOption(group, option)
 		info[i] = option
