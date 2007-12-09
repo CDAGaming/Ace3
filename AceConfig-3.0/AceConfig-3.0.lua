@@ -25,13 +25,19 @@ local cfgdlg = LibStub("AceConfigDialog-3.0")
 --
 -- - appName - (string) application name
 -- - options - table or function ref, see AceConfigRegistry
--- - slashcmd - slash command (string), or nil to NOT create a slash command
+-- - slashcmd - slash command (string) or table with commands, or nil to NOT create a slash command
 
 function lib:RegisterOptionsTable(appName, options, slashcmd)
 	local ok,msg = pcall(cfgreg.RegisterOptionsTable, self, appName, options)
 	if not ok then error(msg, 2) end
 	
 	if slashcmd then
-		cfgcmd:CreateChatCommand(slashcmd, appName)
+		if type(slashcmd) == "table" then
+			for _,cmd in pairs(slashcmd) do
+				cfgcmd:CreateChatCommand(cmd, appName)
+			end
+		else
+			cfgcmd:CreateChatCommand(slashcmd, appName)
+		end
 	end
 end
