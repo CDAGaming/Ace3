@@ -735,6 +735,7 @@ local function FeedOptions(appName, options,container,rootframe,path,group,inlin
 	
 	BuildSortedOptionsTable(group, feedkeys, feedtmp)
 	
+	container:PauseLayout()
 	for i, v in ipairs(feedtmp) do
 		local k = feedkeys[v]
 		local hidden = CheckOptionHidden(v, options, path, appName)
@@ -804,7 +805,7 @@ local function FeedOptions(appName, options,container,rootframe,path,group,inlin
 						end
 						
 						table.sort(valuesort)
-						
+						control:PauseLayout()
 						for i, value in ipairs(valuesort) do
 							local text = values[value]
 							local check = gui:Create("CheckBox")
@@ -816,6 +817,8 @@ local function FeedOptions(appName, options,container,rootframe,path,group,inlin
 							InjectInfo(check, options, v, path, rootframe, appName)
 							control:AddChild(check)
 						end
+						control:ResumeLayout()
+						control:DoLayout()
 					end
 					del(valuesort)
 					
@@ -853,7 +856,8 @@ local function FeedOptions(appName, options,container,rootframe,path,group,inlin
 			end
 		end
 	end
-	
+	container:ResumeLayout()
+	container:DoLayout()
 	del(feedkeys)
 	del(feedtmp)
 end
