@@ -131,6 +131,7 @@ do
 		dropdown:SetCallback("OnValueChanged",SelectedGroup)
 		
 		dropdown.frame:SetPoint("TOPLEFT",titletext,"BOTTOMLEFT",-7,3)
+		dropdown.frame:Show()
 		
 		local border = CreateFrame("Frame",nil,frame)
 		self.border = border
