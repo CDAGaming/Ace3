@@ -36,8 +36,16 @@ do
 				self:Fire("OnValueChanged", newvalue)
 			end
 			if self.value then
-				--this.obj.valuetext:SetText(math.floor(self.value*10)/10)
-				this.obj.editbox:SetText(math.floor(self.value*100)/100)
+				local value = self.value
+				--[[
+				local min, max, step = self.min or 0, self.max or 100, self.step
+				if step then
+					value = math.floor((value - min) / step + 0.5) * step + min
+				else
+					value = math.max(math.min(value,max),min)
+				end
+				--]]
+				this.obj.editbox:SetText(math.floor(value*100+ 0.5) / 100 )
 			end
 		end
 	end
