@@ -173,7 +173,6 @@ local handlermsg = "expected a table"
 local functypes = {["function"]=true, ["string"]=true}
 local funcmsg = "expected function or member name"
 
-
 -- handle() - selfrecursing function that processes input->optiontable 
 -- - depth - starts at 0
 -- - retfalse - return false rather than produce error if a match is not found (used by inlined groups)
@@ -212,7 +211,7 @@ local function handle(info, inputpos, tab, depth, retfalse)
 		nextpos=nextpos+1
 		
 		-- loop .args and try to find a key with a matching name
-		for k,v in pairs(tab.args) do
+		for k,v in iterateargs(tab) do
 			if not(type(k)=="string" and type(v)=="table" and type(v.type)=="string") then err(info,inputpos, "options table child '"..tostring(k).."' is malformed") end
 			
 			-- is this child an inline group? if so, traverse into it
