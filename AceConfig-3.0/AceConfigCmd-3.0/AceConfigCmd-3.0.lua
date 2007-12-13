@@ -148,10 +148,17 @@ end
 
 
 
-local function showhelp(info, inputpos, tab)
-	print(info.appName..": arguments to /"..info[0].." "..strsub(info.input,1,inputpos-1)..":")
+local function showhelp(info, inputpos, tab, noHead)
+	if not noHead then
+		print(info.appName..": arguments to /"..info[0].." "..strsub(info.input,1,inputpos-1)..":")
+	end
 	for k,v in iterateargs(tab) do
-		print("  "..k.." - "..(v.desc or v.name or ""))
+		-- recursively show all inline groups
+		if v.type == "group" and pickfirstset(v.cmdInline, v.inline, false) then
+			showhelp(info, inputpos, v, true)
+		else
+			print("  "..k.." - "..(v.desc or v.name or ""))
+		end
 	end
 end
 
@@ -207,7 +214,7 @@ local function handle(info, inputpos, tab, depth, retfalse)
 		-- loop .args and try to find a key with a matching name
 		for k,v in pairs(tab.args) do
 			if not(type(k)=="string" and type(v)=="table" and type(v.type)=="string") then err(info,inputpos, "options table child '"..tostring(k).."' is malformed") end
-
+			
 			-- is this child an inline group? if so, traverse into it
 			if v.type=="group" and pickfirstset(v.cmdInline, v.inline, false) then
 				info[depth+1] = k
@@ -217,15 +224,13 @@ local function handle(info, inputpos, tab, depth, retfalse)
 				else
 					return	-- done, name was found in inline group
 				end
-			end
-			
-			-- matching name?
-			if strlower(arg)==strlower(k) then
+			-- matching name and not a inline group
+			elseif strlower(arg)==strlower(k) then
 				info[depth+1] = k
 				return handle(info,nextpos,v,depth+1)
 			end
 		end
-		
+			
 		-- no match 
 		if retfalse then
 			-- restore old infotable members and return false to indicate failure
