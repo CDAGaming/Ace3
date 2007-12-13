@@ -145,14 +145,22 @@ local function iterateargs(tab)
 	end
 end
 
-
-
-
 local function showhelp(info, inputpos, tab, noHead)
 	if not noHead then
 		print(info.appName..": arguments to /"..info[0].." "..strsub(info.input,1,inputpos-1)..":")
 	end
+	local sortTbl = {}
+	local refTbl = tab.plugins and {} or tab.args
+	
 	for k,v in iterateargs(tab) do
+		table.insert(sortTbl, k)
+		if tab.plugins then refTbl[k] = v end
+	end
+	
+	table.sort(sortTbl, function(one, two) return (refTbl[one].order or 100) < (refTbl[two].order or 100) end)
+	
+	for _,k in ipairs(sortTbl) do
+		local v = refTbl[k]
 		-- recursively show all inline groups
 		if v.type == "group" and pickfirstset(v.cmdInline, v.inline, false) then
 			showhelp(info, inputpos, v, true)
