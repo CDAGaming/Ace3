@@ -211,7 +211,7 @@ local function handle(info, inputpos, tab, depth, retfalse)
 			-- is this child an inline group? if so, traverse into it
 			if v.type=="group" and pickfirstset(v.cmdInline, v.inline, false) then
 				info[depth+1] = k
-				if handle(info, nextpos, v, depth+1)==false then
+				if handle(info, inputpos, v, depth+1, true)==false then
 					info[depth+1] = nil
 					-- wasn't found in there, but that's ok, we just keep looking down here
 				else
