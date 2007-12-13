@@ -270,6 +270,7 @@ function AceComm:Embed(target)
 		target[v] = self[v]
 	end
 	self.embeds[target] = true
+	return target
 end
 
 function AceComm:OnEmbedDisable(target)

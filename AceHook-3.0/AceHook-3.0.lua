@@ -48,6 +48,7 @@ function AceHook:Embed( target )
 	self.embeded[target] = true
 	-- inject the hooks table safely
 	target.hooks = target.hooks or {}
+	return target
 end
 
 -- AceHook:OnEmbedDisable( target )

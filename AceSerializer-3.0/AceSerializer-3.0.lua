@@ -229,6 +229,7 @@ function AceSerializer:Embed(target)
 		target[v] = self[v]
 	end
 	self.embeds[target] = true
+	return target
 end
 
 -- Update embeds

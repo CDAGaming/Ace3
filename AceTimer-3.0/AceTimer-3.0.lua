@@ -262,11 +262,12 @@ local mixins = {
 	"CancelTimer", "CancelAllTimers"
 }
 
-function AceTimer:Embed(object)
-	AceTimer.embeds[object] = true
+function AceTimer:Embed(target)
+	AceTimer.embeds[target] = true
 	for _,v in pairs(mixins) do
-		object[v] = AceTimer[v]
+		target[v] = AceTimer[v]
 	end
+	return target
 end
 
 for addon in pairs(AceTimer.embeds) do

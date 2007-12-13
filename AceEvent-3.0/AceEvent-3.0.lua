@@ -51,6 +51,7 @@ function AceEvent:Embed(target)
 		target[v] = self[v]
 	end
 	self.embeds[target] = true
+	return target
 end
 
 -- AceEvent:OnEmbedDisable( target )
