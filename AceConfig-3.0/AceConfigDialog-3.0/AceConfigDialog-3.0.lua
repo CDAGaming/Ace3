@@ -488,7 +488,7 @@ local function CheckOptionHidden(option, options, path, appName)
 	local info = new()
 	
 	local group = options
-	local handler
+	local handler = group.handler
 	
 	for i, option in ipairs(path) do
 		group = GetSubOption(group, option)
