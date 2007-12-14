@@ -68,7 +68,7 @@ errors=0
 function geterrorhandler() 
 	return function(msg)
 		errors=errors+1
-		assert(strmatch(msg, ": attempt to call a string value"))
+		assert(strmatch(msg, "a string value"))
 	end
 end
 

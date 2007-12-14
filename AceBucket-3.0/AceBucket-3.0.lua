@@ -21,16 +21,50 @@ AceBucket.embeds = AceBucket.embeds or {}
 local AceEvent, AceTimer
 
 -- local upvalues
-local pcall = pcall
 local pairs = pairs
 
 local bucketCache = setmetatable({}, {__mode='k'})
 
+--[[
+	xpcall safecall implementation
+]]
+local function errorhandler(err)
+	return geterrorhandler()(err)
+end
+
+local function CreateDispatcher(argCount)
+	local code = [[
+		local next, xpcall, eh = ...
+
+		local method, ARGS
+		local function call() method(ARGS) end
+
+		local function dispatch(func, ...)
+			method = func
+			if not method then return end
+			local OLD_ARGS = ARGS
+			ARGS = ...
+			xpcall(call, eh)
+			ARGS = OLD_ARGS
+		end
+
+		return dispatch
+	]]
+
+	local ARGS, OLD_ARGS = {}, {}
+	for i = 1, argCount do ARGS[i], OLD_ARGS[i] = "arg"..i, "old_arg"..i end
+	code = code:gsub("OLD_ARGS", table.concat(OLD_ARGS, ", ")):gsub("ARGS", table.concat(ARGS, ", "))
+	return assert(loadstring(code, "safecall"))(next, xpcall, errorhandler)
+end
+
+local Dispatchers = setmetatable({}, {__index=function(self, argCount)
+	local dispatcher = CreateDispatcher(argCount)
+	rawset(self, argCount, dispatcher)
+	return dispatcher
+end})
+
 local function safecall(func, ...)
-	local success, err = pcall(func, ...)
-	if success then return err end
-	if not err:find("%.lua:%d+:") then err = (debugstack():match("\n(.-: )in.-\n") or "") .. err end 
-	geterrorhandler()(err)
+	Dispatchers[select('#', ...)](func, ...)
 end
 
 -- FireBucket ( bucket )

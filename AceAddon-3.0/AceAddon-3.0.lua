@@ -11,16 +11,50 @@ AceAddon.initializequeue = AceAddon.initializequeue or {} -- addons that are new
 AceAddon.enablequeue = AceAddon.enablequeue or {} -- addons that are initialized and waiting to be enabled
 AceAddon.embeds = AceAddon.embeds or setmetatable({}, {__index = function(tbl, key) tbl[key] = {} return tbl[key] end }) -- contains a list of libraries embedded in an addon
 
+--[[
+	xpcall safecall implementation
+]]
+local function errorhandler(err)
+	return geterrorhandler()(err)
+end
+
+local function CreateDispatcher(argCount)
+	local code = [[
+		local next, xpcall, eh = ...
+
+		local method, ARGS
+		local function call() method(ARGS) end
+
+		local function dispatch(func, ...)
+			method = func
+			if not method then return end
+			local OLD_ARGS = ARGS
+			ARGS = ...
+			xpcall(call, eh)
+			ARGS = OLD_ARGS
+		end
+
+		return dispatch
+	]]
+
+	local ARGS, OLD_ARGS = {}, {}
+	for i = 1, argCount do ARGS[i], OLD_ARGS[i] = "arg"..i, "old_arg"..i end
+	code = code:gsub("OLD_ARGS", table.concat(OLD_ARGS, ", ")):gsub("ARGS", table.concat(ARGS, ", "))
+	return assert(loadstring(code, "safecall"))(next, xpcall, errorhandler)
+end
+
+local Dispatchers = setmetatable({}, {__index=function(self, argCount)
+	local dispatcher = CreateDispatcher(argCount)
+	rawset(self, argCount, dispatcher)
+	return dispatcher
+end})
+
 local function safecall(func, ...)
 	-- we check to see if the func is passed is actually a function here and don't error when it isn't
 	-- this safecall is used for optional functions like OnInitialize OnEnable etc. When they are not
 	-- present execution should continue without hinderance
 	if type(func) == "function" then
-		local success, err = pcall(func, ...)
-		if success then return err end
-		
-		if not err:find("%.lua:%d+:") then err = (debugstack():match("\n(.-: )in.-\n") or "") .. err end
-		geterrorhandler()(err)
+		Dispatchers[select('#', ...)](func, ...)
 	end
 end
 
