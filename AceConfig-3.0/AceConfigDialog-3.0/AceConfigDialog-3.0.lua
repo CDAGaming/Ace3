@@ -29,6 +29,7 @@ local unpack = unpack
 local string = string
 local next = next
 local math = math
+local _
 
 --[[
 	 xpcall safecall implementation
@@ -39,19 +40,17 @@ local function errorhandler(err)
 	return geterrorhandler()(err)
 end
 
--- MODIFIED: returns only the second return value to be compatible with the old safecall implememtation
 local function CreateDispatcher(argCount)
 	local code = [[
 		local xpcall, eh = ...
 		local method, ARGS
-		local function call() method(ARGS) end
+		local function call() return method(ARGS) end
 	
 		local function dispatch(func, ...)
 			 method = func
 			 if not method then return end
 			 ARGS = ...
-			 local success, value = xpcall(call, eh)
-			 if success then return value end
+			 return xpcall(call, eh)
 		end
 	
 		return dispatch
@@ -69,8 +68,7 @@ local Dispatchers = setmetatable({}, {__index=function(self, argCount)
 	return dispatcher
 end})
 Dispatchers[0] = function(func)
-	local success, value = xpcall(func, errorhandler)
-	if success then return value end
+	return xpcall(func, errorhandler)
 end
  
 local function safecall(func, ...)
@@ -391,16 +389,19 @@ local function ActivateControl(widget, event, ...)
 			end
 		end
 	end
-
+	
+	local success
 	if validated and option.type ~= "execute" then
 		if type(validate) == "string" then
 			if handler and handler[validate] then
-				validated = safecall(handler[validate], handler, info, ...)
+				success, validated = safecall(handler[validate], handler, info, ...)
+				if not success then validated = false end
 			else
 				error(string.format("Method %s doesn't exist in handler for type execute", validate))
 			end
 		elseif type(validate) == "function" then
-			validated = safecall(validate, info, ...)
+			success, validated = safecall(validate, info, ...)
+			if not success then validated = false end
 		end
 	end
 
@@ -409,19 +410,23 @@ local function ActivateControl(widget, event, ...)
 		--call confirm func/method
 		if type(confirm) == "string" then
 			if handler and handler[confirm] then
-				confirm = safecall(handler[confirm],handler, info)
-				if type(confirm) == "string" then
+				success, confirm = safecall(handler[confirm],handler, info)
+				if success and type(confirm) == "string" then
 					confirmText = confirm
 					confirm = true
+				elseif not success then
+					confirm = false
 				end
 			else
 				error(string.format("Method %s doesn't exist in handler for type confirm", confirm))
 			end
 		elseif type(confirm) == "function" then
-			confirm = safecall(confirm,info)
-			if type(confirm) == "string" then
+			success, confirm = safecall(confirm,info)
+			if success and type(confirm) == "string" then
 				confirmText = confirm
 				confirm = true
+			elseif not success then
+				confirm = false
 			end
 		end
 

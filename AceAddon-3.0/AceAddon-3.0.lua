@@ -24,7 +24,7 @@ local function CreateDispatcher(argCount)
 	local code = [[
 		local xpcall, eh = ...
 		local method, ARGS
-		local function call() method(ARGS) end
+		local function call() return method(ARGS) end
 	
 		local function dispatch(func, ...)
 			 method = func

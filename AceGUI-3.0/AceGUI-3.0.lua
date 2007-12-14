@@ -42,14 +42,13 @@ local function CreateDispatcher(argCount)
 	local code = [[
 		local xpcall, eh = ...
 		local method, ARGS
-		local function call() method(ARGS) end
+		local function call() return method(ARGS) end
 	
 		local function dispatch(func, ...)
-			 method = func
-			 if not method then return end
-			 ARGS = ...
-			 local success, value = xpcall(call, eh)
-			 if success then return value end
+			method = func
+			if not method then return end
+			ARGS = ...
+			return xpcall(call, eh)
 		end
 	
 		return dispatch
@@ -67,8 +66,7 @@ local Dispatchers = setmetatable({}, {__index=function(self, argCount)
 	return dispatcher
 end})
 Dispatchers[0] = function(func)
-	local success, value = xpcall(func, errorhandler)
-	if success then return value end
+	return xpcall(func, errorhandler)
 end
  
 local function safecall(func, ...)
