@@ -10,6 +10,7 @@ local AceGUI = LibStub("AceGUI-3.0")
 ]]
 do
 	local Type = "Dropdown"
+	local Version = 0
 	
 	local ControlBackdrop  = {
 		bgFile = "Interface\\Tooltips\\UI-Tooltip-Background",
@@ -341,5 +342,5 @@ do
 		return self
 	end
 	
-	AceGUI:RegisterWidgetType(Type,Constructor)
+	AceGUI:RegisterWidgetType(Type,Constructor,Version)
 end

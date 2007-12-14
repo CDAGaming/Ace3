@@ -29,6 +29,7 @@ local AceGUI = LibStub("AceGUI-3.0")
 --------------------------
 do
 	local Type = "TabGroup"
+	local Version = 0
 
 	local PaneBackdrop  = {
 		bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
@@ -250,5 +251,5 @@ do
 		return self
 	end
 	
-	AceGUI:RegisterWidgetType(Type,Constructor)
+	AceGUI:RegisterWidgetType(Type,Constructor,Version)
 end

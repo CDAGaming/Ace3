@@ -9,6 +9,9 @@ local AceGUI = LibStub("AceGUI-3.0")
 
 ]]
 do
+	local Type = "Frame"
+	local Version = 0
+
 	local FrameBackdrop = {
 		bgFile="Interface\\DialogFrame\\UI-DialogBox-Background",
 		edgeFile="Interface\\DialogFrame\\UI-DialogBox-Border", 
@@ -268,5 +271,5 @@ do
 		return self	
 	end
 	
-	AceGUI:RegisterWidgetType("Frame",Constructor)
+	AceGUI:RegisterWidgetType(Type,Constructor,Version)
 end

@@ -10,10 +10,12 @@ AceGUI.WidgetRegistry = AceGUI.WidgetRegistry or {}
 AceGUI.LayoutRegistry = AceGUI.LayoutRegistry or {}
 AceGUI.WidgetBase = AceGUI.WidgetBase or {}
 AceGUI.WidgetContainerBase = AceGUI.WidgetContainerBase or {}
+AceGUI.WidgetVersions = AceGUI.WidgetVersions or {}
  
 -- local upvalues
 local WidgetRegistry = AceGUI.WidgetRegistry
 local LayoutRegistry = AceGUI.LayoutRegistry
+local WidgetVersions = AceGUI.WidgetVersions
 
 local pcall = pcall
 local select = select
@@ -265,8 +267,14 @@ end
 -- Widget API   --
 ------------------
 -- Registers a widget Constructor, this function returns a new instance of the Widget
-function AceGUI:RegisterWidgetType(Name, Constructor)
+function AceGUI:RegisterWidgetType(Name, Constructor, Version)
 	assert(type(Constructor) == "function")
+	assert(type(Version) == "number") 
+	
+	local oldVersion = WidgetVersions[Name]
+	if oldVersion and oldVersion >= Version then return end
+	
+	WidgetVersions[Name] = Version
 	WidgetRegistry[Name] = Constructor
 end
 

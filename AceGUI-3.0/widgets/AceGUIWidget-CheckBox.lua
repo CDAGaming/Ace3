@@ -10,6 +10,7 @@ local AceGUI = LibStub("AceGUI-3.0")
 ]]
 do
 	local Type = "CheckBox"
+	local Version = 0
 	
 	local function Aquire(self)
 		self:SetValue(false)
@@ -173,5 +174,5 @@ do
 		return self
 	end
 	
-	AceGUI:RegisterWidgetType(Type,Constructor)
+	AceGUI:RegisterWidgetType(Type,Constructor,Version)
 end

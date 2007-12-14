@@ -5,6 +5,7 @@ local AceGUI = LibStub("AceGUI-3.0")
 --------------------------
 do
 	local Type = "ColorPicker"
+	local Version = 0
 	
 	local function Aquire(self)
 	end
@@ -139,5 +140,5 @@ do
 		return self
 	end
 	
-	AceGUI:RegisterWidgetType(Type,Constructor)
+	AceGUI:RegisterWidgetType(Type,Constructor,Version)
 end
