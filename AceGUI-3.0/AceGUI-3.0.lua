@@ -37,7 +37,6 @@ local function errorhandler(err)
 	return geterrorhandler()(err)
 end
 
--- MODIFIED: returns only the second return value to be compatible with the old safecall implememtation
 local function CreateDispatcher(argCount)
 	local code = [[
 		local xpcall, eh = ...
