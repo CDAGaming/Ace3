@@ -53,35 +53,34 @@ for i=1,BUCKETS do
 end
 
 --[[
-	xpcall safecall implementation
+	 xpcall safecall implementation
 ]]
+local xpcall = xpcall
+
 local function errorhandler(err)
 	return geterrorhandler()(err)
 end
 
 local function CreateDispatcher(argCount)
 	local code = [[
-		local next, xpcall, eh = ...
-
+		local xpcall, eh = ...
 		local method, ARGS
 		local function call() method(ARGS) end
-
+	
 		local function dispatch(func, ...)
-			method = func
-			if not method then return end
-			local OLD_ARGS = ARGS
-			ARGS = ...
-			xpcall(call, eh)
-			ARGS = OLD_ARGS
+			 method = func
+			 if not method then return end
+			 ARGS = ...
+			 return xpcall(call, eh)
 		end
-
+	
 		return dispatch
 	]]
-
-	local ARGS, OLD_ARGS = {}, {}
-	for i = 1, argCount do ARGS[i], OLD_ARGS[i] = "arg"..i, "old_arg"..i end
-	code = code:gsub("OLD_ARGS", table.concat(OLD_ARGS, ", ")):gsub("ARGS", table.concat(ARGS, ", "))
-	return assert(loadstring(code, "safecall"))(next, xpcall, errorhandler)
+	
+	local ARGS = {}
+	for i = 1, argCount do ARGS[i] = "arg"..i end
+	code = code:gsub("ARGS", table.concat(ARGS, ", "))
+	return assert(loadstring(code, "safecall Dispatcher["..argCount.."]"))(xpcall, errorhandler)
 end
 
 local Dispatchers = setmetatable({}, {__index=function(self, argCount)
@@ -89,11 +88,13 @@ local Dispatchers = setmetatable({}, {__index=function(self, argCount)
 	rawset(self, argCount, dispatcher)
 	return dispatcher
 end})
-
-local function safecall(func, ...)
-	Dispatchers[select('#', ...)](func, ...)
+Dispatchers[0] = function(func)
+	return xpcall(func, errorhandler)
 end
-
+ 
+local function safecall(func, ...)
+	return Dispatchers[select('#', ...)](func, ...)
+end
 
 local lastint = floor(GetTime() * HZ)
 

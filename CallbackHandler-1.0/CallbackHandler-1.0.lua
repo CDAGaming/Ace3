@@ -47,7 +47,7 @@ local function CreateDispatcher(argCount)
 	local ARGS, OLD_ARGS = {}, {}
 	for i = 1, argCount do ARGS[i], OLD_ARGS[i] = "arg"..i, "old_arg"..i end
 	code = code:gsub("OLD_ARGS", concat(OLD_ARGS, ", ")):gsub("ARGS", concat(ARGS, ", "))
-	return assert(loadstring(code, "safecall"))(next, xpcall, errorhandler)
+	return assert(loadstring(code, "safecall Dispatcher["..argCount.."]"))(next, xpcall, errorhandler)
 end
 
 local Dispatchers = setmetatable({}, {__index=function(self, argCount)
