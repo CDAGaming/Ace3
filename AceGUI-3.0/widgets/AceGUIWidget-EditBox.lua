@@ -57,7 +57,7 @@ do
 		elseif type == "spell" then
 			local name, rank = GetSpellName(id, info)
 			if rank and rank:match("%d") then
-				name = name.." ("..rank..")"
+				name = name.."("..rank..")"
 			end
 			self:SetText(name)
 			self:Fire("OnEnterPressed",name)
