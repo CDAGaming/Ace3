@@ -18,8 +18,11 @@ if not lib then return end
 
 lib.tables = lib.tables or {}
 
+local CallbackHandler = LibStub:GetLibrary("CallbackHandler-1.0")
 
-
+if not lib.callbacks then
+	lib.callbacks = CallbackHandler:New(lib)
+end
 
 -----------------------------------------------------------------------
 -- Validating options table consistency:
@@ -224,9 +227,17 @@ function lib:ValidateOptionsTable(options,name,errlvl)
 	validate(options,errlvl,name)
 end
 
+------------------------------
+-- :NotifyChange(appName)
+-- - appName - string identifying the addon
+--
+-- Fires a ConfigTableChange callback for those listening in on it, allowing config GUIs to refresh
+------------------------------
 
-
-
+function lib:NotifyChange(appName)
+	if not lib.tables[appName] then return end
+	lib.callbacks:Fire("ConfigTableChange", appName)
+end
 
 ---------------------------------------------------------------------
 -- Registering and retreiving options tables:
