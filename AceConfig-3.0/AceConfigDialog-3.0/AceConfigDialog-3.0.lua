@@ -290,8 +290,11 @@ local function OptionOnMouseOver(widget, event)
 
 	GameTooltip_SetDefaultAnchor(GameTooltip, widget.frame)
 	GameTooltip:SetText(opt.name, 1, 1, 1, 1)
-	if opt.desc then
+	if type(opt.desc) == "string" then
 		GameTooltip:AddLine(opt.desc, NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b, 1)
+	end
+	if type(opt.usage) == "string" then
+		GameTooltip:AddLine("Usage: "..opt.usage, NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b, 1)
 	end
 
 	GameTooltip:Show()
