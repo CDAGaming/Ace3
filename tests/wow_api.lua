@@ -5,7 +5,7 @@ local donothing = function() end
 local frames = {} -- Stores globally created frames, and their internal properties.
 
 local FrameClass = {} -- A class for creating frames.
-FrameClass.methods = { "SetScript", "RegisterEvent", "UnregisterEvent", "UnregisterAllEvents", "Show", "Hide", "IsShown" }
+FrameClass.methods = { "SetScript", "RegisterEvent", "UnregisterEvent", "UnregisterAllEvents", "Show", "Hide", "IsShown", "ClearAllPoints", "SetParent" }
 function FrameClass:New()
 	local frame = {}
 	for i,method in ipairs(self.methods) do
@@ -15,7 +15,8 @@ function FrameClass:New()
 		events = {},
 		scripts = {},
 		timer = GetTime(),
-		isShow = true
+		isShow = true,
+		parent = nil,
 	}
 	return frame, frameProps
 end
@@ -42,11 +43,16 @@ end
 function FrameClass:IsShown()
 	return frames[self].isShow
 end
-
+function FrameClass:ClearAllPoints()
+end
+function FrameClass:SetParent(parent)
+	frames[self].parent = parent
+end
 
 
 function CreateFrame(kind, name, parent)
 	local frame,internal = FrameClass:New()
+	internal.parent = parent
 	frames[frame] = internal
 	if name then
 		_G[name] = frame
