@@ -1123,6 +1123,14 @@ function lib:Close(appName)
 	end
 end
 
+
+function lib:ConfigTableChanged(event, appName)
+	if self.OpenFrames[appName] then
+		self:Open(appName)
+	end
+end
+reg.RegisterCallback(lib, "ConfigTableChange", "ConfigTableChanged")
+
 function lib:Open(appName, container)
 	if not old_CloseSpecialWindows then
 		old_CloseSpecialWindows = CloseSpecialWindows
