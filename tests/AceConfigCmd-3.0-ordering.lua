@@ -1,5 +1,6 @@
 dofile("wow_api.lua")
 dofile("LibStub.lua")
+dofile("../CallbackHandler-1.0/CallbackHandler-1.0.lua")
 dofile("../AceConsole-3.0/AceConsole-3.0.lua")
 dofile("../AceConfig-3.0/AceConfigRegistry-3.0/AceConfigRegistry-3.0.lua")
 dofile("../AceConfig-3.0/AceConfigCmd-3.0/AceConfigCmd-3.0.lua")
@@ -160,7 +161,7 @@ local output = {
 }
 
 function ChatFrame1.AddMessage(self, txt)
-	print("> "..txt)
+	-- print("> "..txt)
 	local str = assert(tremove(output, 1))
 	assert(string.match(txt, str), "Expected <"..str.."> got <"..txt..">")
 end
