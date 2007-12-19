@@ -149,20 +149,32 @@ local function showhelp(info, inputpos, tab, noHead)
 	if not noHead then
 		print(info.appName..": arguments to /"..info[0].." "..strsub(info.input,1,inputpos-1)..":")
 	end
-	local sortTbl = {}
-	local refTbl = tab.plugins and {} or tab.args
+	
+	local sortTbl = {}	-- [1..n]=name
+	local refTbl = {}   -- [name]=tableref
 	
 	for k,v in iterateargs(tab) do
-		table.insert(sortTbl, k)
-		if tab.plugins then refTbl[k] = v end
+		if not refTbl[k] then	-- a plugin overriding something in .args
+			table.insert(sortTbl, k)
+			refTbl[k] = v
+		end
 	end
 	
-	table.sort(sortTbl, function(one, two) return (refTbl[one].order or 100) < (refTbl[two].order or 100) end)
+	table.sort(sortTbl, function(one, two) 
+		local o1 = refTbl[one].order or 100
+		local o2 = refTbl[two].order or 100
+		if o1<0 and o2<0 then return o1<o2 end
+		if o2<0 then return true end
+		if o1<0 then return false end
+		if o1==o2 then return tostring(one)<tostring(two) end   -- compare names
+		return o1<o2
+	end)
 	
 	for _,k in ipairs(sortTbl) do
 		local v = refTbl[k]
 		-- recursively show all inline groups
 		if v.type == "group" and pickfirstset(v.cmdInline, v.inline, false) then
+			print("  "..(v.desc or v.name)..":")
 			showhelp(info, inputpos, v, true)
 		else
 			print("  "..k.." - "..(v.desc or v.name or ""))
