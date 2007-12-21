@@ -141,6 +141,156 @@ local function pickfirstset(...)
   end
 end
 
+--gets an option from a given group, checking plugins
+local function GetSubOption(group, key)
+	if group.plugins then
+		for plugin, t in pairs(group.plugins) do
+			if t[key] then
+				return t[key]
+			end
+		end
+	end
+
+	return group.args[key]
+end
+
+--Option member type definitions, used to decide how to access it
+
+--Is the member Inherited from parent options
+local isInherited = {
+	set = true,
+	get = true,
+	func = true,
+	confirm = true,
+	validate = true
+}
+
+--Does a string type mean a literal value, instead of the default of a method of the handler
+local stringIsLiteral = {
+	name = true,
+	desc = true,
+	icon = true,
+}
+
+--Is Never a function or method
+local allIsLiteral = {
+	type = true,
+}
+
+--gets the value for a member that could be a function
+--function refs are called with an info arg
+--every other type is returned
+local function GetOptionsMemberValue(membername, option, options, path, appName, ...)
+	--get definition for the member
+	local inherits = isInherited[membername]
+	
+
+	--get the member of the option, traversing the tree if it can be inherited
+	local member
+	
+	if inherits then
+		local group = options
+		if group[membername] ~= nil then
+			member = group[membername]
+		end
+		for i, v in ipairs(path) do
+			group = GetSubOption(group, v)
+			if group[membername] ~= nil then
+				member = group[membername]
+			end
+		end
+	else
+		member = option[membername]
+	end
+	
+	--check if we need to call a functon, or if we have a literal value
+	if ( not allIsLiteral[membername] ) and ( type(member) == "function" or ((not stringIsLiteral[membername]) and type(member) == "string") ) then
+		--We have a function to call
+		local info = new()
+		--traverse the options table, picking up the handler and filling the info with the path
+		local handler
+		local group = options
+		handler = group.handler or handler
+		
+		for i, v in ipairs(path) do
+			group = GetSubOption(group, v)
+			info[i] = v
+			handler = group.handler or handler
+		end
+		
+		info.options = options
+		info[0] = appName
+		info.arg = option.arg
+	
+		local a, b, c ,d 
+		--using 4 returns for the get of a color type, increase if a type needs more
+		if type(member) == "function" then
+			--Call the function
+			a,b,c,d = member(info, ...)
+		else
+			--Call the method
+			if handler and handler[member] then
+				a,b,c,d = handler[member](handler, info, ...)
+			else
+				error(string.format("Method %s doesn't exist in handler for type func", member))
+			end
+		end
+		del(info)
+		return a,b,c,d
+	else
+		--The value isnt a function to call, return it
+		return member	
+	end	
+end
+
+--[[calls an options function that could be inherited, method name or function ref
+local function CallOptionsFunction(funcname ,option, options, path, appName, ...)
+	local info = new()
+
+	local func
+	local group = options
+	local handler
+
+	--build the info table containing the path
+	-- pick up functions while traversing the tree
+	if group[funcname] ~= nil then
+		func = group[funcname]
+	end
+	handler = group.handler or handler
+
+	for i, v in ipairs(path) do
+		group = GetSubOption(group, v)
+		info[i] = v
+		if group[funcname] ~= nil then
+			func =  group[funcname]
+		end
+		handler = group.handler or handler
+	end
+
+	info.options = options
+	info[0] = appName
+	info.arg = option.arg
+
+	local a, b, c ,d
+	if type(func) == "string" then
+		if handler and handler[func] then
+			a,b,c,d = handler[func](handler, info, ...)
+		else
+			error(string.format("Method %s doesn't exist in handler for type func", func))
+		end
+	elseif type(func) == "function" then
+		a,b,c,d = func(info, ...)
+	end
+	del(info)
+	return a,b,c,d
+end
+--]]
+
+--tables to hold orders and names for options being sorted, will be created with new()
+--prevents needing to call functions repeatedly while sorting
+local tempOrders
+local tempNames
+
 local function compareOptions(a,b)
 	if not a then
 		return true
@@ -148,10 +298,10 @@ local function compareOptions(a,b)
 	if not b then
 		return false
 	end
-	local OrderA, OrderB = a.order or 100, b.order or 100
+	local OrderA, OrderB = tempOrders[a] or 100, tempOrders[b] or 100
 	if OrderA == OrderB then
-		local NameA = a.guiName or a.name or ""
-		local NameB = b.guiName or b.name or ""
+		local NameA = (type(tempNames[a] == "string") and tempNames[a]) or ""
+		local NameB = (type(tempNames[b] == "string") and tempNames[b]) or ""
 		return NameA:upper() < NameB:upper()
 	end
 	if OrderA < 0 then
@@ -166,25 +316,16 @@ local function compareOptions(a,b)
 	return OrderA < OrderB
 end
 
---gets an option from a given group, checking plugins
-local function GetSubOption(group, key)
-	if group.plugins then
-		for plugin, t in pairs(group.plugins) do
-			if t[key] then
-				return t[key]
-			end
-		end
-	end
 
-	return group.args[key]
-end
 
 --builds 2 tables out of an options group
 -- feedkeys, a mapping from table to original key
 -- feedtemp, a sorted table of the sub groups
-local function BuildSortedOptionsTable(group, feedkeys, feedtmp)
+local function BuildSortedOptionsTable(group, feedkeys, feedtmp, options, path, appName)
 	local keys = new()
-
+	tempOrders = new()
+	tempNames = new()
+	
 	if group.plugins then
 		for plugin, t in pairs(group.plugins) do
 			for k, v in pairs(t) do
@@ -192,22 +333,32 @@ local function BuildSortedOptionsTable(group, feedkeys, feedtmp)
 					tinsert(feedtmp, v)
 					feedkeys[v] = k
 					keys[k] = true
+					path[#path+1] = k
+					tempOrders[v] = GetOptionsMemberValue("order", v, options, path, appName)
+					tempNames[v] = GetOptionsMemberValue("name", v, options, path, appName)
+					path[#path] = nil
 				end
 			end
 		end
 	end
-
+	
 	for k, v in pairs(group.args) do
 		if not keys[k] then
 			tinsert(feedtmp, v)
 			feedkeys[v] = k
 			keys[k] = true
+			path[#path+1] = k
+			tempOrders[v] = GetOptionsMemberValue("order", v, options, path, appName)
+			tempNames[v] = GetOptionsMemberValue("name", v, options, path, appName)
+			path[#path] = nil
 		end
 	end
 
 	table.sort(feedtmp, compareOptions)
-
+	
 	del(keys)
+	del(tempOrders)
+	del(tempNames)
 end
 
 local function DelTree(tree)
@@ -286,15 +437,21 @@ local function OptionOnMouseOver(widget, event)
 	--show a tooltip/set the status bar to the desc text
 	local user = widget.userdata
 	local opt = user.option
-	--user.rootframe:SetStatusText(user.option.desc)
+	local options = user.options
+	local path = user.path
+	local appName = user.appName
 
 	GameTooltip_SetDefaultAnchor(GameTooltip, widget.frame)
-	GameTooltip:SetText(opt.name, 1, 1, 1, 1)
-	if type(opt.desc) == "string" then
-		GameTooltip:AddLine(opt.desc, NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b, 1)
+	local name = GetOptionsMemberValue("name", opt, options, path, appName)
+	local desc = GetOptionsMemberValue("name", opt, options, path, appName)
+	local usage = GetOptionsMemberValue("name", opt, options, path, appName)
+	
+	GameTooltip:SetText(name, 1, 1, 1, 1)
+	if type(desc) == "string" then
+		GameTooltip:AddLine(desc, NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b, 1)
 	end
-	if type(opt.usage) == "string" then
-		GameTooltip:AddLine("Usage: "..opt.usage, NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b, 1)
+	if type(usage) == "string" then
+		GameTooltip:AddLine("Usage: "..usage, NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b, 1)
 	end
 
 	GameTooltip:Show()
@@ -437,9 +594,16 @@ local function ActivateControl(widget, event, ...)
 		if type(confirm) == "boolean" then
 			if confirm then
 				if not confirmText then
-					confirmText = option.name
-					if option.desc then
-						confirmText = confirmText.." - "..option.desc
+					local name, desc = option.name, option.desc
+					if type(name) == "function" then
+						name = name(info)
+					end
+					if type(desc) == "function" then
+						desc = desc(info)
+					end
+					confirmText = name
+					if desc then
+						confirmText = confirmText.." - "..desc
 					end
 				end
 
@@ -528,39 +692,7 @@ local function CheckOptionHidden(option, options, path, appName)
 		return hidden
 	end
 
-	hidden = option.hidden
-	if type(hidden) == "boolean" then
-		return hidden
-	end
-
-	local info = new()
-
-	local group = options
-	local handler = group.handler
-
-	for i, option in ipairs(path) do
-		group = GetSubOption(group, option)
-		info[i] = option
-		handler = group.handler or handler
-	end
-
-	info.options = options
-	info[0] = appName
-	info.arg = option.arg
-
-	if type(hidden) == "string" then
-		if handler and handler[hidden] then
-			hidden = handler[hidden](handler, info)
-		else
-			error(string.format("Method %s doesn't exist in handler for type hidden", hidden))
-		end
-	elseif type(hidden) == "function" then
-		hidden = hidden(info)
-	end
-
-	del(info)
-
-	return hidden
+	return GetOptionsMemberValue("hidden", option, options, path, appName)
 end
 
 local function CheckOptionDisabled(option, options, path, appName)
@@ -570,81 +702,7 @@ local function CheckOptionDisabled(option, options, path, appName)
 		return disabled
 	end
 
-	disabled = option.disabled
-	if type(disabled) == "boolean" then
-		return disabled
-	end
-
-	local info = new()
-
-	local group = options
-	local handler
-
-	handler = group.handler or handler
-	for i, option in ipairs(path) do
-		group = GetSubOption(group, option)
-		info[i] = option
-		handler = group.handler or handler
-	end
-
-	info.options = options
-	info[0] = appName
-	info.arg = option.arg
-
-	if type(disabled) == "string" then
-		if handler and handler[disabled] then
-			disabled = handler[disabled](handler, info)
-		else
-			error(string.format("Method %s doesn't exist in handler for type disabled", disabled))
-		end
-	elseif type(disabled) == "function" then
-		disabled = disabled(info)
-	end
-
-	del(info)
-
-	return disabled
-end
-
-local function CallOptionsFunction(funcname ,option, options, path, appName, ...)
-	local info = new()
-
-	local func
-	local group = options
-	local handler
-
-	--build the info table containing the path
-	-- pick up functions while traversing the tree
-	if group[funcname] ~= nil then
-		func = group[funcname]
-	end
-	handler = group.handler or handler
-
-	for i, v in ipairs(path) do
-		group = GetSubOption(group, v)
-		info[i] = v
-		if group[funcname] ~= nil then
-			func =  group[funcname]
-		end
-		handler = group.handler or handler
-	end
-
-	info.options = options
-	info[0] = appName
-	info.arg = option.arg
-
-	local a, b, c ,d
-	if type(func) == "string" then
-		if handler and handler[func] then
-			a,b,c,d = handler[func](handler, info, ...)
-		else
-			error(string.format("Method %s doesn't exist in handler for type func", func))
-		end
-	elseif type(func) == "function" then
-		a,b,c,d = func(info, ...)
-	end
-	del(info)
-	return a,b,c,d
+	return GetOptionsMemberValue("disabled", option, options, path, appName)
 end
 
 local function BuildTabs(group, options, path, appName)
@@ -653,7 +711,7 @@ local function BuildTabs(group, options, path, appName)
 	local feedkeys = new()
 	local feedtmp = new()
 
-	BuildSortedOptionsTable(group, feedkeys, feedtmp)
+	BuildSortedOptionsTable(group, feedkeys, feedtmp, options, path, appName)
 
 	for i, v in ipairs(feedtmp) do
 		local k = feedkeys[v]
@@ -662,7 +720,7 @@ local function BuildTabs(group, options, path, appName)
 			local hidden = CheckOptionHidden(v, options, path, appName)
 			if not inline and not hidden then
 				tinsert(tabs, k)
-				text[k] = v.name
+				text[k] = GetOptionsMemberValue("name", v, options, path, appName)
 			end
 		end
 	end
@@ -677,7 +735,7 @@ local function BuildSelect(group, options, path, appName)
 	local groups = new()
 	local feedkeys = new()
 	local feedtmp = new()
-	BuildSortedOptionsTable(group, feedkeys, feedtmp)
+	BuildSortedOptionsTable(group, feedkeys, feedtmp, options, path, appName)
 
 	for i, v in ipairs(feedtmp) do
 		local k = feedkeys[v]
@@ -685,7 +743,7 @@ local function BuildSelect(group, options, path, appName)
 			local inline = pickfirstset(v.dialogInline,v.guiInline,v.inline, false)
 			local hidden = CheckOptionHidden(v, options, path, appName)
 			if not inline and not hidden then
-				groups[k] = v.name
+				groups[k] = GetOptionsMemberValue("name", v, options, path, appName)
 			end
 		end
 	end
@@ -700,7 +758,7 @@ local function BuildSubTree(group, tree, options, path, appName)
 	local feedkeys = new()
 	local feedtmp = new()
 
-	BuildSortedOptionsTable(group, feedkeys, feedtmp)
+	BuildSortedOptionsTable(group, feedkeys, feedtmp, options, path, appName)
 
 	for i, v in ipairs(feedtmp) do
 		local k = feedkeys[v]
@@ -710,7 +768,7 @@ local function BuildSubTree(group, tree, options, path, appName)
 			if not inline and not hidden then
 				local entry = new()
 				entry.value = k
-				entry.text = v.name
+				entry.text = GetOptionsMemberValue("name", v, options, path, appName)
 				entry.disabled = CheckOptionDisabled(v, options, path, appName)
 				if not tree.children then tree.children = new() end
 				tinsert(tree.children,entry)
@@ -730,7 +788,7 @@ local function BuildTree(group, options, path, appName)
 	local feedkeys = new()
 	local feedtmp = new()
 
-	BuildSortedOptionsTable(group, feedkeys, feedtmp)
+	BuildSortedOptionsTable(group, feedkeys, feedtmp, options, path, appName)
 
 	for i, v in ipairs(feedtmp) do
 		local k = feedkeys[v]
@@ -740,7 +798,7 @@ local function BuildTree(group, options, path, appName)
 			if not inline and not hidden then
 				local entry = new()
 				entry.value = k
-				entry.text = v.name
+				entry.text = GetOptionsMemberValue("name", v, options, path, appName)
 				entry.disabled = CheckOptionDisabled(v, options, path, appName)
 				tinsert(tree,entry)
 				if (v.childGroups or "tree") == "tree" then
@@ -781,19 +839,20 @@ local function FeedOptions(appName, options,container,rootframe,path,group,inlin
 	local feedkeys = new()
 	local feedtmp = new()
 
-	BuildSortedOptionsTable(group, feedkeys, feedtmp)
+	BuildSortedOptionsTable(group, feedkeys, feedtmp, options, path, appName)
 
 	container:PauseLayout()
 	for i, v in ipairs(feedtmp) do
 		local k = feedkeys[v]
 		local hidden = CheckOptionHidden(v, options, path, appName)
+		local name = GetOptionsMemberValue("name", v, options, path, appName)
 		if not hidden then
 			if v.type == "group" then
 				if inline or pickfirstset(v.dialogInline,v.guiInline,v.inline, false) then
 					--Inline group
 					groupDisabled = groupDisabled or  CheckOptionDisabled(v, options, path, appName)
 					local GroupContainer = gui:Create("InlineGroup")
-					GroupContainer:SetTitle(v.name or "")
+					GroupContainer:SetTitle(name or "")
 					GroupContainer.width = "fill"
 					GroupContainer:SetLayout("flow")
 					container:AddChild(GroupContainer)
@@ -805,50 +864,57 @@ local function FeedOptions(appName, options,container,rootframe,path,group,inlin
 				tinsert(path, k)
 				--Control to feed
 				local control
+				
+				local name = GetOptionsMemberValue("name", v, options, path, appName)
+				
 				if v.type == "execute" then
 					control = gui:Create("Button")
-					control:SetText(v.name)
+					control:SetText(name)
 					control:SetCallback("OnClick",ActivateControl)
 
 				elseif v.type == "input" then
 					control = gui:Create("EditBox")
-					control:SetLabel(v.name)
+					control:SetLabel(name)
 					control:SetCallback("OnEnterPressed",ActivateControl)
-					control:SetText(CallOptionsFunction("get",v, options, path, appName))
+					control:SetText(GetOptionsMemberValue("get",v, options, path, appName))
 
 				elseif v.type == "toggle" then
 					control = gui:Create("CheckBox")
-					control:SetLabel(v.name)
-					control:SetValue(CallOptionsFunction("get",v, options, path, appName))
+					control:SetLabel(name)
+					control:SetValue(GetOptionsMemberValue("get",v, options, path, appName))
 					control:SetCallback("OnValueChanged",ActivateControl)
 
 				elseif v.type == "range" then
 					control = gui:Create("Slider")
-					control:SetLabel(v.name)
+					control:SetLabel(name)
 					control:SetSliderValues(v.min or 0,v.max or 100, v.bigStep or v.step or 0)
-					control:SetValue(CallOptionsFunction("get",v, options, path, appName))
+					control:SetValue(GetOptionsMemberValue("get",v, options, path, appName) or 0)
 					control:SetCallback("OnValueChanged",ActivateSlider)
 					control:SetCallback("OnMouseUp",ActivateSlider)
 
 				elseif v.type == "select" then
+					local values = GetOptionsMemberValue("values", v, options, path, appName)
+					
 					control = gui:Create("Dropdown")
-					control:SetLabel(v.name)
-					control:SetList(v.values)
-					control:SetValue(CallOptionsFunction("get",v, options, path, appName))
+					control:SetLabel(name)
+					control:SetList(values)
+					control:SetValue(GetOptionsMemberValue("get",v, options, path, appName))
 					control:SetCallback("OnValueChanged",ActivateControl)
 
 				elseif v.type == "multiselect" then
+					local values = GetOptionsMemberValue("values", v, options, path, appName)
+					
 					control = gui:Create("InlineGroup")
 					control:SetLayout("Flow")
-					control:SetTitle(v.name)
+					control:SetTitle(name)
 					control.width = "fill"
 
 					local valuesort = new()
-					local values = v.values
+
 					local disabled = groupDisabled or CheckOptionDisabled(v, options, path, appName)
 
 					if values then
-						for value, text in pairs(v.values) do
+						for value, text in pairs(values) do
 							tinsert(valuesort, value)
 						end
 
@@ -860,7 +926,7 @@ local function FeedOptions(appName, options,container,rootframe,path,group,inlin
 							check:SetLabel(text)
 							check.userdata.value = value
 							check:SetDisabled(disabled)
-							check:SetValue(CallOptionsFunction("get",v, options, path, appName, value))
+							check:SetValue(GetOptionsMemberValue("get",v, options, path, appName, value))
 							check:SetCallback("OnValueChanged",ActivateMultiControl)
 							InjectInfo(check, options, v, path, rootframe, appName)
 							control:AddChild(check)
@@ -872,20 +938,20 @@ local function FeedOptions(appName, options,container,rootframe,path,group,inlin
 
 				elseif v.type == "color" then
 					control = gui:Create("ColorPicker")
-					control:SetLabel(v.name)
-					control:SetColor(CallOptionsFunction("get",v, options, path, appName))
+					control:SetLabel(name)
+					control:SetColor(GetOptionsMemberValue("get",v, options, path, appName))
 					control:SetCallback("OnValueChanged",ActivateControl)
 					control:SetCallback("OnValueConfirmed",ActivateControl)
 
 				elseif v.type == "keybinding" then
 					control = gui:Create("Keybinding")
-					control:SetLabel(v.name)
-					control:SetKey(CallOptionsFunction("get",v, options, path, appName))
+					control:SetLabel(name)
+					control:SetKey(GetOptionsMemberValue("get",v, options, path, appName))
 					control:SetCallback("OnKeyChanged",ActivateControl)
 
 				elseif v.type == "header" then
 					control = gui:Create("Heading")
-					control:SetText(v.name)
+					control:SetText(name)
 					control.width = "fill"
 
 				end
@@ -1146,6 +1212,10 @@ function lib:Open(appName, container)
 	local options = app("dialog", MAJOR)
 
 	local f
+	
+	local path = new()
+	local name = GetOptionsMemberValue("name", options, options, path, appName)
+	
 	--if a container is given feed into that
 	if container then
 		f = container
@@ -1153,7 +1223,7 @@ function lib:Open(appName, container)
 		f.userdata.appName = appName
 		f.userdata.iscustom = true
 		if f.SetTitle then
-			f:SetTitle(options.name or "")
+			f:SetTitle(name or "")
 		end
 		local status = lib:GetStatusTable(appName)
 		if f.SetStatusTable then
@@ -1169,12 +1239,12 @@ function lib:Open(appName, container)
 		f:ReleaseChildren()
 		f:SetCallback("OnClose", FrameOnClose)
 		f.userdata.appName = appName
-		f:SetTitle(options.name or "")
+		f:SetTitle(name or "")
 		local status = lib:GetStatusTable(appName)
 		f:SetStatusTable(status)
 	end
 
-	local path = new()
+	
 
 	self:FeedGroup(appName,options,f,f,path)
 	if f.Show then
