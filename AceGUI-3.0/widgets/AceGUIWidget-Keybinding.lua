@@ -60,7 +60,7 @@ do
 						["RSHIFT"] = true, ["RCTRL"] = true, ["RALT"] = true,
 					}
 				end
-				if quickReturnKeys[keyPressed] then return end
+				if ignoreKeys[keyPressed] then return end
 				if IsShiftKeyDown() then
 					keyPressed = "SHIFT-"..keyPressed
 				end
