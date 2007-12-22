@@ -15,6 +15,7 @@ do
 	
 	local function Aquire(self)
 		self:SetDisabled(false)
+		self.showbutton = true
 	end
 	
 	local function Release(self)
@@ -42,9 +43,29 @@ do
 		this:ClearFocus()
 	end
 	
+	local function ShowButton(self)
+		if self.showbutton then
+			self.button:Show()
+			self.editbox:SetTextInsets(5,25,3,3)
+		end
+	end
+	
+	local function HideButton(self)
+		self.button:Hide()
+		self.editbox:SetTextInsets(5,5,3,3)
+	end
+	
 	local function EditBox_OnEnterPressed(this)
+		local self = this.obj
 		local value = this:GetText()
-		this.obj:Fire("OnEnterPressed",value)
+		self:Fire("OnEnterPressed",value)
+		HideButton(self)
+	end
+	
+	local function Button_OnClick(this)
+		local editbox = this.obj.editbox
+		editbox:ClearFocus()
+		EditBox_OnEnterPressed(editbox)
 	end
 	
 	local function EditBox_OnReceiveDrag(this)
@@ -63,6 +84,7 @@ do
 			self:Fire("OnEnterPressed",name)
 			ClearCursor()
 		end
+		HideButton(self)
 	end
 	
 	local function EditBox_OnTextChanged(this)
@@ -71,6 +93,7 @@ do
 		if value ~= self.lasttext then
 			self:Fire("OnTextChanged",value)
 			self.lasttext = value
+			ShowButton(self)
 		end
 	end
 	
@@ -90,6 +113,7 @@ do
 		self.lasttext = text
 		self.editbox:SetText(text or "")
 		self.editbox:SetCursorPosition(0)
+		HideButton(self)
 	end
 	
 	local function SetWidth(self, width)
@@ -161,6 +185,17 @@ do
 		label:SetJustifyH("CENTER")
 		label:SetHeight(18)
 		self.label = label
+		
+		local button = CreateFrame("Button",nil,editbox,"UIPanelButtonTemplate")
+		button:SetWidth(20)
+		button:SetHeight(20)
+		button:SetPoint("RIGHT",editbox,"RIGHT",-4,0)
+		button:SetText("OK")
+		button:SetScript("OnClick", Button_OnClick)
+		button:Hide()
+		
+		self.button = button
+		button.obj = self
 
 		AceGUI:RegisterAsWidget(self)
 		return self
