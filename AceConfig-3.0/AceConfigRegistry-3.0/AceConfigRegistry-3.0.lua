@@ -104,6 +104,7 @@ local typedkeys={
 		usage=optstring,
 	},
 	toggle={
+		tristate=optbool,
 	},
 	tristate={
 	},
@@ -125,6 +126,7 @@ local typedkeys={
 	multiselect={
 		values=istable,
 		style=optstring,
+		tristate=optbool,
 	},
 	color={
 		hasAlpha=optbool,

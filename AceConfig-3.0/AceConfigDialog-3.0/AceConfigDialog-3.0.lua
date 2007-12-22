@@ -881,6 +881,7 @@ local function FeedOptions(appName, options,container,rootframe,path,group,inlin
 				elseif v.type == "toggle" then
 					control = gui:Create("CheckBox")
 					control:SetLabel(name)
+					control:SetTriState(v.tristate)
 					control:SetValue(GetOptionsMemberValue("get",v, options, path, appName))
 					control:SetCallback("OnValueChanged",ActivateControl)
 
@@ -926,6 +927,7 @@ local function FeedOptions(appName, options,container,rootframe,path,group,inlin
 							check:SetLabel(text)
 							check.userdata.value = value
 							check:SetDisabled(disabled)
+							check:SetTriState(v.tristate)
 							check:SetValue(GetOptionsMemberValue("get",v, options, path, appName, value))
 							check:SetCallback("OnValueChanged",ActivateMultiControl)
 							InjectInfo(check, options, v, path, rootframe, appName)

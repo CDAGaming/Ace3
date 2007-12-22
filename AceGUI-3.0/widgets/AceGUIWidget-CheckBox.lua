@@ -14,6 +14,7 @@ do
 	
 	local function Aquire(self)
 		self:SetValue(false)
+		self.tristate = nil
 	end
 	
 	local function Release(self)
@@ -68,17 +69,41 @@ do
 			SetDesaturation(self.check, true)
 		else
 			self.text:SetTextColor(1,.82,0)
-			SetDesaturation(self.check, false)
+			if self.tristate and self.checked == nil then
+				SetDesaturation(self.check, true)
+			else
+				SetDesaturation(self.check, false)
+			end
 		end
 	end
 	
 	local function SetValue(self,value)
+		local check = self.check
 		self.checked = value
 		if value then
+			SetDesaturation(self.check, false)
+			check:SetWidth(24)
+			check:SetHeight(24)
 			self.check:Show()
 		else
-			self.check:Hide()
+			--Nil is the unknown tristate value
+			if self.tristate and value == nil then
+				SetDesaturation(self.check, true)
+				check:SetWidth(20)
+				check:SetHeight(20)
+				self.check:Show()
+			else
+				SetDesaturation(self.check, false)
+				check:SetWidth(24)
+				check:SetHeight(24)
+				self.check:Hide()
+			end
 		end
+	end
+	
+	local function SetTriState(self, enabled)
+		self.tristate = enabled
+		self:SetValue(self:GetValue())
 	end
 	
 	local function GetValue(self)
@@ -110,7 +135,19 @@ do
 	end
 	
 	local function ToggleChecked(self)
-		self:SetValue(not self:GetValue())
+		local value = self:GetValue()
+		if self.tristate then
+			--cycle in true, nil, false order
+			if value then
+				self:SetValue(nil)
+			elseif value == nil then
+				self:SetValue(false)
+			else
+				self:SetValue(true)
+			end
+		else
+			self:SetValue(not self:GetValue())
+		end
 	end
 	
 	local function SetLabel(self, label)
@@ -131,6 +168,7 @@ do
 		self.SetType = SetType
 		self.ToggleChecked = ToggleChecked
 		self.SetLabel = SetLabel
+		self.SetTriState = SetTriState
 		
 		self.frame = frame
 		frame.obj = self
@@ -153,7 +191,7 @@ do
 		self.check = check
 		check:SetWidth(24)
 		check:SetHeight(24)
-		check:SetPoint("LEFT",frame,"LEFT",0,0)
+		check:SetPoint("CENTER",checkbg,"CENTER",0,0)
 		check:SetTexture("Interface\\Buttons\\UI-CheckBox-Check")
 	
 		local highlight = frame:CreateTexture(nil, "BACKGROUND")
