@@ -29,7 +29,7 @@ end
 
 local function ConfigSelected(widget, event, value)
 	selectedgroup = value
-	dialog:Open(value, widget)	
+	dialog:Open(value, widget)
 end
 
 function Ace3:Open()
@@ -57,7 +57,18 @@ function Ace3:Open()
 	frame:Show()
 end
 
+function Ace3:Print(input)
+	input = input:trim():match("^(.-);*$")
+	local func, err = loadstring("LibStub(\"AceConsole-3.0\"):Print(" .. input .. ")")
+	if not func then
+		AceConsole:Print("Error: " .. err)
+	else
+		func()
+	end
+end
+
 function Ace3:OnInitialize()
 	self:RegisterChatCommand("ace3", function() self:Open() end )
 	self:RegisterChatCommand("rl", function() ReloadUI() end )
+	self:RegisterChatCommand("print", "Print")
 end
