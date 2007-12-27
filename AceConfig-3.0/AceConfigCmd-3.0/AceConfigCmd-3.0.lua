@@ -83,6 +83,19 @@ local function callmethod(info, inputpos, tab, methodtype, ...)
 	end
 end
 
+-- callfunction() - call a given named function (e.g. "name", "desc") with given arguments
+
+local function callfunction(info, tab, methodtype, ...)
+	local method = tab[methodtype]
+
+	info.arg = tab.arg
+	
+	if type(method)=="function" then
+		return method(info, ...)
+	else
+		assert(false) -- type should have already been checked on read
+	end
+end
 
 -- do_final() - do the final step (set/execute) along with validation and confirmation
 
@@ -163,6 +176,20 @@ local function showhelp(info, inputpos, tab, noHead)
 	table.sort(sortTbl, function(one, two) 
 		local o1 = refTbl[one].order or 100
 		local o2 = refTbl[two].order or 100
+		if type(o1) == "function" or type(o1) == "string" then
+			info.order = o1
+			info[#info+1] = one
+			o1 = callmethod(info, inputpos, refTbl[one], "order")
+			info[#info] = nil
+			info.order = nil
+		end
+		if type(o2) == "function" or type(o1) == "string" then
+			info.order = o2
+			info[#info+1] = two
+			o2 = callmethod(info, inputpos, refTbl[two], "order")
+			info[#info] = nil
+			info.order = nil
+		end
 		if o1<0 and o2<0 then return o1<o2 end
 		if o2<0 then return true end
 		if o1<0 then return false end
@@ -173,11 +200,18 @@ local function showhelp(info, inputpos, tab, noHead)
 	for _,k in ipairs(sortTbl) do
 		local v = refTbl[k]
 		-- recursively show all inline groups
+		local name, desc = v.name, v.desc
+		if type(name) == "function" then
+			name = callfunction(info, v, 'name')
+		end
+		if type(desc) == "function" then
+			desc = callfunction(info, v, 'desc')
+		end
 		if v.type == "group" and pickfirstset(v.cmdInline, v.inline, false) then
-			print("  "..(v.desc or v.name)..":")
+			print("  "..(desc or name)..":")
 			showhelp(info, inputpos, v, true)
 		else
-			print("  "..k.." - "..(v.desc or v.name or ""))
+			print("  "..k.." - "..(desc or name or ""))
 		end
 	end
 end
@@ -348,11 +382,16 @@ local function handle(info, inputpos, tab, depth, retfalse)
 			end
 		end
 		
-
-		if type(tab.values)~="table" then err(info, inputpos, "'values' - expected a table") end
+		local values = tab.values
+		if type(values) == "function" or type(values) == "string" then
+			info.values = values
+			values = callmethod(info, inputpos, tab, "values")
+			info.values = nil
+		end
+		if type(values)~="table" then err(info, inputpos, "'values' - expected a table") end
 		for selk, sel in pairs(sels) do
 			local ok
-			for k,v in pairs(tab.values) do 
+			for k,v in pairs(values) do 
 				if strlower(k)==str then
 					sels[selk] = k	-- overwrite with key (in case of case mismatches)
 					ok = true
