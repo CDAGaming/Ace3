@@ -170,6 +170,7 @@ local stringIsLiteral = {
 	name = true,
 	desc = true,
 	icon = true,
+	usage = true,
 }
 
 --Is Never a function or method
@@ -232,7 +233,7 @@ local function GetOptionsMemberValue(membername, option, options, path, appName,
 			if handler and handler[member] then
 				a,b,c,d = handler[member](handler, info, ...)
 			else
-				error(string.format("Method %s doesn't exist in handler for type func", member))
+				error(string.format("Method %s doesn't exist in handler for type %s", member, membername))
 			end
 		end
 		del(info)
@@ -443,8 +444,8 @@ local function OptionOnMouseOver(widget, event)
 
 	GameTooltip_SetDefaultAnchor(GameTooltip, widget.frame)
 	local name = GetOptionsMemberValue("name", opt, options, path, appName)
-	local desc = GetOptionsMemberValue("name", opt, options, path, appName)
-	local usage = GetOptionsMemberValue("name", opt, options, path, appName)
+	local desc = GetOptionsMemberValue("desc", opt, options, path, appName)
+	local usage = GetOptionsMemberValue("usage", opt, options, path, appName)
 	
 	GameTooltip:SetText(name, 1, 1, 1, 1)
 	if type(desc) == "string" then
