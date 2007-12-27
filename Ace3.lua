@@ -61,7 +61,7 @@ function Ace3:Print(input)
 	input = input:trim():match("^(.-);*$")
 	local func, err = loadstring("LibStub(\"AceConsole-3.0\"):Print(" .. input .. ")")
 	if not func then
-		AceConsole:Print("Error: " .. err)
+		LibStub("AceConsole-3.0"):Print("Error: " .. err)
 	else
 		func()
 	end
