@@ -57,7 +57,7 @@ function Ace3:Open()
 	frame:Show()
 end
 
-function Ace3:Print(input)
+function Ace3:PrintCmd(input)
 	input = input:trim():match("^(.-);*$")
 	local func, err = loadstring("LibStub(\"AceConsole-3.0\"):Print(" .. input .. ")")
 	if not func then
@@ -70,5 +70,5 @@ end
 function Ace3:OnInitialize()
 	self:RegisterChatCommand("ace3", function() self:Open() end )
 	self:RegisterChatCommand("rl", function() ReloadUI() end )
-	self:RegisterChatCommand("print", "Print")
+	self:RegisterChatCommand("print", "PrintCmd")
 end
