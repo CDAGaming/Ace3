@@ -330,7 +330,22 @@ local function handle(info, inputpos, tab, depth, retfalse)
 		local b
 		local str = strtrim(strlower(str))
 		if str=="" then
-			b = not callmethod(info, inputpos, tab, "get")
+			b = callmethod(info, inputpos, tab, "get")
+
+			if tab.tristate then
+				--cycle in true, nil, false order
+				if b then
+					b = nil
+				elseif b == nil then
+					b = false
+				else
+					b = true
+				end
+			else
+				b = not b
+			end
+			
+		--TODO: Add handler for setting directly to nil for tristate
 		elseif str==L["on"] then
 			b = true
 		elseif str==L["off"] then
