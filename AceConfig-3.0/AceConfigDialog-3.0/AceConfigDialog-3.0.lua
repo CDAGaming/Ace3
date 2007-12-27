@@ -774,7 +774,9 @@ local function BuildSubTree(group, tree, options, path, appName)
 				if not tree.children then tree.children = new() end
 				tinsert(tree.children,entry)
 				if (v.childGroups or "tree") == "tree" then
+					path[#path+1] = k
 					BuildSubTree(v,entry, options, path, appName)
+					path[#path] = nil
 				end
 			end
 		end
@@ -803,7 +805,9 @@ local function BuildTree(group, options, path, appName)
 				entry.disabled = CheckOptionDisabled(v, options, path, appName)
 				tinsert(tree,entry)
 				if (v.childGroups or "tree") == "tree" then
+					path[#path+1] = k
 					BuildSubTree(v,entry, options, path, appName)
+					path[#path] = nil
 				end
 			end
 		end
