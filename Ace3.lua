@@ -39,21 +39,22 @@ function Ace3:Open()
 		return
 	end
 	
-	frame = frame or gui:Create("Frame")
-	frame:ReleaseChildren()
-	frame:SetTitle("Ace3 Options")
-	frame:SetLayout("FILL")
-	frame:SetCallback("OnClose", frameOnClose)
+	if not frame then
+		frame = gui:Create("Frame")
+		frame:ReleaseChildren()
+		frame:SetTitle("Ace3 Options")
+		frame:SetLayout("FILL")
+		frame:SetCallback("OnClose", frameOnClose)
 	
-	select = select or gui:Create("DropdownGroup")
-	select:SetGroupList(configs)
-	select:SetCallback("OnGroupSelected", ConfigSelected)
+		select = gui:Create("DropdownGroup")
+		select:SetGroupList(configs)
+		select:SetCallback("OnGroupSelected", ConfigSelected)
+		frame:AddChild(select)
+	end
 	if not selectedgroup then
 		selectedgroup = next(configs)
 	end
 	select:SetGroup(selectedgroup)
-	frame:AddChild(select)
-	
 	frame:Show()
 end
 
