@@ -1,3 +1,7 @@
+
+-- AceTimer test suite 2: Errors
+
+
 dofile("wow_api.lua")
 dofile("LibStub.lua")
 
@@ -50,11 +54,11 @@ assert(msg == MAJOR..": ScheduleRepeatingTimer(callback, delay, arg): 'callback'
 
 ok,msg = pcall(AceTimer.CancelAllTimers, AceTimer)
 assert(not ok)
-assert(msg == "CancelAllTimers(): supply a meaningful 'self'", dump(msg))
+assert(msg == MAJOR..": CancelAllTimers(): supply a meaningful 'self'", dump(msg))
 
 
 -------------------------------------------------------------------
---
+-- Scheduling a timer on a member function that later becomes a nonfunction
 
 cnt=0
 obj.method = function() cnt=cnt+1 end
@@ -62,7 +66,7 @@ obj.method = function() cnt=cnt+1 end
 AceTimer.ScheduleRepeatingTimer(obj, "method", 1, "arg")
 
 WoWAPI_FireUpdate(2)	-- Border case: at this exact bucket, we should be able to convince the timer to fire twice even though it only gets a single onupdate
-assert(cnt==2, cnt)
+assert(cnt==2, cnt)		-- This should have worked nicely
 
 errors=0
 function geterrorhandler() 
@@ -76,6 +80,54 @@ obj.method = "this should cause errors"
 WoWAPI_FireUpdate(4)
 
 assert(errors==2)  -- timer should have run twice
+
+
+-----------------------------------------------------------------------
+-- :CancelTimer() on something that's already cancelled / never existed
+
+local handle = AceTimer.ScheduleTimer(obj, function() assert("this shouldnt run") end, 1)
+
+AceTimer.CancelTimer(obj, handle)	-- Should work
+
+
+errors=0
+function geterrorhandler() 
+	return function(msg)
+		errors=errors+1
+		assert(strmatch(msg, "already cancelled"))
+	end
+end
+
+AceTimer.CancelTimer(obj, handle)	-- Should error -- already cancelled
+assert(errors==1)
+
+
+WoWAPI_FireUpdate(6)	-- Let the timer disappear from the buckets
+
+
+errors=0
+function geterrorhandler() 
+	return function(msg)
+		errors=errors+1
+		assert(strmatch(msg, "no such timer"))
+	end
+end
+
+AceTimer.CancelTimer(obj, handle)	-- Should error -- doesnt exist at all
+assert(errors==1)
+
+
+function geterrorhandler() 
+	return function(msg)
+		error("This shouldn't have errored!  -- "..msg)
+	end
+end
+AceTimer.CancelTimer(obj, handle, timer)	-- silent: shouldn't error
+
+
+
+
+
 
 
 

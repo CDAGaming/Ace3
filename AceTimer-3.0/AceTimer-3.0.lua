@@ -6,12 +6,16 @@
 
 	This implementation:
 		CON: The smallest timer interval is constrained by HZ (currently 1/10s).
-		PRO: It will correctly fire any timer faster than HZ over a length of time, e.g. 0.11s interval -> 90 times over 10 seconds
+		PRO: It will still correctly fire any timer slower than HZ over a length of time, e.g. 0.11s interval -> 90 times over 10 seconds
 		PRO: In lag bursts, the system simly skips missed timer intervals to decrease load
 		CON: Algorithms depending on a timer firing "N times per minute" will fail
-		PRO: (Re-)scheduling is O(1) with a VERY small constant. It's a simple table insertion in a hash bucket.
-		PRO: ALLOWS scheduling multiple timers with the same funcref/method
+		PRO: (Re-)scheduling is O(1) with a VERY small constant. It's a simple linked list insertion in a hash bucket.
 		CAUTION: The BUCKETS constant constrains how many timers can be efficiently handled. With too many hash collisions, performance will decrease.
+		
+	Major assumptions upheld:
+	- ALLOWS scheduling multiple timers with the same funcref/method
+	- ALLOWS scheduling more timers during OnUpdate processing
+	- ALLOWS unscheduling ANY timer (including the current running one) at any time, including during OnUpdate processing
 ]]
 
 local MAJOR, MINOR = "AceTimer-3.0", 0
@@ -63,7 +67,7 @@ end
 
 local function CreateDispatcher(argCount)
 	local code = [[
-		local xpcall, eh = ...
+		local xpcall, eh = ...	-- our arguments are received as unnamed values in "..." since we don't have a proper function declaration
 		local method, ARGS
 		local function call() return method(ARGS) end
 	
@@ -83,11 +87,13 @@ local function CreateDispatcher(argCount)
 	return assert(loadstring(code, "safecall Dispatcher["..argCount.."]"))(xpcall, errorhandler)
 end
 
-local Dispatchers = setmetatable({}, {__index=function(self, argCount)
-	local dispatcher = CreateDispatcher(argCount)
-	rawset(self, argCount, dispatcher)
-	return dispatcher
-end})
+local Dispatchers = setmetatable({}, {
+	__index=function(self, argCount)
+		local dispatcher = CreateDispatcher(argCount)
+		rawset(self, argCount, dispatcher)
+		return dispatcher
+	end
+})
 Dispatchers[0] = function(func)
 	return xpcall(func, errorhandler)
 end
@@ -116,6 +122,7 @@ local function OnUpdate()
 	-- Happens on e.g. instance loads, but COULD happen on high local load situations also
 	for curint = (max(lastint, nowint - BUCKETS) + 1), nowint do -- loop until we catch up with "now", usually only 1 iteration
 		local curbucket = (curint % BUCKETS)+1
+		-- Yank the list of timers out of the bucket and empty it. This allows reinsertion in the currently-processed bucket from callbacks.
 		local nexttimer = hash[curbucket]
 		hash[curbucket] = false	-- false rather than nil to prevent the array from becoming a hash
 
@@ -220,6 +227,7 @@ local function Reg(self, callback, delay, arg, repeating)
 		AceTimer.selfs[self] = selftimers
 	end
 	selftimers[handle] = timer
+	selftimers.__ops = (selftimers.__ops or 0) + 1
 	
 	return handle
 end
@@ -247,22 +255,38 @@ end
 -- AceTimer:CancelTimer(handle)
 --
 -- handle - Opaque object given by ScheduleTimer
+-- silent - true: Do not error if the timer does not exist / is already cancelled. Default: false
 --
--- Cancels a timer with the given handle, registered by the same 'self' as given here
+-- Cancels a timer with the given handle, registered by the same 'self' as given in ScheduleTimer
 --
 -- Returns true if a timer was cancelled
 
-function AceTimer:CancelTimer(handle)
+function AceTimer:CancelTimer(handle, silent)
 	if type(handle)~="string" then
 		error(MAJOR..": CancelTimer(handle): 'handle' - expected a string", 2)	-- for now, anyway
 	end
 	local selftimers = AceTimer.selfs[self]
 	local timer = selftimers and selftimers[handle]
-	if timer then
-		timer.callback = nil		-- don't run it
-		-- The timer object is removed in the OnUpdate loop
+	if silent then
+		if timer then
+			timer.callback = nil	-- don't run it again
+			timer.delay = nil		-- if this is the currently-executing one: don't even reschedule 
+			-- The timer object is removed in the OnUpdate loop
+		end
+		return not not timer	-- might return "true" even if we double-cancel. we'll live.
+	else
+		if not timer then
+			geterrorhandler()(MAJOR..": CancelTimer(handle[, silent]): '"..tostring(handle).."' - no such timer registered")
+			return false
+		end
+		if not timer.callback then 
+			geterrorhandler()(MAJOR..": CancelTimer(handle[, silent]): '"..tostring(handle).."' - timer already cancelled or expired")
+			return false
+		end
+		timer.callback = nil	-- don't run it again
+		timer.delay = nil		-- if this is the currently-executing one: don't even reschedule 
+		return true
 	end
-	return not not timer
 end
 
 
@@ -272,20 +296,71 @@ end
 -- Cancels all timers registered to given 'self'
 function AceTimer:CancelAllTimers()
 	if not(type(self)=="string" or type(self)=="table") then
-		error("CancelAllTimers(): 'self' - must be a string or a table",2)
+		error(MAJOR..": CancelAllTimers(): 'self' - must be a string or a table",2)
 	end
 	if self==AceTimer then
-		error("CancelAllTimers(): supply a meaningful 'self'", 2)
+		error(MAJOR..": CancelAllTimers(): supply a meaningful 'self'", 2)
 	end
 	
 	local selftimers = AceTimer.selfs[self]
 	if selftimers then
-		for handle in pairs(selftimers) do
-			AceTimer.CancelTimer(self, handle)
+		for handle,v in pairs(selftimers) do
+			if type(v)=="table" then	-- avoid __ops, etc
+				AceTimer.CancelTimer(self, handle)
+			end
 		end
 	end
 end
 
+
+
+-----------------------------------------------------------------------
+-- PLAYER_REGEN_ENABLED: Run through our .selfs[] array step by step
+-- and clean it out - otherwise the table indices can grow indefinitely
+-- if an addon starts and stops a lot of timers. AceBucket does this!
+--
+-- See ACE-94 and tests/AceTimer-3.0-ACE-94.lua
+
+local lastCleaned = nil
+
+local function OnEvent(this, event)
+	if event~="PLAYER_REGEN_ENABLED" then
+		return
+	end
+	
+	-- Get the next 'self' to process
+	local selfs = AceTimer.selfs
+	local self = next(selfs, lastCleaned)
+	if not self then
+		self = next(selfs)
+	end
+	lastCleaned = self
+	if not self then	-- should only happen if .selfs[] is empty
+		return
+	end
+	
+	-- Time to clean it out?
+	local list = selfs[self]
+	if (list.__ops or 0) < 250 then	-- 250 slosh indices = ~10KB wasted (max!). For one 'self'.
+		return
+	end
+	
+	-- Create a new table and copy all members over
+	local newlist = {}
+	local n=0
+	for k,v in pairs(list) do
+		newlist[k] = v
+		n=n+1
+	end
+	newlist.__ops = 0	-- Reset operation count
+	
+	-- And since we now have a count of the number of live timers, check that it's reasonable. Emit a warning if not.
+	if n>BUCKETS then
+		DEFAULT_CHAT_FRAME:AddMessage(MAJOR..": Warning: The addon/module '"..tostring(self).."' has "..n.." live timers. Surely that's not intended?")
+	end
+	
+	selfs[self] = newlist
+end
 
 -----------------------------------------------------------------------
 -- Embed handling
@@ -319,6 +394,8 @@ AceTimer.debug.BUCKETS = BUCKETS
 -- Finishing touchups
 
 AceTimer.frame:SetScript("OnUpdate", OnUpdate)
+AceTimer.frame:SetScript("OnEvent", OnEvent)
+AceTimer.frame:RegisterEvent("PLAYER_REGEN_ENABLED")
 
 -- In theory, we should hide&show the frame based on there being timers or not.
 -- However, this job is fairly expensive, and the chance that there will 
