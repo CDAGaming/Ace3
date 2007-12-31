@@ -117,7 +117,7 @@ local function DeserializeStringHelper(escape)
 	return ""
 end
 
-local function DeserialzeNumberHelper(number)
+local function DeserializeNumberHelper(number)
 	if number == tostring(0/0) then
 		return 0/0
 	elseif number == tostring(-1/0) then
