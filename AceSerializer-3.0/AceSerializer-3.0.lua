@@ -117,6 +117,18 @@ local function DeserializeStringHelper(escape)
 	return ""
 end
 
+local function DeserialzeNumberHelper(number)
+	if number == tostring(0/0) then
+		return 0/0
+	elseif number == tostring(-1/0) then
+		return -1/0
+	elseif number == tostring(1/0) then
+		return 1/0
+	else
+		return tonumber(number)
+	end
+end
+
 -- DeserializeValue: worker function for :Deserialize()
 -- It works in two modes:
 --   Main (top-level) mode: Deserialize a list of values and return them all
@@ -146,7 +158,7 @@ local function DeserializeValue(iter,single,ctl,data)
 	if ctl=="^S" then
 		res = gsub(data, "~.", DeserializeStringHelper)
 	elseif ctl=="^N" then
-		res = tonumber(data)
+		res = DeserializeNumberHelper(data)
 		if not res then
 			error("Invalid serialized number: '"..data.."'")
 		end
