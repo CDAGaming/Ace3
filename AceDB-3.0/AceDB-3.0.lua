@@ -206,7 +206,7 @@ local function initdb(sv, defaults, defaultProfile, olddb, parent)
 	if not sv.profileKeys then sv.profileKeys = {} end
 	
 	-- Try to get the profile selected from the char db
-	local profileKey = sv.profileKeys[charKey] or defaultProfile or "Default"
+	local profileKey = sv.profileKeys[charKey] or defaultProfile or charKey
 	sv.profileKeys[charKey] = profileKey
 	
 	-- This table contains keys that enable the dynamic creation 
