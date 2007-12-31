@@ -114,10 +114,10 @@ do
 
 	local profileList = db:GetProfiles()
 	table.sort(profileList)
-	assert(profileList[1] == "Healers")
-	assert(profileList[2] == "Hunter")
-	assert(profileList[3] == "Tanks")
-	assert(profileList[4] == UnitName("player" .. " - " .. GetRealmName()))
+	assert(profileList[2] == "Healers")
+	assert(profileList[3] == "Hunter")
+	assert(profileList[4] == "Tanks")
+	assert(profileList[1] == "Default")
 end
 
 -- Very simple default test
