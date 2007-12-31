@@ -148,7 +148,7 @@ assert(t1s==2 and t2s==1 and t3s==1 and t4s==0 and t5s==0 and t6s==1)	-- NOTE: t
 
 t1s, t2s, t3s, t4s, t5s, t6s = 0,0,0,0,0,0
 
-assert(not AceTimer:CancelTimer(timer1))	-- wrong self, shouldnt cancel anything
+assert(not AceTimer:CancelTimer(timer1, true))	-- wrong self, shouldnt cancel anything
 
 assert(obj:CancelTimer(timer1))	-- right self - cancel timer1
 
