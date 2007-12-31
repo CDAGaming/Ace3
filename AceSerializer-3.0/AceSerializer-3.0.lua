@@ -83,19 +83,18 @@ end
 -- and returns it in serialized form (a string).
 -- May throw errors on invalid data types.
 --
-
+local res = { "^1" }	-- "^1" = Hi, I'm data serialized by AceSerializer protocol rev 1
 function AceSerializer:Serialize(...)
-	local res = { "^1" }	-- "^1" = Hi, I'm data serialized by AceSerializer protocol rev 1
 	local nres = 1
 	
-	for i=1,select("#",...) do
-		local v = select(i,...)
+	for i=1,select("#", ...) do
+		local v = select(i, ...)
 		nres = SerializeValue(v, res, nres)
 	end
 	
 	res[nres+1] = "^^"	-- "^^" = End of serialized data
 	
-	return tconcat(res,"")
+	return tconcat(res, "", 1, nres+1)
 end
 
 
