@@ -341,6 +341,7 @@ function DBObjectLib:SetProfile(name)
 	
 	self.profile = nil
 	self.keys["profile"] = name
+	self.sv.profileKeys[charKey] = name
 
 	-- Callback: OnProfileChanged, database, newProfileKey
 	self.callbacks:Fire("OnProfileChanged", self, name)
