@@ -122,7 +122,7 @@ function geterrorhandler()
 		error("This shouldn't have errored!  -- "..msg)
 	end
 end
-AceTimer.CancelTimer(obj, handle, timer)	-- silent: shouldn't error
+AceTimer.CancelTimer(obj, handle, true)	-- silent: shouldn't error
 
 
 
