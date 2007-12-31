@@ -100,7 +100,7 @@ opts.args.select.style=nil
 assert(pcall(creg.ValidateOptionsTable, creg, opts,"mytable"))
 
 opts.args.select.values=nil
-test("select.values.*expected a table")
+test("select.values.*expected a methodname, funcref or table")
 opts.args.select.values={}
 
 
