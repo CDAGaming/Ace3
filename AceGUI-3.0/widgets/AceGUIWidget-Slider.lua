@@ -56,6 +56,17 @@ do
 		self:Fire("OnMouseUp",this:GetValue())
 	end
 	
+	local function Slider_OnMouseWheel(this, v)
+		local self = this.obj
+		local value = self.value
+		if v > 0 then
+			value = math.min(value + (self.step or 1),self.max)
+		else
+			value = math.max(value - (self.step or 1), self.min)
+		end
+		self.slider:SetValue(value)
+	end
+	
 	local function SetDisabled(self, disabled)
 		self.disabled = disabled
 		if disabled then
@@ -149,6 +160,8 @@ do
 		slider:SetHeight(15)
 		slider:SetHitRectInsets(0,0,-10,0)
 		slider:SetBackdrop(SliderBackdrop)
+		slider:EnableMouseWheel(true)
+		slider:SetScript("OnMouseWheel", Slider_OnMouseWheel)
 			
 		local label = frame:CreateFontString(nil,"OVERLAY","GameFontNormal")
 		label:SetPoint("TOPLEFT",frame,"TOPLEFT",0,0)
