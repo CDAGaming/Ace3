@@ -85,6 +85,9 @@ do
 				["pet"] = {
 					test = 3
 				},
+				["bug"] = {
+					test = 3,
+				},
 			} 
 		} 
 	} 
@@ -102,6 +105,7 @@ do
 					}, 
 					["focus"] = { 
 					}, 
+					bug = "bug",
 				}, 
 			}, 
 		}, 
@@ -112,6 +116,8 @@ do
 	assert(data.profile.units["player"].test == 2)
 	assert(data.profile.units["pet"].test == 3)
 	assert(data.profile.units["focus"].test == 2)
+	assert(type(data.profile.units.bug) == "string")
+	WoWAPI_FireEvent("PLAYER_LOGOUT")
 end
 
 do

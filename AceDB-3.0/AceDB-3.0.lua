@@ -39,6 +39,8 @@ end
 -- and set in the host table.  These tables must be cleaned up by removeDefaults
 -- in order to ensure we don't write empty default tables.
 local function copyDefaults(dest, src)
+	-- this happens if some value in the SV overwrites our default value with a non-table
+	--if type(dest) ~= "table" then return end
 	for k, v in pairs(src) do
 		if k == "*" or k == "**" then
 			if type(v) == "table" then
@@ -66,9 +68,11 @@ local function copyDefaults(dest, src)
 			end
 		elseif type(v) == "table" then
 			if not rawget(dest, k) then rawset(dest, k, {}) end
-			copyDefaults(dest[k], v)
-			if src['**'] then
-				copyDefaults(dest[k], src['**'])
+			if type(dest[k]) == "table" then
+				copyDefaults(dest[k], v)
+				if src['**'] then
+					copyDefaults(dest[k], src['**'])
+				end
 			end
 		else
 			if rawget(dest, k) == nil then
@@ -85,12 +89,14 @@ local function removeDefaults(db, defaults, blocker)
 			if type(v) == "table" then
 				-- Loop through all the actual k,v pairs and remove
 				for key, value in pairs(db) do
-					-- if the key was not explicitly specified in the defaults table, just strip everything from * and ** tables
-					if defaults[key] == nil then
-						removeDefaults(value, v)
-					-- if it was specified, only strip ** content, but block values which were set in the key table
-					elseif k == "**" then 
-						removeDefaults(value, v, defaults[key])
+					if type(value) == "table" then
+						-- if the key was not explicitly specified in the defaults table, just strip everything from * and ** tables
+						if defaults[key] == nil then
+							removeDefaults(value, v)
+						-- if it was specified, only strip ** content, but block values which were set in the key table
+						elseif k == "**" then 
+							removeDefaults(value, v, defaults[key])
+						end
 					end
 				end
 			elseif k == "*" then
@@ -101,7 +107,7 @@ local function removeDefaults(db, defaults, blocker)
 					end
 				end
 			end
-		elseif type(v) == "table" and db[k] then
+		elseif type(v) == "table" and type(db[k]) == "table" then
 			-- if a blocker was set, dive into it, to allow multi-level defaults
 			removeDefaults(db[k], v, blocker and blocker[k])
 			if not next(db[k]) then
