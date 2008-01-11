@@ -717,12 +717,14 @@ local function BuildTabs(group, options, path, appName)
 	for i, v in ipairs(feedtmp) do
 		local k = feedkeys[v]
 		if v.type == "group" then
+			path[#path+1] = k
 			local inline = pickfirstset(v.dialogInline,v.guiInline,v.inline, false)
 			local hidden = CheckOptionHidden(v, options, path, appName)
 			if not inline and not hidden then
 				tinsert(tabs, k)
 				text[k] = GetOptionsMemberValue("name", v, options, path, appName)
 			end
+			path[#path] = nil
 		end
 	end
 
@@ -741,11 +743,13 @@ local function BuildSelect(group, options, path, appName)
 	for i, v in ipairs(feedtmp) do
 		local k = feedkeys[v]
 		if v.type == "group" then
+			path[#path+1] = k
 			local inline = pickfirstset(v.dialogInline,v.guiInline,v.inline, false)
 			local hidden = CheckOptionHidden(v, options, path, appName)
 			if not inline and not hidden then
 				groups[k] = GetOptionsMemberValue("name", v, options, path, appName)
 			end
+			path[#path] = nil
 		end
 	end
 
@@ -764,6 +768,7 @@ local function BuildSubTree(group, tree, options, path, appName)
 	for i, v in ipairs(feedtmp) do
 		local k = feedkeys[v]
 		if v.type == "group" then
+			path[#path+1] = k
 			local inline = pickfirstset(v.dialogInline,v.guiInline,v.inline, false)
 			local hidden = CheckOptionHidden(v, options, path, appName)
 			if not inline and not hidden then
@@ -774,11 +779,10 @@ local function BuildSubTree(group, tree, options, path, appName)
 				if not tree.children then tree.children = new() end
 				tinsert(tree.children,entry)
 				if (v.childGroups or "tree") == "tree" then
-					path[#path+1] = k
 					BuildSubTree(v,entry, options, path, appName)
-					path[#path] = nil
 				end
 			end
+			path[#path] = nil
 		end
 	end
 
@@ -796,6 +800,7 @@ local function BuildTree(group, options, path, appName)
 	for i, v in ipairs(feedtmp) do
 		local k = feedkeys[v]
 		if v.type == "group" then
+			path[#path+1] = k
 			local inline = pickfirstset(v.dialogInline,v.guiInline,v.inline, false)
 			local hidden = CheckOptionHidden(v, options, path, appName)
 			if not inline and not hidden then
@@ -805,11 +810,10 @@ local function BuildTree(group, options, path, appName)
 				entry.disabled = CheckOptionDisabled(v, options, path, appName)
 				tinsert(tree,entry)
 				if (v.childGroups or "tree") == "tree" then
-					path[#path+1] = k
 					BuildSubTree(v,entry, options, path, appName)
-					path[#path] = nil
 				end
 			end
+			path[#path] = nil
 		end
 	end
 	del(feedkeys)
@@ -849,6 +853,7 @@ local function FeedOptions(appName, options,container,rootframe,path,group,inlin
 	container:PauseLayout()
 	for i, v in ipairs(feedtmp) do
 		local k = feedkeys[v]
+		tinsert(path, k)
 		local hidden = CheckOptionHidden(v, options, path, appName)
 		local name = GetOptionsMemberValue("name", v, options, path, appName)
 		if not hidden then
@@ -861,12 +866,9 @@ local function FeedOptions(appName, options,container,rootframe,path,group,inlin
 					GroupContainer.width = "fill"
 					GroupContainer:SetLayout("flow")
 					container:AddChild(GroupContainer)
-					tinsert(path, k)
 					FeedOptions(appName,options,GroupContainer,rootframe,path,v,true,groupDisabled)
-					tremove(path)
 				end
 			else
-				tinsert(path, k)
 				--Control to feed
 				local control
 				
@@ -973,9 +975,10 @@ local function FeedOptions(appName, options,container,rootframe,path,group,inlin
 					InjectInfo(control, options, v, path, rootframe, appName)
 					container:AddChild(control)
 				end
-				tremove(path)
+				
 			end
 		end
+		tremove(path)
 	end
 	container:ResumeLayout()
 	container:DoLayout()
@@ -1043,11 +1046,13 @@ function lib:FeedGroup(appName,options,container,rootframe,path)
 	local groupDisabled
 
 	for i, v in ipairs(path) do
+		path[#path+1] = v
 		group = GetSubOption(group, v)
 		inline = inline or pickfirstset(v.dialogInline,v.guiInline,v.inline, false)
 		groupDisabled = groupDisabled or CheckOptionDisabled(group, options, path, appName)
 		parenttype = grouptype
 		grouptype = group.childGroups
+		path[#path] = nil
 	end
 
 	if not parenttype then
