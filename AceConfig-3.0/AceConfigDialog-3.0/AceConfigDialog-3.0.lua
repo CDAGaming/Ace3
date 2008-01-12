@@ -1030,6 +1030,28 @@ local function BuildPath(path, ...)
 	end
 end
 
+local function GroupExists(options, path, uniquevalue)
+	if not uniquevalue then return false end
+	
+	local feedpath = new()
+	for i, v in ipairs(path) do
+		feedpath[i] = v
+	end
+	
+	BuildPath(feedpath, string.split("\001", uniquevalue))
+	
+	local group = options
+	for i, v in ipairs(feedpath) do
+		group = GetSubOption(group, v)
+		if not group then 
+			del(feedpath)
+			return false 
+		end
+	end
+	del(feedpath)
+	return true
+end
+
 local function GroupSelected(widget, event, uniquevalue)
 
 	local user = widget.userdata
@@ -1181,7 +1203,7 @@ function lib:FeedGroup(appName,options,container,rootframe,path)
 				end
 			end
 
-			select:SetGroup(status.groups.selectedgroup or firstgroup)
+			select:SetGroup( (GroupExists(options, path,status.groups.selectedgroup) and status.groups.selectedgroup) or firstgroup)
 
 			select.width = "fill"
 			select.height = "fill"
@@ -1211,7 +1233,7 @@ function lib:FeedGroup(appName,options,container,rootframe,path)
 
 			for i, entry in ipairs(treedefinition) do
 				if not entry.disabled then
-					tree:SelectByValue(status.groups.selected or entry.value)
+					tree:SelectByValue((GroupExists(options, path,status.groups.selected) and status.groups.selected) or entry.value)
 					break
 				end
 			end
