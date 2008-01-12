@@ -480,7 +480,7 @@ local function confirmPopup(appName, rootframe, info, message, func, ...)
 	t.button1 = ACCEPT
 	t.button2 = CANCEL
 	t.OnAccept = function()
-		safecall(func, info, unpack(t))
+		safecall(func, unpack(t))
 		lib:Open(appName, rootframe)
 		del(info)
 	end
