@@ -320,23 +320,22 @@ end
 
 
 --builds 2 tables out of an options group
--- feedkeys, a mapping from table to original key
--- feedtemp, a sorted table of the sub groups
-local function BuildSortedOptionsTable(group, feedkeys, feedtmp, options, path, appName)
-	local keys = new()
+-- keySort, sorted keys
+-- opts, combined options from .plugins and args
+local function BuildSortedOptionsTable(group, keySort, opts, options, path, appName)
 	tempOrders = new()
 	tempNames = new()
 	
 	if group.plugins then
 		for plugin, t in pairs(group.plugins) do
 			for k, v in pairs(t) do
-				if not keys[k] then
-					tinsert(feedtmp, v)
-					feedkeys[v] = k
-					keys[k] = true
+				if not opts[k] then
+					tinsert(keySort, k)
+					opts[k] = v
+
 					path[#path+1] = k
-					tempOrders[v] = GetOptionsMemberValue("order", v, options, path, appName)
-					tempNames[v] = GetOptionsMemberValue("name", v, options, path, appName)
+					tempOrders[k] = GetOptionsMemberValue("order", v, options, path, appName)
+					tempNames[k] = GetOptionsMemberValue("name", v, options, path, appName)
 					path[#path] = nil
 				end
 			end
@@ -344,20 +343,19 @@ local function BuildSortedOptionsTable(group, feedkeys, feedtmp, options, path, 
 	end
 	
 	for k, v in pairs(group.args) do
-		if not keys[k] then
-			tinsert(feedtmp, v)
-			feedkeys[v] = k
-			keys[k] = true
+		if not opts[k] then
+			tinsert(keySort, k)
+			opts[k] = v
+
 			path[#path+1] = k
-			tempOrders[v] = GetOptionsMemberValue("order", v, options, path, appName)
-			tempNames[v] = GetOptionsMemberValue("name", v, options, path, appName)
+			tempOrders[k] = GetOptionsMemberValue("order", v, options, path, appName)
+			tempNames[k] = GetOptionsMemberValue("name", v, options, path, appName)
 			path[#path] = nil
 		end
 	end
 
-	table.sort(feedtmp, compareOptions)
-	
-	del(keys)
+	table.sort(keySort, compareOptions)
+
 	del(tempOrders)
 	del(tempNames)
 end
@@ -470,8 +468,7 @@ local function GetFuncName(option)
 		return 'set'
 	end
 end
-
-local function confirmPopup(message, func, info, ...)
+local function confirmPopup(appName, rootframe, info, message, func, ...)
 	if not StaticPopupDialogs["ACECONFIGDIALOG30_CONFIRM_DIALOG"] then
 		StaticPopupDialogs["ACECONFIGDIALOG30_CONFIRM_DIALOG"] = {}
 	end
@@ -484,6 +481,7 @@ local function confirmPopup(message, func, info, ...)
 	t.button2 = CANCEL
 	t.OnAccept = function()
 		safecall(func, info, unpack(t))
+		lib:Open(appName, rootframe)
 		del(info)
 	end
 	t.OnCancel = function()
@@ -541,11 +539,22 @@ local function ActivateControl(widget, event, ...)
 	info[0] = user.appName
 	info.arg = option.arg
 
+	local name
+	if type(option.name) == "function" then
+		name = option.name(info)
+	elseif type(option.name) == "string" then
+		name = option.name
+	else
+		name = ""
+	end
+	local usage = option.usage
+	local pattern = option.pattern
+
 	local validated = true
 
 	if option.type == "input" then
-		if type(option.pattern)=="string" then
-			if not strmatch(..., option.pattern) then
+		if type(pattern)=="string" then
+			if not strmatch(..., pattern) then
 				validated = false
 			end
 		end
@@ -565,8 +574,33 @@ local function ActivateControl(widget, event, ...)
 			if not success then validated = false end
 		end
 	end
-
-	if validated then
+	
+	local rootframe = user.rootframe
+	if type(validated) == "string" then
+		--validate function returned a message to display
+		if rootframe.SetStatusText then
+			rootframe:SetStatusText(validated)
+		end
+		PlaySound("igPlayerInviteDecline")
+		del(info)
+		return true
+	elseif not validated then
+		--validate returned false	
+		if rootframe.SetStatusText then
+			if usage then
+				rootframe:SetStatusText(name..": "..usage)
+			else
+				if pattern then
+					rootframe:SetStatusText(name..": Expected "..pattern)
+				else
+					rootframe:SetStatusText(name..": Invalid Value")
+				end
+			end
+		end
+		PlaySound("igPlayerInviteDecline")
+		del(info)
+		return true
+	else
 		local confirmText = option.confirmText
 		--call confirm func/method
 		if type(confirm) == "string" then
@@ -607,15 +641,19 @@ local function ActivateControl(widget, event, ...)
 						confirmText = confirmText.." - "..desc
 					end
 				end
-
+				local iscustom = user.rootframe.userdata.iscustom
+				local rootframe
+				if iscustom then
+					rootframe = user.rootframe
+				end
 				if type(func) == "string" then
 					if handler and handler[func] then
-						confirmPopup(confirmText, handler[func], handler, info, ...)
+						confirmPopup(user.appName, rootframe, info, confirmText, handler[func], handler, info, ...)
 					else
 						error(string.format("Method %s doesn't exist in handler for type func", func))
 					end
 				elseif type(func) == "function" then
-					confirmPopup(confirmText, func, info, ...)
+					confirmPopup(user.appName, rootframe, info, confirmText, func, info, ...)
 				end
 				--func will be called and info deleted when the confirm dialog is responded to
 				return
@@ -709,13 +747,13 @@ end
 local function BuildTabs(group, options, path, appName)
 	local tabs = new()
 	local text = new()
-	local feedkeys = new()
-	local feedtmp = new()
+	local keySort = new()
+	local opts = new()
 
-	BuildSortedOptionsTable(group, feedkeys, feedtmp, options, path, appName)
+	BuildSortedOptionsTable(group, keySort, opts, options, path, appName)
 
-	for i, v in ipairs(feedtmp) do
-		local k = feedkeys[v]
+	for i, k in ipairs(keySort) do
+		local v = opts[k]
 		if v.type == "group" then
 			path[#path+1] = k
 			local inline = pickfirstset(v.dialogInline,v.guiInline,v.inline, false)
@@ -728,20 +766,21 @@ local function BuildTabs(group, options, path, appName)
 		end
 	end
 
-	del(feedkeys)
-	del(feedtmp)
+	del(keySort)
+	del(opts)
 
 	return tabs, text
 end
 
 local function BuildSelect(group, options, path, appName)
 	local groups = new()
-	local feedkeys = new()
-	local feedtmp = new()
-	BuildSortedOptionsTable(group, feedkeys, feedtmp, options, path, appName)
+	local keySort = new()
+	local opts = new()
 
-	for i, v in ipairs(feedtmp) do
-		local k = feedkeys[v]
+	BuildSortedOptionsTable(group, keySort, opts, options, path, appName)
+
+	for i, k in ipairs(keySort) do
+		local v = opts[k]
 		if v.type == "group" then
 			path[#path+1] = k
 			local inline = pickfirstset(v.dialogInline,v.guiInline,v.inline, false)
@@ -753,20 +792,20 @@ local function BuildSelect(group, options, path, appName)
 		end
 	end
 
-	del(feedkeys)
-	del(feedtmp)
+	del(keySort)
+	del(opts)
 
 	return groups
 end
 
 local function BuildSubTree(group, tree, options, path, appName)
-	local feedkeys = new()
-	local feedtmp = new()
+	local keySort = new()
+	local opts = new()
 
-	BuildSortedOptionsTable(group, feedkeys, feedtmp, options, path, appName)
+	BuildSortedOptionsTable(group, keySort, opts, options, path, appName)
 
-	for i, v in ipairs(feedtmp) do
-		local k = feedkeys[v]
+	for i, k in ipairs(keySort) do
+		local v = opts[k]
 		if v.type == "group" then
 			path[#path+1] = k
 			local inline = pickfirstset(v.dialogInline,v.guiInline,v.inline, false)
@@ -786,19 +825,19 @@ local function BuildSubTree(group, tree, options, path, appName)
 		end
 	end
 
-	del(feedkeys)
-	del(feedtmp)
+	del(keySort)
+	del(opts)
 end
 
 local function BuildTree(group, options, path, appName)
 	local tree = new()
-	local feedkeys = new()
-	local feedtmp = new()
+	local keySort = new()
+	local opts = new()
 
-	BuildSortedOptionsTable(group, feedkeys, feedtmp, options, path, appName)
+	BuildSortedOptionsTable(group, keySort, opts, options, path, appName)
 
-	for i, v in ipairs(feedtmp) do
-		local k = feedkeys[v]
+	for i, k in ipairs(keySort) do
+		local v = opts[k]
 		if v.type == "group" then
 			path[#path+1] = k
 			local inline = pickfirstset(v.dialogInline,v.guiInline,v.inline, false)
@@ -816,8 +855,8 @@ local function BuildTree(group, options, path, appName)
 			path[#path] = nil
 		end
 	end
-	del(feedkeys)
-	del(feedtmp)
+	del(keySort)
+	del(opts)
 	return tree
 end
 
@@ -845,14 +884,13 @@ end
 --]]
 
 local function FeedOptions(appName, options,container,rootframe,path,group,inline,groupDisabled)
-	local feedkeys = new()
-	local feedtmp = new()
+	local keySort = new()
+	local opts = new()
 
-	BuildSortedOptionsTable(group, feedkeys, feedtmp, options, path, appName)
+	BuildSortedOptionsTable(group, keySort, opts, options, path, appName)
 
-	container:PauseLayout()
-	for i, v in ipairs(feedtmp) do
-		local k = feedkeys[v]
+	for i, k in ipairs(keySort) do
+		local v = opts[k]
 		tinsert(path, k)
 		local hidden = CheckOptionHidden(v, options, path, appName)
 		local name = GetOptionsMemberValue("name", v, options, path, appName)
@@ -982,8 +1020,8 @@ local function FeedOptions(appName, options,container,rootframe,path,group,inlin
 	end
 	container:ResumeLayout()
 	container:DoLayout()
-	del(feedkeys)
-	del(feedtmp)
+	del(keySort)
+	del(opts)
 end
 
 local function BuildPath(path, ...)
@@ -991,7 +1029,7 @@ local function BuildPath(path, ...)
 		tinsert(path, (select(i,...)))
 	end
 end
--- ... is the path up the tree to the current node, in reverse order (node, parent, grandparent)
+
 local function GroupSelected(widget, event, uniquevalue)
 
 	local user = widget.userdata
@@ -1007,7 +1045,6 @@ local function GroupSelected(widget, event, uniquevalue)
 	end
 
 	BuildPath(feedpath, string.split("\001", uniquevalue))
-
 	local group = options
 	for i, v in ipairs(feedpath) do
 		group = GetSubOption(group, v)
@@ -1045,20 +1082,21 @@ function lib:FeedGroup(appName,options,container,rootframe,path)
 
 	local groupDisabled
 
+	--temp path table to pass to callbacks as we traverse the tree
+	local temppath = new()
 	for i, v in ipairs(path) do
-		path[#path+1] = v
+		temppath[i] = v
 		group = GetSubOption(group, v)
 		inline = inline or pickfirstset(v.dialogInline,v.guiInline,v.inline, false)
-		groupDisabled = groupDisabled or CheckOptionDisabled(group, options, path, appName)
+		groupDisabled = groupDisabled or CheckOptionDisabled(group, options, temppath, appName)
 		parenttype = grouptype
 		grouptype = group.childGroups
-		path[#path] = nil
 	end
+	del(temppath)
 
 	if not parenttype then
 		parenttype = "tree"
 	end
-
 
 	--check if the group has child groups
 	local hasChildGroups
