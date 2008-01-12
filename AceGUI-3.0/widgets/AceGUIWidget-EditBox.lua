@@ -58,8 +58,10 @@ do
 	local function EditBox_OnEnterPressed(this)
 		local self = this.obj
 		local value = this:GetText()
-		self:Fire("OnEnterPressed",value)
-		HideButton(self)
+		local cancel = self:Fire("OnEnterPressed",value)
+		if not cancel then
+			HideButton(self)
+		end
 	end
 	
 	local function Button_OnClick(this)

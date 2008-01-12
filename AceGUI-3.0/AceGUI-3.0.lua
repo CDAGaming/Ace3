@@ -172,11 +172,12 @@ do
 	
 	WidgetBase.Fire = function(self, name, ...)
 		if self.events[name] then
-			safecall(self.events[name], self, name, ...)
+			local success, ret = safecall(self.events[name], self, name, ...)
+			if success then
+				return ret
+			end
 		end
 	end
-
-	
 		
 	local function LayoutOnUpdate(this)
 		this:SetScript("OnUpdate",nil)
