@@ -112,7 +112,7 @@ do
 	end
 	
 	local function SetText(self, text)
-		self.lasttext = text
+		self.lasttext = text or ""
 		self.editbox:SetText(text or "")
 		self.editbox:SetCursorPosition(0)
 		HideButton(self)
