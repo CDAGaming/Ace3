@@ -206,7 +206,7 @@ do
 	
 	--call this function to layout, makes sure layed out objects get a frame to get sizes etc
 	WidgetContainerBase.DoLayout = function(self)
-		self:PerformLayout(true)
+		self:PerformLayout()
 		self.frame:SetScript("OnUpdate", LayoutOnUpdate)
 	end
 	
@@ -363,12 +363,15 @@ AceGUI:RegisterLayout("List",
 			else
 				frame:SetPoint("TOPLEFT",children[i-1].frame,"BOTTOMLEFT",0,0)
 			end
-			height = height + frame:GetHeight()
 			
 			if child.width == "fill" then
 				frame:SetPoint("RIGHT",content,"RIGHT")
+				if child.DoLayout then
+					child:DoLayout()
+				end
 			end
 			
+			height = height + frame:GetHeight()
 		end
 		safecall( content.obj.LayoutFinished, content.obj, nil, height )
 	 end
@@ -427,6 +430,11 @@ AceGUI:RegisterLayout("Flow",
 			
 			if child.width == "fill" then
 				frame:SetPoint("RIGHT",content,"RIGHT")
+				if child.DoLayout then
+					child:DoLayout()
+					rowheight = frame:GetHeight() or 0
+				end
+				
 				usedwidth = 0
 				rowstart = frame
 			end
