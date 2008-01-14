@@ -112,8 +112,7 @@ local function DeserializeStringHelper(escape)
 	elseif escape=="~\125" then
 		return "\94"
 	end
-	print("oof")
-	return ""
+	error("DeserializeStringHelper got called for '"..escape.."'?!?")  -- can't be reached unless regex is screwed up
 end
 
 local function DeserializeNumberHelper(number)
