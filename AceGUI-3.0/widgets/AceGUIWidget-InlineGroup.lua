@@ -38,7 +38,8 @@ do
 	local Version = 0
 	
 	local function Aquire(self)
-
+		self:SetWidth(300)
+		self:SetHeight(100)
 	end
 	
 	local function Release(self)
@@ -59,9 +60,29 @@ do
 
 
 	local function LayoutFinished(self, width, height)
-		self.frame:SetHeight((height or 0) + 40)
+		self:SetHeight((height or 0) + 40)
 	end
 	
+	local function OnWidthSet(self, width)
+		local content = self.content
+		local contentwidth = width - 20
+		if contentwidth < 0 then
+			contentwidth = 0
+		end
+		content:SetWidth(contentwidth)
+		content.width = contentwidth
+	end
+	
+	
+	local function OnHeightSet(self, height)
+		local content = self.content
+		local contentheight = height - 20
+		if contentheight < 0 then
+			contentheight = 0
+		end
+		content:SetHeight(contentheight)
+		content.height = contentheight
+	end
 	
 	local function Constructor()
 		local frame = CreateFrame("Frame",nil,UIParent)
@@ -73,6 +94,8 @@ do
 		self.SetTitle = SetTitle
 		self.frame = frame
 		self.LayoutFinished = LayoutFinished
+		self.OnWidthSet = OnWidthSet
+		self.OnHeightSet = OnHeightSet
 		
 		frame.obj = self
 		
@@ -86,7 +109,6 @@ do
 		titletext:SetJustifyH("LEFT")
 		titletext:SetHeight(18)
 		
-	
 		self.titletext = titletext	
 		
 		local border = CreateFrame("Frame",nil,frame)

@@ -498,6 +498,29 @@ do
 		end
 	end
 	
+	local function OnWidthSet(self, width)
+		local content = self.content
+		local contentwidth = width - 199
+		if contentwidth < 0 then
+			contentwidth = 0
+		end
+		content:SetWidth(contentwidth)
+		content.width = contentwidth
+	end
+	
+	
+	local function OnHeightSet(self, height)
+		local content = self.content
+		local contentheight = height - 20
+		if contentheight < 0 then
+			contentheight = 0
+		end
+		content:SetHeight(contentheight)
+		content.height = contentheight
+	end
+	
+
+	
 	local createdcount = 0
 	local function Constructor()
 		local frame = CreateFrame("Frame",nil,UIParent)
@@ -537,6 +560,8 @@ do
 		self.Select = Select
 		self.SelectByValue = SelectByValue
 		self.SelectByPath = SelectByPath
+		self.OnWidthSet = OnWidthSet
+		self.OnHeightSet = OnHeightSet		
 		
 		self.frame = frame
 		frame.obj = self

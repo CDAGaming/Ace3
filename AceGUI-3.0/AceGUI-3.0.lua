@@ -178,11 +178,27 @@ do
 			end
 		end
 	end
-		
-	local function LayoutOnUpdate(this)
-		this:SetScript("OnUpdate",nil)
-		this.obj:PerformLayout()
+	
+	WidgetBase.SetWidth = function(self, width)
+		self.frame:SetWidth(width)
+		self.frame.width = width
+		if self.OnWidthSet then
+			self:OnWidthSet(width)
+		end
 	end
+	
+	WidgetBase.SetHeight = function(self, height)
+		self.frame:SetHeight(height)
+		self.frame.height = height
+		if self.OnHeightSet then
+			self:OnHeightSet(height)
+		end
+	end
+		
+--	local function LayoutOnUpdate(this)
+--		this:SetScript("OnUpdate",nil)
+--		this.obj:PerformLayout()
+--	end
 	
 	local WidgetContainerBase = AceGUI.WidgetContainerBase
 		
@@ -198,16 +214,15 @@ do
 		if self.LayoutPaused then
 			return
 		end
---		for k, v in ipairs(self.children) do
---			safecall(v.PerformLayout, v)
---		end
 		safecall(self.LayoutFunc,self.content, self.children)
 	end
 	
 	--call this function to layout, makes sure layed out objects get a frame to get sizes etc
 	WidgetContainerBase.DoLayout = function(self)
 		self:PerformLayout()
-		self.frame:SetScript("OnUpdate", LayoutOnUpdate)
+--		if not self.parent then
+--			self.frame:SetScript("OnUpdate", LayoutOnUpdate)
+--		end
 	end
 	
 	WidgetContainerBase.AddChild = function(self, child)
@@ -371,7 +386,7 @@ AceGUI:RegisterLayout("List",
 				end
 			end
 			
-			height = height + frame:GetHeight()
+			height = height + frame.height or frame:GetHeight()
 		end
 		safecall( content.obj.LayoutFinished, content.obj, nil, height )
 	 end
@@ -381,7 +396,7 @@ AceGUI:RegisterLayout("List",
 AceGUI:RegisterLayout("Fill",
 	 function(content, children)
 		if children[1] then
-			children[1].frame:SetAllPoints(content)
+			children[1].frame:SetAllPoints(content)	
 			children[1].frame:Show()
 			safecall( content.obj.LayoutFinished, content.obj, nil, children[1].frame:GetHeight() )
 		end
@@ -396,7 +411,9 @@ AceGUI:RegisterLayout("Flow",
 	 	local usedwidth = 0
 	 	--height of the current row
 	 	local rowheight = 0
-	 	local width = content:GetWidth() or 0
+
+	 	local width = content.width or content:GetWidth() or 0
+	 	
 	 	--control at the start of the row
 	 	local rowstart
 	 	
@@ -408,31 +425,31 @@ AceGUI:RegisterLayout("Flow",
 			if i == 1 then
 				-- anchor the first control to the top left
 				frame:SetPoint("TOPLEFT",content,"TOPLEFT",0,0)
-				rowheight = frame:GetHeight() or 0
+				rowheight = frame.height or frame:GetHeight() or 0
 				rowstart = frame
-				usedwidth = frame:GetWidth()
+				usedwidth = frame.width or frame:GetWidth() or 0
 			else
 				-- if there isn't available width for the control start a new row
 				-- if a control is "fill" it will be on a row of its own full width
-				if usedwidth == 0 or ((frame:GetWidth() or 0) + usedwidth > width) or child.width == "fill" then
+				if usedwidth == 0 or ((frame.width or frame:GetWidth() or 0) + usedwidth > width) or child.width == "fill" then
 					frame:SetPoint("TOPLEFT",rowstart,"TOPLEFT",0,-rowheight)
 					height = height + rowheight
 					rowstart = frame
-					rowheight = frame:GetHeight() or 0
-					usedwidth = frame:GetWidth()
+					rowheight = frame.height or frame:GetHeight() or 0
+					usedwidth = frame.width or frame:GetWidth()
 				-- put the control on the current row, adding it to the width and checking if the height needs to be increased
 				else
 					frame:SetPoint("TOPLEFT",children[i-1].frame,"TOPRIGHT",0,0)
-					rowheight = math.max(rowheight, frame:GetHeight() or 0)
-					usedwidth = frame:GetWidth() + usedwidth
+					rowheight = math.max(rowheight, frame.height or frame:GetHeight() or 0)
+					usedwidth = (frame.width or frame:GetWidth()) + usedwidth
 				end
 			end
 			
 			if child.width == "fill" then
-				frame:SetPoint("RIGHT",content,"RIGHT")
+				child:SetWidth(content.width or content:GetWidth())
 				if child.DoLayout then
 					child:DoLayout()
-					rowheight = frame:GetHeight() or 0
+					rowheight = frame.height or frame:GetHeight() or 0
 				end
 				
 				usedwidth = 0

@@ -121,6 +121,28 @@ do
 			frame:SetPoint("CENTER",UIParent,"CENTER")
 		end
 	end
+	
+	local function OnWidthSet(self, width)
+		local content = self.content
+		local contentwidth = width - 44
+		if contentwidth < 0 then
+			contentwidth = 0
+		end
+		content:SetWidth(contentwidth)
+		content.width = contentwidth
+	end
+	
+	
+	local function OnHeightSet(self, height)
+		local content = self.content
+		local contentheight = height - 57
+		if contentheight < 0 then
+			contentheight = 0
+		end
+		content:SetHeight(contentheight)
+		content.height = contentheight
+	end
+	
 
 	local function Constructor()
 		local frame = CreateFrame("Frame",nil,UIParent)
@@ -135,6 +157,8 @@ do
 		self.SetStatusText = SetStatusText
 		self.SetStatusTable = SetStatusTable
 		self.ApplyStatus = ApplyStatus
+		self.OnWidthSet = OnWidthSet
+		self.OnHeightSet = OnHeightSet
 		
 		self.localstatus = {}
 		

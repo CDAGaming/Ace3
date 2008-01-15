@@ -92,6 +92,27 @@ do
 		self:Fire("OnGroupSelected", group)
 	end
 	
+	local function OnWidthSet(self, width)
+		local content = self.content
+		local contentwidth = width - 63
+		if contentwidth < 0 then
+			contentwidth = 0
+		end
+		content:SetWidth(contentwidth)
+		content.width = contentwidth
+	end
+	
+	
+	local function OnHeightSet(self, height)
+		local content = self.content
+		local contentheight = height - 26
+		if contentheight < 0 then
+			contentheight = 0
+		end
+		content:SetHeight(contentheight)
+		content.height = contentheight
+	end
+	
 	local function Constructor()
 		local frame = CreateFrame("Frame")
 		local self = {}
@@ -104,7 +125,9 @@ do
 		self.SetGroupList = SetGroupList
 		self.SetGroup = SetGroup
 		self.SetStatusTable = SetStatusTable
-
+		self.OnWidthSet = OnWidthSet
+		self.OnHeightSet = OnHeightSet
+		
 		self.localstatus = {}
 
 		self.frame = frame

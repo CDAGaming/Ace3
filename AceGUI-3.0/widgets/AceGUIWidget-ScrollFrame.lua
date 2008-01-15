@@ -145,6 +145,17 @@ do
 	
 	local createdcount = 0
 	
+	local function OnWidthSet(self, width)
+		local content = self.content
+		content.width = width
+	end
+	
+	
+	local function OnHeightSet(self, height)
+		local content = self.content
+		content.height = height
+	end
+	
 	local function Constructor()
 		local frame = CreateFrame("Frame",nil,UIParent)
 		local self = {}
@@ -158,14 +169,13 @@ do
 		self.SetScroll = SetScroll
 		self.LayoutFinished = LayoutFinished
 		self.SetStatusTable = SetStatusTable
-	
+		self.OnWidthSet = OnWidthSet
+		self.OnHeightSet = OnHeightSet
+		
 		self.localstatus = {} 	
 		self.frame = frame
 		frame.obj = self
 
-		
-		
-		
 		--Container Support
 		local scrollframe = CreateFrame("ScrollFrame",nil,frame)
 		local content = CreateFrame("Frame",nil,scrollframe)
