@@ -10,7 +10,7 @@ if not lib then return end
 
 lib.OpenFrames = lib.OpenFrames or {}
 lib.Status = lib.Status or {}
-
+lib.frame = lib.frame or CreateFrame("Frame")
 
 local gui = LibStub("AceGUI-3.0")
 local reg = LibStub("AceConfigRegistry-3.0")
@@ -1261,12 +1261,24 @@ function lib:Close(appName)
 	end
 end
 
+local function RefreshOnUpdate(this)
+	for appName in pairs(this.apps) do
+		if lib.OpenFrames[appName] then
+			lib:Open(appName)
+		end
+		this.apps[appName] = nil
+	end
+	this:SetScript("OnUpdate", nil)
+end
 
 function lib:ConfigTableChanged(event, appName)
-	if self.OpenFrames[appName] then
-		self:Open(appName)
+	if not lib.frame.apps then
+		lib.frame.apps = {}
 	end
+	lib.frame.apps[appName] = true
+	lib.frame:SetScript("OnUpdate", RefreshOnUpdate)
 end
+
 reg.RegisterCallback(lib, "ConfigTableChange", "ConfigTableChanged")
 
 function lib:Open(appName, container)
