@@ -2,6 +2,7 @@ dofile("wow_api.lua")
 dofile("../LibStub/LibStub.lua")
 dofile("../AceSerializer-3.0/AceSerializer-3.0.lua")
 
+local BURNIN = tonumber(arg[1]) or 1	-- roughly 1 sec execution time per loop, 10000 loops should be a good burn-in
 
 local AceSer = LibStub("AceSerializer-3.0")
 
@@ -198,6 +199,66 @@ assert(r6.name=="val")
 comp("?", r7, "\001\032\127^~fin!^^")
 assert(r8==nil)
 
+
+
+
+-----------------------------------------------------------------------
+-- NaN, inf, etc
+
+local ok,res = AceSer:Deserialize(AceSer:Serialize(0/0))
+assert(ok and tostring(res)==tostring(0/0))
+
+local ok,res = AceSer:Deserialize(AceSer:Serialize(1/0))
+assert(ok and tostring(res)==tostring(1/0))
+
+local ok,res = AceSer:Deserialize(AceSer:Serialize(-1/0))
+assert(ok and tostring(res)==tostring(-1/0))
+
+
+-----------------------------------------------------------------------
+-- Floating-point accuracy (ACE-123)
+
+local function testone(v)
+	local ser = AceSer:Serialize(v)
+	local ok,deser = AceSer:Deserialize(ser)
+	assert(ok and deser==v, dump(ok, v, ser, deser))
+end
+
+local __myrand_n = 0
+local function myrand()
+	__myrand_n = (__myrand_n + 1.23456789) % 123	-- this prng does not repeat for at least 10G iterations - tested up to 13.048G
+	local n = frexp(__myrand_n)*2
+	local ret = math.random() + n
+	ret = ret - floor(ret)
+	return ret
+end
+
+
+testone(1/3)
+testone(2/3)
+testone(math.pi)
+testone(math.sqrt(math.exp(1)))
+testone(math.sqrt(0.5))
+
+local startt = os.clock()
+for l=0,BURNIN do
+	if BURNIN>1 and l>1 then
+		local tick = (os.clock()-startt) / l
+		printf("%.2f%% (%.1fs)", (l/BURNIN*100), (BURNIN-l)*tick)
+	end
+	for i=1,10000 do
+		local v = myrand() + myrand()*(2^-20) + myrand()*(2^-40) + myrand()*(2^-60)
+		if math.random(1,2)==1 then
+			v = v * -1
+		end
+		-- str=format("%+0.20f\t",v)
+		local e = math.random(-1000, 1000)
+		v = v * 2^(e)
+		-- print(str,e,v)
+		
+		testone(v)
+	end
+end
 
 
 -----------------------------------------------------------------------

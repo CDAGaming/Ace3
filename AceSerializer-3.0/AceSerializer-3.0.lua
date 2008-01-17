@@ -10,6 +10,15 @@ local tconcat=table.concat
 local gsub=string.gsub
 local gmatch=string.gmatch
 local pcall=pcall
+local strlen=string.len
+local format=string.format
+
+
+-- quick copies of string representations of wonky numbers
+local serNaN = tostring(0/0)
+local serInf = tostring(1/0)
+local serNegInf = tostring(-1/0)
+
 
 -----------------------------------------------------------------------
 -- Serialization functions
@@ -30,7 +39,6 @@ local function SerializeStringHelper(ch)	-- Used by SerializeValue for strings
 	end
 end
 
-
 local function SerializeValue(v, res, nres)
 	-- We use "^" as a value separator, followed by one byte for type indicator
 	local t=type(v)
@@ -40,10 +48,21 @@ local function SerializeValue(v, res, nres)
 		res[nres+2] = gsub(v,"[%c \94\126\127]", SerializeStringHelper)
 		nres=nres+2
 	
-	elseif t=="number" then	-- ^N = number (just tostring()ed)
-		res[nres+1] = "^N"
-		res[nres+2] = tostring(v)
-		nres=nres+2
+	elseif t=="number" then	-- ^N = number (just tostring()ed) or ^F (float components)
+		local str = tostring(v)
+		if tonumber(str)==v  or str==serNaN or str==serInf or str==serNegInf then
+			-- translates just fine, transmit as-is
+			res[nres+1] = "^N"
+			res[nres+2] = str
+			nres=nres+2
+		else
+			local m,e = frexp(v)
+			res[nres+1] = "^F"
+			res[nres+2] = format("%.0f",m*2^53)	-- force mantissa to become integer (it's originally 0.5--0.9999)
+			res[nres+3] = "^f"
+			res[nres+4] = tostring(e-53)	-- adjust exponent to counteract mantissa manipulation
+			nres=nres+4
+		end
 	
 	elseif t=="table" then	-- ^T...^t = table (list of key,value pairs)
 		nres=nres+1
@@ -116,11 +135,11 @@ local function DeserializeStringHelper(escape)
 end
 
 local function DeserializeNumberHelper(number)
-	if number == tostring(0/0) then
+	if number == serNaN then
 		return 0/0
-	elseif number == tostring(-1/0) then
+	elseif number == serNegInf then
 		return -1/0
-	elseif number == tostring(1/0) then
+	elseif number == serInf then
 		return 1/0
 	else
 		return tonumber(number)
@@ -158,8 +177,19 @@ local function DeserializeValue(iter,single,ctl,data)
 	elseif ctl=="^N" then
 		res = DeserializeNumberHelper(data)
 		if not res then
-			error("Invalid serialized number: '"..data.."'")
+			error("Invalid serialized number: '"..tostring(data).."'")
 		end
+	elseif ctl=="^F" then     -- ^F<mantissa>^f<exponent>
+		local ctl2,e = iter()
+		if ctl2~="^f" then
+			error("Invalid serialized floating-point number, expected '^f', not '"..tostring(ctl2).."'")
+		end
+		local m=tonumber(data)
+		e=tonumber(e)
+		if not (m and e) then
+			error("Invalid serialized floating-point number, expected mantissa and exponent, got '"..tostring(m).."' and '"..tostring(e).."'")
+		end
+		res = m*(2^e)
 	elseif ctl=="^B" then	-- yeah yeah ignore data portion
 		res = true
 	elseif ctl=="^b" then   -- yeah yeah ignore data portion
