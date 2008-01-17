@@ -2,12 +2,13 @@ dofile("wow_api.lua")
 dofile("../LibStub/LibStub.lua")
 dofile("../AceSerializer-3.0/AceSerializer-3.0.lua")
 
+-- Usage: lua AceSerializer-3.0.lua [<burnin count, default 1>]
 local BURNIN = tonumber(arg[1]) or 1	-- roughly 1 sec execution time per loop, 10000 loops should be a good burn-in
 
 local AceSer = LibStub("AceSerializer-3.0")
 
-local function printf(format, ...)
-	print(format:format(...))
+local function printf(fmt, ...)
+	print(fmt:format(...))
 end
 
 
@@ -237,12 +238,16 @@ end
 testone(1/3)
 testone(2/3)
 testone(math.pi)
-testone(math.sqrt(math.exp(1)))
-testone(math.sqrt(0.5))
+testone(math.exp(1))	-- 2.718281828459...
+testone(math.sqrt(math.exp(1)))  -- 1.6487212707001...
+testone(math.sqrt(0.5))   -- 0.70710678118655...
 
+if BURNIN>1 then
+	print "Floating point precision burn-in test:"
+end
 local startt = os.clock()
-for l=0,BURNIN do
-	if BURNIN>1 and l>1 then
+for l=0,BURNIN-1 do	-- default 1 = 1 loop, but no printing
+	if l>=1 then
 		local tick = (os.clock()-startt) / l
 		printf("%.2f%% (%.1fs)", (l/BURNIN*100), (BURNIN-l)*tick)
 	end
