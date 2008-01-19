@@ -156,6 +156,7 @@ do
 		
 		dropdown.frame:SetPoint("TOPLEFT",titletext,"BOTTOMLEFT",-7,3)
 		dropdown.frame:Show()
+		dropdown:SetLabel("")
 		
 		local border = CreateFrame("Frame",nil,frame)
 		self.border = border
