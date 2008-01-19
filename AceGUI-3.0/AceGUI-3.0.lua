@@ -411,56 +411,90 @@ AceGUI:RegisterLayout("Flow",
 	 	local usedwidth = 0
 	 	--height of the current row
 	 	local rowheight = 0
+	 	local rowoffset = 0
+	 	local lastrowoffset
 
 	 	local width = content.width or content:GetWidth() or 0
 	 	
 	 	--control at the start of the row
 	 	local rowstart
+	 	local lastrowstart
+	 	local isfullheight
 	 	
+	 	local frameoffset
+	 	local lastframeoffset
 		for i, child in ipairs(children) do
 			
 			local frame = child.frame
+			local frameheight = frame.height or frame:GetHeight() or 0
+			local framewidth = frame.width or frame:GetWidth() or 0
+			lastframeoffset = frameoffset
+			frameoffset = child.alignoffset or (frameheight / 2)
+			
 			frame:Show()
 			frame:ClearAllPoints()
 			if i == 1 then
 				-- anchor the first control to the top left
-				frame:SetPoint("TOPLEFT",content,"TOPLEFT",0,0)
-				rowheight = frame.height or frame:GetHeight() or 0
+				--frame:SetPoint("TOPLEFT",content,"TOPLEFT",0,0)
+				rowheight = frameheight
+				rowoffset = frameoffset
 				rowstart = frame
-				usedwidth = frame.width or frame:GetWidth() or 0
+				rowstartoffset = frameoffset
+				usedwidth = framewidth
 			else
 				-- if there isn't available width for the control start a new row
 				-- if a control is "fill" it will be on a row of its own full width
-				if usedwidth == 0 or ((frame.width or frame:GetWidth() or 0) + usedwidth > width) or child.width == "fill" then
-					frame:SetPoint("TOPLEFT",rowstart,"TOPLEFT",0,-rowheight)
-					height = height + rowheight
+				if usedwidth == 0 or ((framewidth) + usedwidth > width) or child.width == "fill" then
+					--anchor the previous row, we will now know its height and offset
+					rowstart:SetPoint("TOPLEFT",content,"TOPLEFT",0,-(height+(rowoffset-rowstartoffset)+3))
+					height = height + rowheight + 3
+					--save this as the rowstart so we can anchor it after the row is complete and we have the max height and offset of controls in it
 					rowstart = frame
-					rowheight = frame.height or frame:GetHeight() or 0
+					rowstartoffset = frameoffset
+					rowheight = frameheight
+					rowoffset = frameoffset
 					usedwidth = frame.width or frame:GetWidth()
 				-- put the control on the current row, adding it to the width and checking if the height needs to be increased
 				else
-					frame:SetPoint("TOPLEFT",children[i-1].frame,"TOPRIGHT",0,0)
-					rowheight = math.max(rowheight, frame.height or frame:GetHeight() or 0)
-					usedwidth = (frame.width or frame:GetWidth()) + usedwidth
+					--handles cases where the new height is higher than either control because of the offsets
+					rowheight = math.max(rowheight-rowoffset+frameoffset, frameheight-frameoffset+rowoffset)
+					--offset is always the larger of the two offsets
+					rowoffset = math.max(rowoffset, frameoffset)
+					frame:SetPoint("TOPLEFT",children[i-1].frame,"TOPRIGHT",0,frameoffset-lastframeoffset)
+					usedwidth = framewidth + usedwidth
 				end
 			end
-			
+
 			if child.width == "fill" then
-				child:SetWidth(content.width or content:GetWidth())
-				if child.DoLayout then
-					child:DoLayout()
-					rowheight = frame.height or frame:GetHeight() or 0
-				end
+				child:SetWidth(width)
 				
 				usedwidth = 0
 				rowstart = frame
+				rowstartoffset = frameoffset
+				
+				if child.DoLayout then
+					child:DoLayout()
+					rowheight = frame.height or frame:GetHeight() or 0
+					rowoffset = child.alignoffset or (rowheight / 2)
+					rowstartoffset = rowoffset
+				end
 			end
+			
 			if child.height == "fill" then
 				frame:SetPoint("BOTTOM",content,"BOTTOM")
+				isfullheight = true
 				break
 			end
 		end
-		height = height + rowheight
+		
+		--anchor the last row, if its full height needs a special case since  its height has just been changed by the anchor
+		if isfullheight then
+			rowstart:SetPoint("TOPLEFT",content,"TOPLEFT",0,-height)
+		elseif rowstart then
+			rowstart:SetPoint("TOPLEFT",content,"TOPLEFT",0,-(height+(rowoffset-rowstartoffset)+3))
+		end
+		
+		height = height + rowheight + 3
 		safecall( content.obj.LayoutFinished, content.obj, nil, height )		
 	 end
 	)

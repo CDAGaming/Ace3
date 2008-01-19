@@ -150,6 +150,8 @@ do
 		self.SetSliderValues = SetSliderValues
 		self.SetLabel = SetLabel
 
+		self.alignoffset = 25
+		
 		self.slider = CreateFrame("Slider",nil,frame)
 		local slider = self.slider
 		slider:SetScript("OnEnter",Control_OnEnter)

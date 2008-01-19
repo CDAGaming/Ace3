@@ -156,6 +156,8 @@ do
 		self.editbox = editbox
 		editbox.obj = self
 		
+		self.alignoffset = 30
+		
 		frame:SetHeight(44)
 		frame:SetWidth(200)
 

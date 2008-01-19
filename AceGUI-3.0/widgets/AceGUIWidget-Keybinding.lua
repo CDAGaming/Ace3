@@ -152,6 +152,8 @@ do
 		frame:SetWidth(200)
 		frame:SetHeight(44)
 		
+		self.alignoffset = 30
+		
 		self.button = button
 		
 		local label = frame:CreateFontString(nil,"OVERLAY","GameFontNormal")

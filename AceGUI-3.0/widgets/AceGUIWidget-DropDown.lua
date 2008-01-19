@@ -278,7 +278,9 @@ do
 		
 		self.frame = frame
 		frame.obj = self
-
+		
+		self.alignoffset = 30
+		
 		local editbox = CreateFrame("EditBox",nil,frame)
 		self.editbox = editbox
 		editbox.obj = self
@@ -314,7 +316,7 @@ do
 		button:GetHighlightTexture():SetTexCoord(.09,.91,.09,.91)
 		button:SetPoint("BOTTOMRIGHT",frame,"BOTTOMRIGHT",0,0)
 		button:SetScript("OnClick",Dropdown_TogglePullout)
-		frame:SetHeight(26)
+		frame:SetHeight(44)
 		frame:SetWidth(200)
 		frame:SetScript("OnHide",Dropdown_OnHide)
 		local pullout = CreateFrame("Frame",nil,UIParent)
