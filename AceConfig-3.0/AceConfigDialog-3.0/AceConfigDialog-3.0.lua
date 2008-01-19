@@ -446,6 +446,10 @@ local function OptionOnMouseOver(widget, event)
 	local usage = GetOptionsMemberValue("usage", opt, options, path, appName)
 	
 	GameTooltip:SetText(name, 1, 1, 1, 1)
+	
+	if opt.type == 'multiselect' then
+		GameTooltip:AddLine(user.text,NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b, 1)
+	end	
 	if type(desc) == "string" then
 		GameTooltip:AddLine(desc, NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b, 1)
 	end
@@ -971,6 +975,7 @@ local function FeedOptions(appName, options,container,rootframe,path,group,inlin
 							local check = gui:Create("CheckBox")
 							check:SetLabel(text)
 							check.userdata.value = value
+							check.userdata.text = text
 							check:SetDisabled(disabled)
 							check:SetTriState(v.tristate)
 							check:SetValue(GetOptionsMemberValue("get",v, options, path, appName, value))
