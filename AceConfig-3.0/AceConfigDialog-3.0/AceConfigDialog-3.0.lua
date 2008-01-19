@@ -1006,6 +1006,10 @@ local function FeedOptions(appName, options,container,rootframe,path,group,inlin
 					control:SetText(name)
 					control.width = "fill"
 
+				elseif v.type == "description" then
+					control = gui:Create("Label")
+					control:SetText(name)
+					control.width = "fill"					
 				end
 
 				--Common Init

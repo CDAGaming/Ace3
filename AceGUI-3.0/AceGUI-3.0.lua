@@ -474,10 +474,10 @@ AceGUI:RegisterLayout("Flow",
 				
 				if child.DoLayout then
 					child:DoLayout()
-					rowheight = frame.height or frame:GetHeight() or 0
-					rowoffset = child.alignoffset or (rowheight / 2)
-					rowstartoffset = rowoffset
 				end
+				rowheight = frame.height or frame:GetHeight() or 0
+				rowoffset = child.alignoffset or (rowheight / 2)
+				rowstartoffset = rowoffset
 			end
 			
 			if child.height == "fill" then

@@ -87,6 +87,7 @@ local basekeys={
 
 local typedkeys={
 	header={},
+	description={},
 	group={
 		args=istable,
 		plugins=opttable,
