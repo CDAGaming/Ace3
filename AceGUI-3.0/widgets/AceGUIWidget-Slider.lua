@@ -10,6 +10,7 @@ do
 	local function Aquire(self)
 		self:SetDisabled(false)
 		self:SetSliderValues(0,100,1)
+		self:SetIsPercent(nil)
 		self:SetValue(0)
 	end
 	
@@ -27,6 +28,14 @@ do
 		this.obj:Fire("OnLeave")
 	end
 	
+	local function UpdateText(self)
+		if self.ispercent then
+			self.editbox:SetText((math.floor(self.value*1000+0.5)/10)..'%')
+		else
+			self.editbox:SetText(math.floor(self.value*100+0.5)/100)
+		end
+	end
+	
 	local function Slider_OnValueChanged(this)
 		local self = this.obj
 		if not this.setup then
@@ -38,15 +47,7 @@ do
 			end
 			if self.value then
 				local value = self.value
-				--[[
-				local min, max, step = self.min or 0, self.max or 100, self.step
-				if step then
-					value = math.floor((value - min) / step + 0.5) * step + min
-				else
-					value = math.max(math.min(value,max),min)
-				end
-				--]]
-				this.obj.editbox:SetText(math.floor(value*100+ 0.5) / 100 )
+				UpdateText(self)
 			end
 		end
 	end
@@ -93,7 +94,7 @@ do
 		self.slider.setup = true
 		self.slider:SetValue(value)
 		self.value = value
-		self.editbox:SetText(math.floor(self.value*100)/100)
+		UpdateText(self)
 		self.slider.setup = nil
 	end
 	
@@ -121,10 +122,20 @@ do
 	local function EditBox_OnEnterPressed(this)
 		local self = this.obj
 		local value = this:GetText()
-		value = tonumber(value)
+		if self.ispercent then
+			value = value:gsub('%%','')
+			value = tonumber(value) / 100
+		else
+			value = tonumber(value)
+		end
+		
 		if value then
 			self:Fire("OnMouseUp",value)
 		end
+	end
+	
+	local function SetIsPercent(self, value)
+		self.ispercent = value
 	end
 	
 	local SliderBackdrop  = {
@@ -149,7 +160,8 @@ do
 		self.SetValue = SetValue
 		self.SetSliderValues = SetSliderValues
 		self.SetLabel = SetLabel
-
+		self.SetIsPercent = SetIsPercent
+		
 		self.alignoffset = 25
 		
 		self.slider = CreateFrame("Slider",nil,frame)

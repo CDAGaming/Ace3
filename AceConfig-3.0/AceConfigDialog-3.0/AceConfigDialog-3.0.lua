@@ -938,6 +938,7 @@ local function FeedOptions(appName, options,container,rootframe,path,group,inlin
 					control = gui:Create("Slider")
 					control:SetLabel(name)
 					control:SetSliderValues(v.min or 0,v.max or 100, v.bigStep or v.step or 0)
+					control:SetIsPercent(v.isPercent)
 					control:SetValue(GetOptionsMemberValue("get",v, options, path, appName) or 0)
 					control:SetCallback("OnValueChanged",ActivateSlider)
 					control:SetCallback("OnMouseUp",ActivateSlider)
