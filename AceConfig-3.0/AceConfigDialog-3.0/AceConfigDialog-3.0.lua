@@ -162,7 +162,9 @@ local isInherited = {
 	get = true,
 	func = true,
 	confirm = true,
-	validate = true
+	validate = true,
+	disabled = true,
+	hidden = true
 }
 
 --Does a string type mean a literal value, instead of the default of a method of the handler
@@ -887,7 +889,7 @@ end
 	path - table with the keys to get to the group being fed
 --]]
 
-local function FeedOptions(appName, options,container,rootframe,path,group,inline,groupDisabled)
+local function FeedOptions(appName, options,container,rootframe,path,group,inline)
 	local keySort = new()
 	local opts = new()
 
@@ -902,13 +904,12 @@ local function FeedOptions(appName, options,container,rootframe,path,group,inlin
 			if v.type == "group" then
 				if inline or pickfirstset(v.dialogInline,v.guiInline,v.inline, false) then
 					--Inline group
-					groupDisabled = groupDisabled or  CheckOptionDisabled(v, options, path, appName)
 					local GroupContainer = gui:Create("InlineGroup")
 					GroupContainer:SetTitle(name or "")
 					GroupContainer.width = "fill"
 					GroupContainer:SetLayout("flow")
 					container:AddChild(GroupContainer)
-					FeedOptions(appName,options,GroupContainer,rootframe,path,v,true,groupDisabled)
+					FeedOptions(appName,options,GroupContainer,rootframe,path,v,true)
 				end
 			else
 				--Control to feed
@@ -962,7 +963,7 @@ local function FeedOptions(appName, options,container,rootframe,path,group,inlin
 
 					local valuesort = new()
 
-					local disabled = groupDisabled or CheckOptionDisabled(v, options, path, appName)
+					local disabled = CheckOptionDisabled(v, options, path, appName)
 
 					if values then
 						for value, text in pairs(values) do
@@ -1017,7 +1018,7 @@ local function FeedOptions(appName, options,container,rootframe,path,group,inlin
 				if control then
 					if control.SetDisabled then
 						local disabled = CheckOptionDisabled(v, options, path, appName)
-						control:SetDisabled(groupDisabled or disabled)
+						control:SetDisabled(disabled)
 					end
 
 					InjectInfo(control, options, v, path, rootframe, appName)
@@ -1040,10 +1041,11 @@ local function BuildPath(path, ...)
 	end
 end
 
-local function GroupExists(options, path, uniquevalue)
+local function GroupExists(appName, options, path, uniquevalue)
 	if not uniquevalue then return false end
 	
 	local feedpath = new()
+	local temppath = new()
 	for i, v in ipairs(path) do
 		feedpath[i] = v
 	end
@@ -1052,13 +1054,16 @@ local function GroupExists(options, path, uniquevalue)
 	
 	local group = options
 	for i, v in ipairs(feedpath) do
+		temppath[i] = v
 		group = GetSubOption(group, v)
-		if not group then 
+		local hidden =  CheckOptionHidden(group, options, temppath, appName)
+		if hidden or not group then 
 			del(feedpath)
 			return false 
 		end
 	end
 	del(feedpath)
+	del(temppath)
 	return true
 end
 
@@ -1112,7 +1117,6 @@ function lib:FeedGroup(appName,options,container,rootframe,path)
 	local inline
 	local grouptype, parenttype = options.childGroups, "none"
 
-	local groupDisabled
 
 	--temp path table to pass to callbacks as we traverse the tree
 	local temppath = new()
@@ -1120,7 +1124,6 @@ function lib:FeedGroup(appName,options,container,rootframe,path)
 		temppath[i] = v
 		group = GetSubOption(group, v)
 		inline = inline or pickfirstset(v.dialogInline,v.guiInline,v.inline, false)
-		groupDisabled = groupDisabled or CheckOptionDisabled(group, options, temppath, appName)
 		parenttype = grouptype
 		grouptype = group.childGroups
 	end
@@ -1163,7 +1166,7 @@ function lib:FeedGroup(appName,options,container,rootframe,path)
 		end
 	end
 
-	FeedOptions(appName,options,container,rootframe,path,group,nil,groupDisabled)
+	FeedOptions(appName,options,container,rootframe,path,group,nil)
 
 	if scroll then
 		container:PerformLayout()
@@ -1213,7 +1216,7 @@ function lib:FeedGroup(appName,options,container,rootframe,path)
 				end
 			end
 
-			select:SetGroup( (GroupExists(options, path,status.groups.selectedgroup) and status.groups.selectedgroup) or firstgroup)
+			select:SetGroup( (GroupExists(appName, options, path,status.groups.selectedgroup) and status.groups.selectedgroup) or firstgroup)
 
 			select.width = "fill"
 			select.height = "fill"
@@ -1243,7 +1246,7 @@ function lib:FeedGroup(appName,options,container,rootframe,path)
 
 			for i, entry in ipairs(treedefinition) do
 				if not entry.disabled then
-					tree:SelectByValue((GroupExists(options, path,status.groups.selected) and status.groups.selected) or entry.value)
+					tree:SelectByValue((GroupExists(appName, options, path,status.groups.selected) and status.groups.selected) or entry.value)
 					break
 				end
 			end
