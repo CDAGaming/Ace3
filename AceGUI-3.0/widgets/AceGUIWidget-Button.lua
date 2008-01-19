@@ -49,8 +49,8 @@ do
 
 		local text = frame:GetFontString()
 		self.text = text
-		text:SetPoint("LEFT",frame,"LEFT",7,0)
-		text:SetPoint("RIGHT",frame,"RIGHT",-7,0)
+		text:SetPoint("LEFT",frame,"LEFT",15,-1)
+		text:SetPoint("RIGHT",frame,"RIGHT",-15,-1)
 
 		frame:SetScript("OnClick",Button_OnClick)
 		frame:SetScript("OnEnter",Button_OnEnter)

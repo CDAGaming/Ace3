@@ -111,8 +111,8 @@ do
 		tab.SetText = Tab_SetText
 		tab.SetSelected = Tab_SetSelected
 		
-		text:SetPoint("LEFT",tab,"LEFT",5,-7)
-		text:SetPoint("RIGHT",tab,"RIGHT",-5,-7)
+		text:SetPoint("LEFT",tab,"LEFT",5,-4)
+		text:SetPoint("RIGHT",tab,"RIGHT",-5,-4)
 		text:SetHeight(18)
 		text:SetText("Test")
 		

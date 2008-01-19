@@ -183,7 +183,7 @@ do
 		local scrollbar = CreateFrame("Slider",("AceConfigDialogScrollFrame%dScrollBar"):format(createdcount),scrollframe,"UIPanelScrollBarTemplate")
 		local scrollbg = scrollbar:CreateTexture(nil,"BACKGROUND")
 		scrollbg:SetAllPoints(scrollbar)
-		scrollbg:SetTexture(0,0,0,1)
+		scrollbg:SetTexture(0,0,0,0.4)
 		self.scrollframe = scrollframe
 		self.content = content
 		self.scrollbar = scrollbar
