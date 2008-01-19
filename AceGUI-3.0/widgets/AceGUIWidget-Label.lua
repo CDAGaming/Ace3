@@ -54,8 +54,8 @@ do
 		local label = frame:CreateFontString(nil,"BACKGROUND","GameFontNormal")
 		label:SetPoint("TOPLEFT",frame,"TOPLEFT",0,0)
 		label:SetWidth(200)
-		label:SetJustifyH("CENTER")
-		label:SetJustifyV("LEFT")
+		label:SetJustifyH("LEFT")
+		label:SetJustifyV("TOP")
 		self.label = label
 		
 		AceGUI:RegisterAsWidget(self)
