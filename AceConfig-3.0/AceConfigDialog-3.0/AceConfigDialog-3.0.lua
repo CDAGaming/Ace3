@@ -1056,8 +1056,8 @@ local function GroupExists(appName, options, path, uniquevalue)
 	for i, v in ipairs(feedpath) do
 		temppath[i] = v
 		group = GetSubOption(group, v)
-		local hidden =  CheckOptionHidden(group, options, temppath, appName)
-		if hidden or not group then 
+		
+		if not group or CheckOptionHidden(group, options, temppath, appName) then 
 			del(feedpath)
 			return false 
 		end
