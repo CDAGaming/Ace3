@@ -294,8 +294,10 @@ do
 		editbox:SetTextInsets(5,5,3,3)
 		editbox:SetMaxLetters(256)
 		editbox:SetAutoFocus(false)
+		
 		editbox:SetBackdrop(ControlBackdrop)
 		editbox:SetBackdropColor(0,0,0)
+		editbox:SetBackdropBorderColor(0.4,0.4,0.4)
 	
 		editbox:SetPoint("TOPLEFT",frame,"TOPLEFT",0,0)
 		editbox:SetPoint("BOTTOMRIGHT",frame,"BOTTOMRIGHT",-20,0)

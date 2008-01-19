@@ -450,7 +450,7 @@ local function OptionOnMouseOver(widget, event)
 	GameTooltip:SetText(name, 1, 1, 1, 1)
 	
 	if opt.type == 'multiselect' then
-		GameTooltip:AddLine(user.text,NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b, 1)
+		GameTooltip:AddLine(user.text,0.5, 0.5, 0.8, 1)
 	end	
 	if type(desc) == "string" then
 		GameTooltip:AddLine(desc, NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b, 1)
