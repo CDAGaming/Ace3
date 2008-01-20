@@ -221,18 +221,27 @@ end
 -- addon:SetDefaultModuleLibraries( [lib, lib, lib, ...]  )
 -- [lib] (string) - libs to embed in every module
 function SetDefaultModuleLibraries(self, ...)
+	if next(self.modules) then
+		error("Usage: SetDefaultModuleLibraries(...): cannot change the module defaults after a module has been registered.", 2)
+	end
 	self.defaultModuleLibraries = {...}
 end
 
 -- addon:SetDefaultModuleState( state )
 -- state (boolean) - default state for new modules (enabled=true, disabled=false)
 function SetDefaultModuleState(self, state)
+	if next(self.modules) then
+		error("Usage: SetDefaultModuleState(state): cannot change the module defaults after a module has been registered.", 2)
+	end
 	self.defaultModuleState = state
 end
 
 -- addon:SetDefaultModulePrototype( prototype )
 -- prototype (string or table) - the default prototype to use if none is specified on module creation
 function SetDefaultModulePrototype(self, prototype)
+	if next(self.modules) then
+		error("Usage: SetDefaultModulePrototype(prototype): cannot change the module defaults after a module has been registered.", 2)
+	end
 	if type(prototype) ~= "table" then
 		error(("Usage: SetDefaultModulePrototype(prototype): 'prototype' - table expected got '%s'."):format(type(prototype)), 2)
 	end
