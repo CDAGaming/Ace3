@@ -4,14 +4,16 @@ local AceSerializer, oldminor = LibStub:NewLibrary(MAJOR, MINOR)
 
 if not AceSerializer then return end
 
-local strbyte=string.byte
-local strchar=string.char
-local tconcat=table.concat
-local gsub=string.gsub
-local gmatch=string.gmatch
-local pcall=pcall
-local format=string.format
-
+local strbyte = string.byte
+local strchar = string.char
+local tconcat = table.concat
+local gsub = string.gsub
+local gmatch = string.gmatch
+local pcall = pcall
+local format = string.format
+local type = type
+local tostring, tonumber = tostring, tonumber
+local select = select
 
 -- quick copies of string representations of wonky numbers
 local serNaN = tostring(0/0)
@@ -236,7 +238,7 @@ end
 function AceSerializer:Deserialize(str)
 	str = gsub(str, "[%c ]", "")	-- ignore all control characters; nice for embedding in email and stuff
 
-	local iter = string.gmatch(str, "(^.)([^^]*)")	-- Any ^x followed by string of non-^
+	local iter = gmatch(str, "(^.)([^^]*)")	-- Any ^x followed by string of non-^
 	local ctl,data = iter()
 	if not ctl or ctl~="^1" then
 		-- we purposefully ignore the data portion of the start code, it can be used as an extension mechanism
