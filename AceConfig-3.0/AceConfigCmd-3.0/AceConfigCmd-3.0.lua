@@ -18,6 +18,9 @@ local lib = LibStub:NewLibrary(MAJOR, MINOR)
 
 if not lib then return end
 
+lib.commands = lib.commands or {}
+local commands = lib.commands
+
 local cfgreg = LibStub("AceConfigRegistry-3.0")
 local AceConsole -- LoD
 local AceConsoleName = "AceConsole-3.0"
@@ -481,8 +484,19 @@ function lib:CreateChatCommand(slashcmd, appName)
 	if not AceConsole then
 		AceConsole = LibStub(AceConsoleName)
 	end
-	AceConsole.RegisterChatCommand(self, slashcmd, function(input)
+	if AceConsole.RegisterChatCommand(self, slashcmd, function(input)
 				lib.HandleCommand(self, slashcmd, appName, input)	-- upgradable
 		end,
-	true)
+	true) then -- succesfully registered so lets get the command -> app table in
+		commands[slashcmd] = appName
+	end
+end
+
+-- GetChatCommandOptions(slashcmd)
+-- 
+-- Utility function that returns the options table that belongs to a slashcommand
+-- mainly used by AceTab
+
+function lib:GetChatCommandOptions(slashcmd)
+	return commands[slashcmd]
 end

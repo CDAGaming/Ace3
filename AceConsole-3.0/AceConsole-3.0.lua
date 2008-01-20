@@ -73,6 +73,7 @@ function AceConsole:RegisterChatCommand( command, func, persist, silent )
 	if not persist then
 		AceConsole.weakcommands[self][command] = func
 	end
+	return true
 end
 
 
@@ -88,6 +89,8 @@ function AceConsole:UnregisterChatCommand( command )
 		AceConsole.commands[command] = nil
 	end
 end
+
+function AceConsole:IterateChatCommands() return pairs(AceConsole.commands) end
 
 
 local function nils(n, ...)
