@@ -11,6 +11,10 @@ AceAddon.initializequeue = AceAddon.initializequeue or {} -- addons that are new
 AceAddon.enablequeue = AceAddon.enablequeue or {} -- addons that are initialized and waiting to be enabled
 AceAddon.embeds = AceAddon.embeds or setmetatable({}, {__index = function(tbl, key) tbl[key] = {} return tbl[key] end }) -- contains a list of libraries embedded in an addon
 
+local tinsert, tconcat = table.insert, table.concat
+local fmt = string.format
+local pairs, ipairs, next, type = pairs, ipairs, next, type
+
 --[[
 	 xpcall safecall implementation
 ]]
@@ -38,7 +42,7 @@ local function CreateDispatcher(argCount)
 	
 	local ARGS = {}
 	for i = 1, argCount do ARGS[i] = "arg"..i end
-	code = code:gsub("ARGS", table.concat(ARGS, ", "))
+	code = code:gsub("ARGS", tconcat(ARGS, ", "))
 	return assert(loadstring(code, "safecall Dispatcher["..argCount.."]"))(xpcall, errorhandler)
 end
 
@@ -84,7 +88,7 @@ function AceAddon:NewAddon(name, ...)
 	self:EmbedLibraries(addon, ...)
 	
 	-- add to queue of addons to be initialized upon ADDON_LOADED
-	table.insert(self.initializequeue, addon)
+	tinsert(self.initializequeue, addon)
 	return addon
 end
 
@@ -122,7 +126,7 @@ function AceAddon:EmbedLibrary(addon, libname, silent, offset)
 		error(("Usage: EmbedLibrary(addon, libname, silent, offset): 'libname' - Cannot find a library instance of %q."):format(tostring(libname)), offset or 2)
 	elseif lib and type(lib.Embed) == "function" then
 		lib:Embed(addon)
-		table.insert(self.embeds[addon], libname)
+		tinsert(self.embeds[addon], libname)
 		return true
 	elseif lib then
 		error(("Usage: EmbedLibrary(addon, libname, silent, offset): 'libname' - Library '%s' is not Embed capable"):format(libname), offset or 2)
@@ -158,7 +162,7 @@ function NewModule(self, name, prototype, ...)
 	
 	-- modules are basically addons. We treat them as such. They will be added to the initializequeue properly as well.
 	-- NewModule can only be called after the parent addon is present thus the modules will be initialized after their parent is.
-	local module = AceAddon:NewAddon(("%s_%s"):format(self.name or tostring(self), name))
+	local module = AceAddon:NewAddon(fmt("%s_%s", self.name or tostring(self), name))
 	
 	module.IsModule = IsModuleTrue
 	module:SetEnabledState(self.defaultModuleState)
@@ -374,7 +378,7 @@ local function onEvent(this, event, arg1)
 			if event == "ADDON_LOADED" then addon.baseName = arg1 end
 			AceAddon.initializequeue[i] = nil
 			AceAddon:InitializeAddon(addon)
-			table.insert(AceAddon.enablequeue, addon)
+			tinsert(AceAddon.enablequeue, addon)
 		end
 		
 		if IsLoggedIn() then
