@@ -15,9 +15,9 @@ if not AceComm then return end
 local CallbackHandler = LibStub:GetLibrary("CallbackHandler-1.0")
 local CTL = assert(ChatThrottleLib, "AceComm-3.0 requires ChatThrottleLib")
 
+local type = type
 local strsub = string.sub
 local strfind = string.find
-local format = string.format
 local tinsert = table.insert
 local tconcat = table.concat
 

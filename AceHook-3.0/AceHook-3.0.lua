@@ -18,7 +18,12 @@ local handlers = AceHook.handlers
 local actives = AceHook.actives
 local scripts = AceHook.scripts
 local onceSecure = AceHook.onceSecure
+
 local _G = _G
+local format = string.format
+local next = next
+local pairs = pairs
+local type = type
 
 -- functions for later definition
 local donothing, createHook, hook
@@ -108,23 +113,23 @@ function hook(self, obj, method, handler, script, secure, raw, forceSecure, usag
 	
 	-- Error checking Battery!
 	if obj and type(obj) ~= "table" then
-		error(string.format("%s: 'object' - nil or table expected got %s", usage, type(obj)), 3)
+		error(format("%s: 'object' - nil or table expected got %s", usage, type(obj)), 3)
 	end
 	if type(method) ~= "string" then
-		error(string.format("%s: 'method' - string expected got %s", usage, type(method)), 3)
+		error(format("%s: 'method' - string expected got %s", usage, type(method)), 3)
 	end
 	if type(handler) ~= "string" and type(handler) ~= "function" then
-		error(string.format("%s: 'handler' - nil, string, or function expected got %s", usage, type(handler)), 3)
+		error(format("%s: 'handler' - nil, string, or function expected got %s", usage, type(handler)), 3)
 	end
 	if type(handler) == "string" and type(self[handler]) ~= "function" then
-		error(string.format("%s: 'handler' - Handler specified does not exist at self[handler]", usage), 3)
+		error(format("%s: 'handler' - Handler specified does not exist at self[handler]", usage), 3)
 	end
 	if script then
 	 	if not secure and obj:IsProtected() and protectedScripts[method] then
-			error(string.format("Cannot hook secure script %q; Use SecureHookScript(obj, method, [handler]) instead.", method), 3)
+			error(format("Cannot hook secure script %q; Use SecureHookScript(obj, method, [handler]) instead.", method), 3)
 		end
 		if not obj or not obj.GetScript or not obj:HasScript(method) then
-			error(string.format("%s: You can only hook a script on a frame object", usage), 3)
+			error(format("%s: You can only hook a script on a frame object", usage), 3)
 		end
 	else
 		local issecure 
@@ -142,7 +147,7 @@ function hook(self, obj, method, handler, script, secure, raw, forceSecure, usag
 					onceSecure[method] = true
 				end
 			elseif not secure then
-				error(string.format("%s: Attempt to hook secure function %s. Use `SecureHook' or add `true' to the argument list to override.", usage, method), 3)
+				error(format("%s: Attempt to hook secure function %s. Use `SecureHook' or add `true' to the argument list to override.", usage, method), 3)
 			end
 		end
 	end
@@ -158,7 +163,7 @@ function hook(self, obj, method, handler, script, secure, raw, forceSecure, usag
 		if actives[uid] then
 			-- Only two sane choices exist here.  We either a) error 100% of the time or b) always unhook and then hook
 			-- choice b would likely lead to odd debuging conditions or other mysteries so we're going with a.
-			error(string.format("Attempting to rehook already active hook %s.", method))
+			error(format("Attempting to rehook already active hook %s.", method))
 		end
 		
 		if handlers[uid] == handler then -- turn on a decative hook, note enclosures break this ability, small memory leak
@@ -189,7 +194,7 @@ function hook(self, obj, method, handler, script, secure, raw, forceSecure, usag
 	end
 	
 	if not orig then
-		error(string.format("%s: Attempting to hook a non existing target", usage), 3)
+		error(format("%s: Attempting to hook a non existing target", usage), 3)
 	end
 	
 	uid = createHook(self, handler, orig, secure, not (raw or secure))
@@ -282,10 +287,10 @@ function AceHook:Unhook(obj, method)
 	end
 		
 	if obj and type(obj) ~= "table" then
-		error(string.format("%s: 'obj' - expecting nil or table got %s", usage, type(obj)), 2)
+		error(format("%s: 'obj' - expecting nil or table got %s", usage, type(obj)), 2)
 	end
 	if type(method) ~= "string" then
-		error(string.format("%s: 'method' - expeting string got %s", usage, type(method)), 2)
+		error(format("%s: 'method' - expeting string got %s", usage, type(method)), 2)
 	end
 	
 	local uid

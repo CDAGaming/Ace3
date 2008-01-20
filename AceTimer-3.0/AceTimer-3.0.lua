@@ -28,8 +28,10 @@ AceTimer.hash = AceTimer.hash or {}         -- Array of [0..BUCKET-1] = linked l
 AceTimer.selfs = AceTimer.selfs or {}       -- Array of [self]={[handle]=timerobj, [handle2]=timerobj2, ...}
 AceTimer.frame = AceTimer.frame or CreateFrame("Frame", "AceTimer30Frame")
 
-local pcall = pcall
+local type = type
+local next = next
 local pairs = pairs
+local select = select
 local tostring = tostring
 local floor = floor
 local max = max

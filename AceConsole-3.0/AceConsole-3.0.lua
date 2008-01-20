@@ -9,6 +9,16 @@ AceConsole.embeds = AceConsole.embeds or {} -- table containing objects AceConso
 AceConsole.commands = AceConsole.commands or {} -- table containing commands registered
 AceConsole.weakcommands = AceConsole.weakcommands or {} -- table containing self, command => func references for weak commands that don't persist through enable/disable
 
+-- local upvalues
+local _G = _G
+local pairs = pairs
+local select = select
+local type = type
+local tostring = tostring
+local strfind = string.find
+local strsub = string.sub
+local max = math.max
+
 -- AceConsole:Print( [chatframe,] ... )
 --
 -- Print to DEFAULT_CHAT_FRAME or given chatframe (anything with an .AddMessage member)
@@ -73,7 +83,7 @@ function AceConsole:UnregisterChatCommand( command )
 	local name = AceConsole.commands[command]
 	if name then
 		SlashCmdList[name] = nil
-		setglobal("SLASH_"..name.."1", nil)
+		_G["SLASH_" .. name .. "1"] = nil
 		hash_SlashCmdList["/" .. command:upper()] = nil
 		AceConsole.commands[command] = nil
 	end

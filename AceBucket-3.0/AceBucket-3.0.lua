@@ -21,7 +21,12 @@ AceBucket.embeds = AceBucket.embeds or {}
 local AceEvent, AceTimer
 
 -- local upvalues
+local type = type
+local next = next
 local pairs = pairs
+local select = select
+local tonumber = tonumber
+local tostring = tostring
 
 local bucketCache = setmetatable({}, {__mode='k'})
 
