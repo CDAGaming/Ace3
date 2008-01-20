@@ -92,6 +92,7 @@ do
 	
 	local function Aquire(self)
 		self.frame:SetParent(UIParent)
+		self.frame:SetFrameStrata("DIALOG")
 		self:ApplyStatus()
 	end
 	

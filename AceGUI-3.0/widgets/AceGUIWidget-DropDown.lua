@@ -21,6 +21,7 @@ do
 
 	local function Aquire(self)
 		self:SetStrict(true)
+		self:SetLabel("")
 	end
 	
 	local function Release(self)
