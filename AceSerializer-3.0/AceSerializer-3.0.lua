@@ -10,7 +10,6 @@ local tconcat=table.concat
 local gsub=string.gsub
 local gmatch=string.gmatch
 local pcall=pcall
-local strlen=string.len
 local format=string.format
 
 
