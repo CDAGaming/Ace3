@@ -322,7 +322,7 @@ do
 		frame:SetHeight(44)
 		frame:SetWidth(200)
 		frame:SetScript("OnHide",Dropdown_OnHide)
-		local pullout = CreateFrame("Frame",nil,UIParent)
+		local pullout = CreateFrame("Frame",nil,frame)
 		self.pullout = pullout
 		frame:EnableMouse()
 		pullout:SetBackdrop(ControlBackdrop)
