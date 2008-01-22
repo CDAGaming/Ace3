@@ -418,6 +418,7 @@ AceGUI:RegisterLayout("Flow",
 	 	
 	 	--control at the start of the row
 	 	local rowstart
+		local rowstartoffset
 	 	local lastrowstart
 	 	local isfullheight
 	 	
