@@ -202,7 +202,7 @@ do
 		elseif ( level == 2 ) then
 			button:SetText(HIGHLIGHT_FONT_COLOR_CODE..text..FONT_COLOR_CODE_CLOSE)
 			button:SetPoint("LEFT",frame,"LEFT",34,0)
-			--normalText:SetPoint("LEFT", button, "LEFT", 12, 0)
+			normalText:SetPoint("LEFT", button, "LEFT", 4, 0)
 			normalTexture:SetAlpha(0.4)
 			expand:SetPoint("RIGHT",button,"LEFT",0,0)
 			line:Hide()
