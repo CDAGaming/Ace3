@@ -25,12 +25,15 @@ local readmeta = {
 -- Remember the locale table being registered right now (it gets set by :NewLocale())
 local registering
 
+-- local assert false function
+local assertfalse = function() assert(false) end
+
 -- This metatable proxy is used when registering nondefault locales
 local writeproxy = setmetatable({}, {
 	__newindex = function(self, key, value)
 		rawset(registering, key, value == true and key or value) -- assigning values: replace 'true' with key string
 	end,
-	__index = function() assert(false) end
+	__index = assertfalse
 })
 
 -- This metatable proxy is used when registering the default locale. 
@@ -46,7 +49,7 @@ local writedefaultproxy = setmetatable({}, {
 			rawset(registering, key, value == true and key or value)
 		end
 	end,
-	__index = function() assert(false) end
+	__index = assertfalse
 })
 
 -- AceLocale:NewLocale(application, locale, isDefault)
