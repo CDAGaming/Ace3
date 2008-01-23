@@ -386,7 +386,7 @@ AceGUI:RegisterLayout("List",
 				end
 			end
 			
-			height = height + frame.height or frame:GetHeight()
+			height = height + (frame.height or frame:GetHeight() or 0)
 		end
 		safecall( content.obj.LayoutFinished, content.obj, nil, height )
 	 end
