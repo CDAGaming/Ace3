@@ -37,7 +37,7 @@ addon:RegisterMessage( message[, metod[, arg]] )
 	[arg] - optional argument, if set will be passed as the first argument when the message fires.
 Messages are used for interaddon communication.
 
-addon:TriggerMessage( message[, ...] )
+addon:SendMessage( message[, ...] )
 	message (string) - Message to trigger.
 	[...] - optional arguments to the message.
 Will fire a message towards all listeners.
