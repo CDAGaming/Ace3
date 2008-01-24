@@ -173,6 +173,7 @@ local stringIsLiteral = {
 	desc = true,
 	icon = true,
 	usage = true,
+	width = true,
 }
 
 --Is Never a function or method
@@ -972,6 +973,7 @@ local function FeedOptions(appName, options,container,rootframe,path,group,inlin
 
 						table.sort(valuesort)
 						control:PauseLayout()
+						local width = GetOptionsMemberValue("width",v,options,path,appName)
 						for i, value in ipairs(valuesort) do
 							local text = values[value]
 							local check = gui:Create("CheckBox")
@@ -984,6 +986,15 @@ local function FeedOptions(appName, options,container,rootframe,path,group,inlin
 							check:SetCallback("OnValueChanged",ActivateMultiControl)
 							InjectInfo(check, options, v, path, rootframe, appName)
 							control:AddChild(check)
+							if width == "double" then
+								check:SetWidth(400)
+							elseif width == "half" then
+								check:SetWidth(100)
+							elseif width == "full" then
+								check.width = "fill"
+							else
+								check:SetWidth(200)
+							end
 						end
 						control:ResumeLayout()
 						control:DoLayout()
@@ -1016,6 +1027,18 @@ local function FeedOptions(appName, options,container,rootframe,path,group,inlin
 
 				--Common Init
 				if control then
+					if control.width ~= "fill" then
+						local width = GetOptionsMemberValue("width",v,options,path,appName)
+						if width == "double" then
+							control:SetWidth(400)
+						elseif width == "half" then
+							control:SetWidth(100)
+						elseif width == "full" then
+							control.width = "fill"
+						else
+							control:SetWidth(200)
+						end
+					end
 					if control.SetDisabled then
 						local disabled = CheckOptionDisabled(v, options, path, appName)
 						control:SetDisabled(disabled)

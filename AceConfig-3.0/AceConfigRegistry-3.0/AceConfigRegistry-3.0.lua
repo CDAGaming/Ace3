@@ -82,7 +82,8 @@ local basekeys={
 	get=optmethodfalse,
 	set=optmethodfalse,
 	func=optmethodfalse,
-	arg={["*"]=true}
+	arg={["*"]=true},
+	width=optstring,
 }
 
 local typedkeys={
