@@ -283,8 +283,80 @@ for REPEATS=1,20 do
 	
 end
 
--- We do not test the actual callback logic here. The AceEvent tests do that plenty.
 
+
+-----------------------------------------------------------------------
+-- Delayed registration:
+-- - Verify that delayed OnUsed are fired
+-- - Verify that OnUnused aren't fired if OnUsed hasn't been fired yet
+
+do
+	local obj = {}
+	local reg = CH:New(obj, "Reg", "Unreg", "UnregAll")
+
+	local dummys, regs, onused, onunused = 0,0,0,0
+	
+	local addon = {}
+	addon.Dummy = function() dummys=dummys+1 end
+	addon.ReggingEvent = function() end
+	obj.Reg(addon,"ReggingEvent")
+	
+	reg.OnUsed = function(reg,tgt,evt) 
+		assert(evt=="Dummy")
+		onused = onused + 1  
+	end
+	reg.OnUnused = function(rev,tgt,evt) 
+		assert(evt=="Dummy")
+		onunused = onunused + 1  
+	end
+
+	-- Register "Dummy" from inside "ReggingEvent"
+	addon.ReggingEvent = function() 	
+		regs=regs+1
+		obj.Reg(addon,"Dummy")
+		assert(onused==0) -- shouldn't fire yet
+	end
+	
+	reg:Fire("ReggingEvent")
+	assert(regs==1)		-- should have run once
+	assert(onused==1)	-- should have fired now
+	assert(dummys==0)
+	reg:Fire("Dummy")
+	assert(dummys==1)
+	assert(onunused==0)
+	
+	-- Now unregister "Dummy" normally
+	obj.Unreg(addon,"Dummy")
+	assert(onunused==1)
+	reg:Fire("Dummy")		-- sanity: should do nothing unless something is SERIOUSLY broken
+	assert(dummys==1)
+	
+	
+	-- Register "Dummy" from inside "ReggingEvent" and then unregister it
+	dummys, regs, onused, onunused = 0,0,0,0
+	addon.ReggingEvent = function() 	-- This event tries to register more events inside it
+		regs=regs+1
+		obj.Reg(addon,"Dummy")
+		assert(onused==0) -- shouldn't fire yet
+		reg:Fire("Dummy")	-- this shouldn't fire; it should still be queued
+		obj.Unreg(addon,"Dummy")
+		assert(onunused==0) -- shouldn't fire at all now since onused never did
+	end
+	
+	reg:Fire("ReggingEvent")
+	assert(regs==1)
+	assert(dummys==0)
+	
+	reg:Fire("Dummy")	-- sanity: should do nothing unless something is SERIOUSLY broken
+	assert(onused==0)
+	assert(onunused==0)
+	assert(dummys==0)
+	
+end
+
+
+
+-- We do not test the actual callback logic here. The AceEvent tests do that plenty.
 
 -----------------------------------------------------------------------
 print "OK"
