@@ -201,6 +201,44 @@ comp("?", r7, "\001\032\127^~fin!^^")
 assert(r8==nil)
 
 
+-----------------------------------------------------------------------
+-- Wild combos, now as a table
+
+local ser = AceSer:Serialize({
+	"firstval",
+	123e-17,
+	true,
+	false,	-- ACE-130
+	nil,
+	{
+		{
+			foo="bar"
+		},
+		{
+			baz={}
+		},
+		name="val",
+	},
+	"\001\032\127^~fin!^^",
+	[true]="yes",
+	[false]="no"	-- ACE-130
+})
+
+local ok,r = assert(AceSer:Deserialize(ser))
+assert(r[1]=="firstval")
+assert(r[2]==1.23e-15)
+assert(r[3]==true)
+assert(r[4]==false)
+assert(r[5]==nil)
+assert(type(r[6])=="table")
+assert(r[6][1].foo=="bar")
+assert(type(r[6][2].baz)=="table")
+assert(r[6].name=="val")
+comp("?", r7, "\001\032\127^~fin!^^")
+assert(r[8]==nil)
+
+assert(r[true]=="yes")
+assert(r[false]=="no")
 
 
 -----------------------------------------------------------------------
