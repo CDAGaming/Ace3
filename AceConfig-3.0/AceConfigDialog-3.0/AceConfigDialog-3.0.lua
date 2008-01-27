@@ -905,8 +905,14 @@ local function FeedOptions(appName, options,container,rootframe,path,group,inlin
 			if v.type == "group" then
 				if inline or pickfirstset(v.dialogInline,v.guiInline,v.inline, false) then
 					--Inline group
-					local GroupContainer = gui:Create("InlineGroup")
-					GroupContainer:SetTitle(name or "")
+					local GroupContainer
+					if name and name ~= "" then
+						GroupContainer = gui:Create("InlineGroup")
+						GroupContainer:SetTitle(name or "")
+					else
+						GroupContainer = gui:Create("SimpleGroup")
+					end
+					
 					GroupContainer.width = "fill"
 					GroupContainer:SetLayout("flow")
 					container:AddChild(GroupContainer)

@@ -11,7 +11,8 @@
 	<Script file="widgets\AceGUIWidget-Heading.lua"/>	
 	<Script file="widgets\AceGUIWidget-InlineGroup.lua"/>	
 	<Script file="widgets\AceGUIWidget-Keybinding.lua"/>	
-	<Script file="widgets\AceGUIWidget-ScrollFrame.lua"/>	
+	<Script file="widgets\AceGUIWidget-ScrollFrame.lua"/>
+	<Script file="widgets\AceGUIWidget-SimpleGroup.lua"/>	
 	<Script file="widgets\AceGUIWidget-Slider.lua"/>	
 	<Script file="widgets\AceGUIWidget-TabGroup.lua"/>	
 	<Script file="widgets\AceGUIWidget-TreeGroup.lua"/>
