@@ -217,7 +217,7 @@ local function GetOptionsMemberValue(membername, option, options, path, appName,
 		
 		for i = 1, #path do
 			group = GetSubOption(group, path[i])
-			info[i] = v
+			info[i] = path[i]
 			handler = group.handler or handler
 		end
 		
