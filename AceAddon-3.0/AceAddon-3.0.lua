@@ -13,7 +13,7 @@ AceAddon.embeds = AceAddon.embeds or setmetatable({}, {__index = function(tbl, k
 
 local tinsert, tconcat = table.insert, table.concat
 local fmt = string.format
-local pairs, ipairs, next, type = pairs, ipairs, next, type
+local pairs, next, type = pairs, next, type
 
 --[[
 	 xpcall safecall implementation
@@ -307,8 +307,9 @@ end
 function AceAddon:InitializeAddon(addon)
 	safecall(addon.OnInitialize, addon)
 	
-	for k, libname in ipairs(self.embeds[addon]) do
-		local lib = LibStub:GetLibrary(libname, true)
+	local embeds = self.embeds[addon]
+	for i = 1, #embeds do
+		local lib = LibStub:GetLibrary(embeds[i], true)
 		if lib then safecall(lib.OnEmbedInitialize, lib, addon) end
 	end
 	
@@ -326,8 +327,9 @@ function AceAddon:EnableAddon(addon)
 	if self.statuses[addon.name] or not addon.enabledState then return false end
 	-- TODO: handle 'first'? Or let addons do it on their own?
 	safecall(addon.OnEnable, addon)
-	for k, libname in ipairs(self.embeds[addon]) do
-		local lib = LibStub:GetLibrary(libname, true)
+	local embeds = self.embeds[addon]
+	for i = 1, #embeds do
+		local lib = LibStub:GetLibrary(embeds[i], true)
 		if lib then safecall(lib.OnEmbedEnable, lib, addon) end
 	end
 	self.statuses[addon.name] = true
@@ -349,8 +351,9 @@ function AceAddon:DisableAddon(addon)
 	if type(addon) == "string" then addon = AceAddon:GetAddon(addon) end
 	if not self.statuses[addon.name] then return false end
 	safecall( addon.OnDisable, addon )
-	for k, libname in ipairs(self.embeds[addon]) do
-		local lib = LibStub:GetLibrary(libname, true)
+	local embeds = self.embeds[addon]
+	for i = 1, #embeds do
+		local lib = LibStub:GetLibrary(embeds[i], true)
 		if lib then safecall(lib.OnEmbedDisable, lib, addon) end
 	end
 	self.statuses[addon.name] = nil

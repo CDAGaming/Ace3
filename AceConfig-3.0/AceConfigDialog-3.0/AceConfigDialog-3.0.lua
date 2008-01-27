@@ -18,7 +18,6 @@ local con = LibStub("AceConsole-3.0")
 
 local select = select
 local pairs = pairs
-local ipairs = ipairs
 local type = type
 local assert = assert
 local tinsert = tinsert
@@ -197,8 +196,8 @@ local function GetOptionsMemberValue(membername, option, options, path, appName,
 		if group[membername] ~= nil then
 			member = group[membername]
 		end
-		for i, v in ipairs(path) do
-			group = GetSubOption(group, v)
+		for i = 1, #path do
+			group = GetSubOption(group, path[i])
 			if group[membername] ~= nil then
 				member = group[membername]
 			end
@@ -216,8 +215,8 @@ local function GetOptionsMemberValue(membername, option, options, path, appName,
 		local group = options
 		handler = group.handler or handler
 		
-		for i, v in ipairs(path) do
-			group = GetSubOption(group, v)
+		for i = 1, #path do
+			group = GetSubOption(group, path[i])
 			info[i] = v
 			handler = group.handler or handler
 		end
@@ -365,11 +364,12 @@ end
 
 local function DelTree(tree)
 	if tree.children then
-		for i, v in ipairs(tree.children) do
-			DelTree(v)
-			del(v)
+		local childs = tree.children
+		for i = 1, #childs do
+			DelTree(childs[i])
+			del(childs[i])
 		end
-		del(tree.children)
+		del(childs)
 	end
 end
 
@@ -383,9 +383,9 @@ local function CleanUserData(widget, event)
 	if widget.type == "TreeGroup" then
 		local tree = widget.tree
 		if tree then
-			for i, v in ipairs(tree) do
-				DelTree(v)
-				del(v)
+			for i = 1, #tree do
+				DelTree(tree[i])
+				del(tree[i])
 			end
 			del(tree)
 			widget.tree = nil
@@ -422,7 +422,8 @@ function lib:GetStatusTable(appName, path)
 	status = status[appName]
 
 	if path then
-		for i, v in ipairs(path) do
+		for i = 1, #path do
+			local v = path[i]
 			if not status.children[v] then
 				status.children[v] = {}
 				status.children[v].status = {}
@@ -527,7 +528,8 @@ local function ActivateControl(widget, event, ...)
 	handler = group.handler or handler
 	confirm = group.confirm
 	validate = group.validate
-	for i, v in ipairs(path) do
+	for i = 1, #path do
+		local v = path[i]
 		group = GetSubOption(group, v)
 		info[i] = v
 		if group[funcname] ~= nil then
@@ -759,7 +761,8 @@ local function BuildTabs(group, options, path, appName)
 
 	BuildSortedOptionsTable(group, keySort, opts, options, path, appName)
 
-	for i, k in ipairs(keySort) do
+	for i = 1, #keySort do
+		local k = keySort[i]
 		local v = opts[k]
 		if v.type == "group" then
 			path[#path+1] = k
@@ -786,7 +789,8 @@ local function BuildSelect(group, options, path, appName)
 
 	BuildSortedOptionsTable(group, keySort, opts, options, path, appName)
 
-	for i, k in ipairs(keySort) do
+	for i = 1, #keySort do
+		local k = keySort[i]
 		local v = opts[k]
 		if v.type == "group" then
 			path[#path+1] = k
@@ -811,7 +815,8 @@ local function BuildSubTree(group, tree, options, path, appName)
 
 	BuildSortedOptionsTable(group, keySort, opts, options, path, appName)
 
-	for i, k in ipairs(keySort) do
+	for i = 1, #keySort do
+		local k = keySort[i]
 		local v = opts[k]
 		if v.type == "group" then
 			path[#path+1] = k
@@ -843,7 +848,8 @@ local function BuildTree(group, options, path, appName)
 
 	BuildSortedOptionsTable(group, keySort, opts, options, path, appName)
 
-	for i, k in ipairs(keySort) do
+	for i = 1, #keySort do
+		local k = keySort[i]
 		local v = opts[k]
 		if v.type == "group" then
 			path[#path+1] = k
@@ -869,8 +875,8 @@ end
 
 local function InjectInfo(control, options, option, path, rootframe, appName)
 	local user = control.userdata
-	for i,key in ipairs(path) do
-		user[i] = key
+	for i = 1, #path do
+		user[i] = path[i]
 	end
 	user.rootframe = rootframe
 	user.option = option
@@ -896,7 +902,8 @@ local function FeedOptions(appName, options,container,rootframe,path,group,inlin
 
 	BuildSortedOptionsTable(group, keySort, opts, options, path, appName)
 
-	for i, k in ipairs(keySort) do
+	for i = 1, #keySort do
+		local k = keySort[i]
 		local v = opts[k]
 		tinsert(path, k)
 		local hidden = CheckOptionHidden(v, options, path, appName)
@@ -980,7 +987,8 @@ local function FeedOptions(appName, options,container,rootframe,path,group,inlin
 						table.sort(valuesort)
 						control:PauseLayout()
 						local width = GetOptionsMemberValue("width",v,options,path,appName)
-						for i, value in ipairs(valuesort) do
+						for i = 1, #valuesort do
+							local value = valuesort[i]
 							local text = values[value]
 							local check = gui:Create("CheckBox")
 							check:SetLabel(text)
@@ -1075,14 +1083,15 @@ local function GroupExists(appName, options, path, uniquevalue)
 	
 	local feedpath = new()
 	local temppath = new()
-	for i, v in ipairs(path) do
-		feedpath[i] = v
+	for i = 1, #path do
+		feedpath[i] = path[i]
 	end
 	
 	BuildPath(feedpath, string.split("\001", uniquevalue))
 	
 	local group = options
-	for i, v in ipairs(feedpath) do
+	for i = 1, #feedpath do
+		local v = feedpath[i]
 		temppath[i] = v
 		group = GetSubOption(group, v)
 		
@@ -1106,14 +1115,14 @@ local function GroupSelected(widget, event, uniquevalue)
 	local rootframe = user.rootframe
 
 	local feedpath = new()
-	for i, v in ipairs(path) do
-		feedpath[i] = v
+	for i = 1, #path do
+		feedpath[i] = path[i]
 	end
 
 	BuildPath(feedpath, string.split("\001", uniquevalue))
 	local group = options
-	for i, v in ipairs(feedpath) do
-		group = GetSubOption(group, v)
+	for i = 1, #feedpath do
+		group = GetSubOption(group, feedpath[i])
 	end
 
 	widget:ReleaseChildren()
@@ -1149,7 +1158,8 @@ function lib:FeedGroup(appName,options,container,rootframe,path)
 
 	--temp path table to pass to callbacks as we traverse the tree
 	local temppath = new()
-	for i, v in ipairs(path) do
+	for i = 1, #path do
+		local v = path[i]
 		temppath[i] = v
 		group = GetSubOption(group, v)
 		inline = inline or pickfirstset(v.dialogInline,v.guiInline,v.inline, false)
@@ -1273,7 +1283,8 @@ function lib:FeedGroup(appName,options,container,rootframe,path)
 
 			tree:SetTree(treedefinition)
 
-			for i, entry in ipairs(treedefinition) do
+			for i = 1, #treedefinition do
+				local entry = treedefinition[i]
 				if not entry.disabled then
 					tree:SelectByValue((GroupExists(appName, options, path,status.groups.selected) and status.groups.selected) or entry.value)
 					break
