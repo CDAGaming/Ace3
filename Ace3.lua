@@ -32,7 +32,20 @@ local function ConfigSelected(widget, event, value)
 	dialog:Open(value, widget)
 end
 
+local old_CloseSpecialWindows
+
 function Ace3:Open()
+	if not old_CloseSpecialWindows then
+		old_CloseSpecialWindows = CloseSpecialWindows
+		CloseSpecialWindows = function()
+			local found = old_CloseSpecialWindows()
+			if frame then
+				frame:Hide()
+				return true
+			end
+			return found
+		end
+	end
 	RefreshConfigs()
 	if next(configs) == nil then
 		self:Print("No Configs are Registered")
