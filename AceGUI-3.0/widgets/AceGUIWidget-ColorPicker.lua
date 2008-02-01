@@ -77,7 +77,7 @@ do
 		self.frame:Hide()
 	end
 
-	local function SetDisabled(self, diabled)
+	local function SetDisabled(self, disabled)
 		self.disabled = disabled
 		if self.disabled then
 			self.text:SetTextColor(0.5,0.5,0.5)
