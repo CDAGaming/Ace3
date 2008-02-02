@@ -332,7 +332,7 @@ function AceAddon:EnableAddon(addon)
 		local lib = LibStub:GetLibrary(embeds[i], true)
 		if lib then safecall(lib.OnEmbedEnable, lib, addon) end
 	end
-	self.statuses[addon.name] = true
+	self.statuses[addon.name] = addon.enabledState
 	
 	-- enable possible modules.
 	for name, module in pairs(addon.modules) do
@@ -356,7 +356,7 @@ function AceAddon:DisableAddon(addon)
 		local lib = LibStub:GetLibrary(embeds[i], true)
 		if lib then safecall(lib.OnEmbedDisable, lib, addon) end
 	end
-	self.statuses[addon.name] = nil
+	self.statuses[addon.name] = addon.enabledState
 	
 	-- disable possible modules.
 	for name, module in pairs(addon.modules) do
