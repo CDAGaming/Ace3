@@ -294,7 +294,7 @@ local function handle(info, inputpos, tab, depth, retfalse)
 			info.set,info.set_at = oldset,oldset_at
 			info.get,info.get_at = oldget,oldget_at
 			info.func,info.func_at = oldfunc,oldfunc_at
-			info.validate,info.validate_at = oldvalidate,oldvalidate_alt
+			info.validate,info.validate_at = oldvalidate,oldvalidate_at
 			info.confirm,info.confirm_at = oldconfirm,oldconfirm_at
 			return false
 		end
@@ -516,8 +516,68 @@ local function handle(info, inputpos, tab, depth, retfalse)
 		
 	elseif tab.type=="color" then
 		------------ color --------------------------------------------
-		error("TODO: color type")
+		local str = strtrim(strlower(str))
+		if str == "" then
+			--TODO: Show current value
+			return
+		end
 		
+		local r, g, b, a
+		
+		if tab.hasAlpha then
+			if str:len() == 8 and str:find("^%x*$")  then
+				--parse a hex string
+				r,g,b,a = tonumber(str:sub(1, 2), 16) / 255, tonumber(str:sub(3, 4), 16) / 255, tonumber(str:sub(5, 6), 16) / 255, tonumber(str:sub(7, 8), 16) / 255
+			else
+				--parse seperate values
+				r,g,b,a = str:match("^([%d%.]+) ([%d%.]+) ([%d%.]+) ([%d%.]+)$")
+				r,g,b,a = tonumber(r), tonumber(g), tonumber(b), tonumber(a)
+			end
+			if not (r and g and b and a) then
+				usererr(info, inputpos, format(L["'%s' - expected 'RRGGBBAA' or 'r g b a'."], str))
+				return
+			end
+			
+			if r >= 0.0 and r <= 1.0 and g >= 0.0 and g <= 1.0 and b >= 0.0 and b <= 1.0 and a >= 0.0 and a <= 1.0 then
+				--values are valid
+			elseif r >= 0 and r <= 255 and g >= 0 and g <= 255 and b >= 0 and b <= 255 and a >= 0 and a <= 255 then
+				--values are valid 0..255, convert to 0..1
+				r = r / 255
+				g = g / 255
+				b = b / 255
+				a = a / 255
+			else
+				--values are invalid
+				usererr(info, inputpos, format(L["'%s' - values must all be either in the range 0..1 or 0..255."], str))
+			end
+		else
+			a = 1.0
+			if str:len() == 6 and str:find("^%x*$") then
+				--parse a hex string
+				r,g,b = tonumber(str:sub(1, 2), 16) / 255, tonumber(str:sub(3, 4), 16) / 255, tonumber(str:sub(5, 6), 16) / 255
+			else
+				--parse seperate values
+				r,g,b = str:match("^([%d%.]+) ([%d%.]+) ([%d%.]+)$")
+				r,g,b = tonumber(r), tonumber(g), tonumber(b)
+			end
+			if not (r and g and b) then
+				usererr(info, inputpos, format(L["'%s' - expected 'RRGGBB' or 'r g b'."], str))
+				return
+			end
+			if r >= 0.0 and r <= 1.0 and g >= 0.0 and g <= 1.0 and b >= 0.0 and b <= 1.0 then
+				--values are valid
+			elseif r >= 0 and r <= 255 and g >= 0 and g <= 255 and b >= 0 and b <= 255 then
+				--values are valid 0..255, convert to 0..1
+				r = r / 255
+				g = g / 255
+				b = b / 255
+			else
+				--values are invalid
+				usererr(info, inputpos, format(L["'%s' - values must all be either in the range 0-1 or 0-255."], str))
+			end
+		end
+		
+		do_final(info, inputpos, tab, "set", r,g,b,a)
 
 	elseif tab.type=="keybinding" then
 		------------ keybinding --------------------------------------------
