@@ -6,7 +6,7 @@ TODO: Time out old data rotting around from dead senders? Not a HUGE deal since 
 
 ]]
 
-local MAJOR, MINOR = "AceComm-3.0", 2
+local MAJOR, MINOR = "AceComm-3.0", 3
 	
 local AceComm,oldminor = LibStub:NewLibrary(MAJOR, MINOR)
 

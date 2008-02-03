@@ -5,7 +5,7 @@ local AceGUI = LibStub("AceGUI-3.0")
 --------------------------
 do
 	local Type = "Slider"
-	local Version = 0
+	local Version = 1
 	
 	local function Aquire(self)
 		self:SetDisabled(false)

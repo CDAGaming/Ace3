@@ -13,7 +13,7 @@ REQUIRES: AceConsole-3.0 for command registration (loaded on demand)
 -- TODO: plugin args
 
 
-local MAJOR, MINOR = "AceConfigCmd-3.0", 1
+local MAJOR, MINOR = "AceConfigCmd-3.0", 2
 local lib = LibStub:NewLibrary(MAJOR, MINOR)
 
 if not lib then return end

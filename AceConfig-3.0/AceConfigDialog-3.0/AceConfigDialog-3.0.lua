@@ -3,7 +3,7 @@ AceConfigDialog-3.0
 
 ]]
 local LibStub = LibStub
-local MAJOR, MINOR = "AceConfigDialog-3.0", 0
+local MAJOR, MINOR = "AceConfigDialog-3.0", 1
 local lib = LibStub:NewLibrary(MAJOR, MINOR)
 
 if not lib then return end

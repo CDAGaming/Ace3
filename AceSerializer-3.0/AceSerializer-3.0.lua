@@ -1,5 +1,5 @@
-
-local MAJOR,MINOR = "AceSerializer-3.0", 1
+--[[ $Id$ ]]
+local MAJOR,MINOR = "AceSerializer-3.0", 2
 local AceSerializer, oldminor = LibStub:NewLibrary(MAJOR, MINOR)
 
 if not AceSerializer then return end

@@ -40,7 +40,7 @@ local AceGUI = LibStub("AceGUI-3.0")
 ]]
 do
 	local Type = "DropdownGroup"
-	local Version = 0
+	local Version = 1
 	
 	local function Aquire(self)
 

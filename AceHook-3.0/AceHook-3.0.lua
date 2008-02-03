@@ -1,5 +1,5 @@
 --[[ $Id$ ]]
-local ACEHOOK_MAJOR, ACEHOOK_MINOR = "AceHook-3.0", 0
+local ACEHOOK_MAJOR, ACEHOOK_MINOR = "AceHook-3.0", 1
 local AceHook, oldminor = LibStub:NewLibrary(ACEHOOK_MAJOR, ACEHOOK_MINOR)
 
 if not AceHook then return end -- No upgrade needed
