@@ -220,7 +220,63 @@ local function showhelp(info, inputpos, tab, noHead)
 end
 
 
-
+local function keybindingValidateFunc(text)
+	if text == nil or text == "NONE" then
+		return nil
+	end
+	text = text:upper()
+	local shift, ctrl, alt
+	local modifier
+	while true do
+		if text == "-" then
+			break
+		end
+		modifier, text = strsplit('-', text, 2)
+		if text then
+			if modifier ~= "SHIFT" and modifier ~= "CTRL" and modifier ~= "ALT" then
+				return false
+			end
+			if modifier == "SHIFT" then
+				if shift then
+					return false
+				end
+				shift = true
+			end
+			if modifier == "CTRL" then
+				if ctrl then
+					return false
+				end
+				ctrl = true
+			end
+			if modifier == "ALT" then
+				if alt then
+					return false
+				end
+				alt = true
+			end
+		else
+			text = modifier
+			break
+		end
+	end
+	if text == "" then
+		return false
+	end
+	if not text:find("^F%d+$") and text ~= "CAPSLOCK" and text:len() ~= 1 and (text:byte() < 128 or text:len() > 4) and not _G["KEY_" .. text] then
+		return false
+	end
+	local s = text
+	if shift then
+		s = "SHIFT-" .. s
+	end
+	if ctrl then
+		s = "CTRL-" .. s
+	end
+	if alt then
+		s = "ALT-" .. s
+	end
+	return s
+end
 
 -- constants used by getparam() calls below
 
@@ -581,7 +637,18 @@ local function handle(info, inputpos, tab, depth, retfalse)
 
 	elseif tab.type=="keybinding" then
 		------------ keybinding --------------------------------------------
-		error("TODO: keybinding type")
+		local str = strtrim(strlower(str))
+		if str == "" then
+			--TODO: Show current value
+			return
+		end
+		local value = keybindingValidateFunc(str:upper())
+		if value == false then
+			usererr(info, inputpos, format(L["'%s' - Invalid Keybinding."], str))
+			return
+		end
+
+		do_final(info, inputpos, tab, "set", value)
 
 	else
 		err(info, inputpos, "unknown options table item type '"..tostring(tab.type).."'")
