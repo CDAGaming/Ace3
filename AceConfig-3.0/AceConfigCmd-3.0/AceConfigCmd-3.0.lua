@@ -348,13 +348,18 @@ local function handle(info, inputpos, tab, depth, retfalse)
 				b = not b
 			end
 			
-		--TODO: Add handler for setting directly to nil for tristate
 		elseif str==L["on"] then
 			b = true
 		elseif str==L["off"] then
 			b = false
+		elseif tab.tristate and str==L["default"] then
+			b = nil
 		else
-			usererr(info, inputpos, format(L["'%s' - expected 'on' or 'off', or no argument to toggle."], str))
+			if tab.tristate then
+				usererr(info, inputpos, format(L["'%s' - expected 'on', 'off' or 'default', or no argument to toggle."], str))
+			else
+				usererr(info, inputpos, format(L["'%s' - expected 'on' or 'off', or no argument to toggle."], str))
+			end
 			return
 		end
 		
@@ -383,21 +388,12 @@ local function handle(info, inputpos, tab, depth, retfalse)
 		do_final(info, inputpos, tab, "set", val)
 
 	
-	elseif tab.type=="select" or tab.type=="multiselect" then
-		------------ select / multiselect ------------------------------------
+	elseif tab.type=="select" then
+		------------ select ------------------------------------
 		local str = strtrim(strlower(str))
-
-		local sels   -- sels = table with list of arguments (just a single one for type=select)
-		if tab.type=="select" then
-			if str=="" then
-				usererr(info, inputpos, "missing selection")
-			end
-			sels = { str }
-		else
-			sels = {}
-			for v in string.gmatch("  a  b c  ", "[^ ]+") do
-				tinsert(sels, v)
-			end
+		if str == "" then
+			--TODO: Show current selection and possible values
+			return
 		end
 		
 		local values = tab.values
@@ -406,25 +402,118 @@ local function handle(info, inputpos, tab, depth, retfalse)
 			values = callmethod(info, inputpos, tab, "values")
 			info.values = nil
 		end
-		if type(values)~="table" then err(info, inputpos, "'values' - expected a table") end
-		for selk, sel in pairs(sels) do
+
+		local ok
+		for k,v in pairs(values) do 
+			if strlower(k)==str then
+				str = k	-- overwrite with key (in case of case mismatches)
+				ok = true
+				break
+			end
+		end
+		if not ok then
+			usererr(info, inputpos, "'"..str.."' - "..L["unknown selection"])
+			return
+		end
+		
+		do_final(info, inputpos, tab, "set", str)
+		
+	elseif tab.type=="multiselect" then
+		------------ multiselect -------------------------------------------
+		local str = strtrim(strlower(str))
+		if str == "" then
+			--TODO: Show current values
+			return
+		end
+		
+		local values = tab.values
+		if type(values) == "function" or type(values) == "string" then
+			info.values = values
+			values = callmethod(info, inputpos, tab, "values")
+			info.values = nil
+		end		
+		
+		--build a table of the selections, checking that they exist
+		--parse for =on =off =default in the process
+		--table will be key = true for options that should toggle, key = [on|off|default] for options to be set
+		local sels = {}
+		for v in string.gmatch(str, "[^ ]+") do
+			--parse option=on etc
+			local opt, val = string.match(v,'(.+)=(.+)')
+			--get option if toggling
+			if not opt then 
+				opt = v 
+			end
+			
+			--check that the opt is valid
 			local ok
 			for k,v in pairs(values) do 
-				if strlower(k)==str then
-					sels[selk] = k	-- overwrite with key (in case of case mismatches)
+				if strlower(k)==opt then
+					opt = k	-- overwrite with key (in case of case mismatches)
 					ok = true
 					break
 				end
 			end
+			
 			if not ok then
-				usererr(info, inputpos, "'"..sel.."' - "..L["unknown selection"])
+				usererr(info, inputpos, "'"..opt.."' - "..L["unknown selection"])
 				return
+			end
+			
+			--check that if val was supplied it is valid
+			if val then
+				if val == L["on"] or val == L["off"] or (tab.tristate and val == L["default"]) then
+					--val is valid insert it
+					sels[opt] = val
+				else
+					if tab.tristate then
+						usererr(info, inputpos, format(L["'%s' '%s' - expected 'on', 'off' or 'default', or no argument to toggle."], v, val))
+					else
+						usererr(info, inputpos, format(L["'%s' '%s' - expected 'on' or 'off', or no argument to toggle."], v, val))
+					end
+					return
+				end
+			else
+				-- no val supplied, toggle
+				sels[opt] = true
 			end
 		end
 		
-		do_final(info, inputpos, tab, "set", unpack(t))
+		for opt, val in pairs(sels) do
+			local newval
+			
+			if (val == true) then
+				--toggle the option
+				local b = callmethod(info, inputpos, tab, "get", opt)
+				
+				if tab.tristate then
+					--cycle in true, nil, false order
+					if b then
+						b = nil
+					elseif b == nil then
+						b = false
+					else
+						b = true
+					end
+				else
+					b = not b
+				end
+				newval = b
+			else
+				--set the option as specified
+				if val==L["on"] then
+					newval = true
+				elseif val==L["off"] then
+					newval = false
+				elseif val==L["default"] then
+					newval = nil
+				end
+			end
+			
+			do_final(info, inputpos, tab, "set", opt, newval)
+		end
+					
 		
-	
 	elseif tab.type=="color" then
 		------------ color --------------------------------------------
 		error("TODO: color type")
