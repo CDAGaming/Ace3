@@ -59,13 +59,15 @@ do
 	
 	local function Slider_OnMouseWheel(this, v)
 		local self = this.obj
-		local value = self.value
-		if v > 0 then
-			value = math.min(value + (self.step or 1),self.max)
-		else
-			value = math.max(value - (self.step or 1), self.min)
+		if not self.disabled then
+			local value = self.value
+			if v > 0 then
+				value = math.min(value + (self.step or 1),self.max)
+			else
+				value = math.max(value - (self.step or 1), self.min)
+			end
+			self.slider:SetValue(value)
 		end
-		self.slider:SetValue(value)
 	end
 	
 	local function SetDisabled(self, disabled)
