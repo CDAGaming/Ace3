@@ -10,7 +10,7 @@ local AceGUI = LibStub("AceGUI-3.0")
 ]]
 do
 	local Type = "Dropdown"
-	local Version = 1
+	local Version = 2
 	
 	local ControlBackdrop  = {
 		bgFile = "Interface\\Tooltips\\UI-Tooltip-Background",
@@ -233,7 +233,7 @@ do
 		frame:SetHeight(17)
 		frame:SetPoint("LEFT",self.pullout,"LEFT",6,0)
 		frame:SetPoint("RIGHT",self.pullout,"RIGHT",-6,0)
-		frame:SetFrameStrata("DIALOG")
+		frame:SetFrameStrata("FULLSCREEN_DIALOG")
 		frame.obj = self
 	
 		local highlight = frame:CreateTexture(nil, "OVERLAY")
@@ -327,7 +327,7 @@ do
 		frame:EnableMouse()
 		pullout:SetBackdrop(ControlBackdrop)
 		pullout:SetBackdropColor(0,0,0)
-		pullout:SetFrameStrata("DIALOG")
+		pullout:SetFrameStrata("FULLSCREEN_DIALOG")
 		pullout:SetPoint("TOPLEFT",frame,"BOTTOMLEFT",0,0)
 		pullout:SetPoint("TOPRIGHT",frame,"BOTTOMRIGHT",-24,0)
 		pullout:SetClampedToScreen(true)

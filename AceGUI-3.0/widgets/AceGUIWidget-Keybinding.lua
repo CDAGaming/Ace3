@@ -5,7 +5,7 @@ local AceGUI = LibStub("AceGUI-3.0")
 --------------------------
 do
 	local Type = "Keybinding"
-	local Version = 1
+	local Version = 2
 
 	local ControlBackdrop  = {
 		bgFile = "Interface\\Tooltips\\UI-Tooltip-Background",
@@ -167,7 +167,7 @@ do
 		msgframe:SetHeight(30)
 		msgframe:SetBackdrop(ControlBackdrop)
 		msgframe:SetBackdropColor(0,0,0)
-		msgframe:SetFrameStrata("DIALOG")
+		msgframe:SetFrameStrata("FULLSCREEN_DIALOG")
 		msgframe:SetFrameLevel(1000)
 		self.msgframe = msgframe
 		local msg = msgframe:CreateFontString(nil,"OVERLAY","GameFontNormal")
