@@ -5,7 +5,7 @@ local AceGUI = LibStub("AceGUI-3.0")
 --------------------------
 do
 	local Type = "Keybinding"
-	local Version = 2
+	local Version = 3
 
 	local ControlBackdrop  = {
 		bgFile = "Interface\\Tooltips\\UI-Tooltip-Background",
@@ -110,8 +110,10 @@ do
 		self.disabled = disabled
 		if disabled then
 			self.button:Disable()
+			self.label:SetTextColor(0.5,0.5,0.5)
 		else
 			self.button:Enable()
+			self.label:SetTextColor(1,.82,0)
 		end
 	end
 	

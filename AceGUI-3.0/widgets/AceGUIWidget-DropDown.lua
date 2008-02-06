@@ -10,7 +10,7 @@ local AceGUI = LibStub("AceGUI-3.0")
 ]]
 do
 	local Type = "Dropdown"
-	local Version = 2
+	local Version = 3
 	
 	local ControlBackdrop  = {
 		bgFile = "Interface\\Tooltips\\UI-Tooltip-Background",
@@ -134,8 +134,10 @@ do
 			self.editbox:ClearFocus()
 			self.editbox:SetTextColor(0.5,0.5,0.5)
 			self.button:Disable()
+			self.label:SetTextColor(0.5,0.5,0.5)
 		else
 			self.button:Enable()
+			self.label:SetTextColor(1,.82,0)
 			if self.strict then
 				self.editbox:EnableMouse(false)
 				self.editbox:ClearFocus()
