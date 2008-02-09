@@ -29,7 +29,7 @@ local _G = getfenv()
 
 local AceGUI = LibStub("AceGUI-3.0")
 
-local Version = 1
+local Version = 2
 ---------------------
 -- Common Elements --
 ---------------------
@@ -174,7 +174,7 @@ do
 		self.frame = frame
 		self.backdrop = backdrop
 		frame.obj = self
-	
+
 		backdrop:SetBackdrop(ControlBackdrop)
 		backdrop:SetBackdropColor(0, 0, 0)
 		backdrop:SetBackdropBorderColor(0.4, 0.4, 0.4)
@@ -185,7 +185,8 @@ do
 		local scrollframe = CreateFrame("ScrollFrame", format("%s@%s@%s", Type, "ScrollFrame", tostring(self)), backdrop, "UIPanelScrollFrameTemplate")
 		scrollframe:SetPoint("TOPLEFT", 5, -6)
 		scrollframe:SetPoint("BOTTOMRIGHT", -28, 6)
-	
+		scrollframe.obj = self
+		
 		local scrollchild = CreateFrame("Frame", nil, scrollframe)
 		scrollframe:SetScrollChild(scrollchild)
 		scrollchild:SetHeight(2)
@@ -210,7 +211,7 @@ do
 		editbox:EnableMouse(true)
 		editbox:SetAutoFocus(false)
 		editbox:SetFontObject(ChatFontNormal)
-		
+
 		local button = CreateFrame("Button",nil,scrollframe,"UIPanelButtonTemplate")
 		button:SetWidth(80)
 		button:SetHeight(20)
@@ -222,8 +223,14 @@ do
 		self.button = button
 		button.obj = self
 		
-		scrollchild:EnableMouse(true)
-		scrollchild:SetScript("OnMouseUp", function() editbox:SetFocus() end)
+		scrollframe:EnableMouse(true)
+		scrollframe:SetScript("OnMouseUp", function() editbox:SetFocus() end)
+		scrollframe:SetScript("OnEnter", function(this) this.obj:Fire("OnEnter") end)
+		scrollframe:SetScript("OnLeave", function(this) this.obj:Fire("OnLeave") end)
+		
+		editbox:SetScript("OnEnter", function(this) this.obj:Fire("OnEnter") end)
+		editbox:SetScript("OnLeave", function(this) this.obj:Fire("OnLeave") end)
+		
 		local function FixSize()
 			scrollchild:SetHeight(scrollframe:GetHeight())
 			scrollchild:SetWidth(scrollframe:GetWidth())
