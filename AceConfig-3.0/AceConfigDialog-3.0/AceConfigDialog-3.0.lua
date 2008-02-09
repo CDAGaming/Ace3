@@ -3,7 +3,7 @@ AceConfigDialog-3.0
 
 ]]
 local LibStub = LibStub
-local MAJOR, MINOR = "AceConfigDialog-3.0", 3
+local MAJOR, MINOR = "AceConfigDialog-3.0", 4
 local lib = LibStub:NewLibrary(MAJOR, MINOR)
 
 if not lib then return end
@@ -948,10 +948,15 @@ local function FeedOptions(appName, options,container,rootframe,path,group,inlin
 					control:SetCallback("OnClick",ActivateControl)
 
 				elseif v.type == "input" then
-					local controlType = v.dialogControl or v.control or "EditBox"
+					local controlType = v.dialogControl or v.control or (v.multiline and "MultiLineEditBox") or "EditBox"
 					control = gui:Create(controlType)
 					if not control then
 						error(("Invalid Custom Control Type - %s"):format(tostring(controlType)))
+					end
+					
+					if v.multiline then
+						control:SetHeight(115)
+						control.width = "fill"
 					end
 					control:SetLabel(name)
 					control:SetCallback("OnEnterPressed",ActivateControl)
@@ -1280,9 +1285,11 @@ function lib:FeedGroup(appName,options,container,rootframe,path)
 					firstgroup = k
 				end
 			end
-
-			select:SetGroup( (GroupExists(appName, options, path,status.groups.selectedgroup) and status.groups.selectedgroup) or firstgroup)
-
+			
+			if firstgroup then
+				select:SetGroup( (GroupExists(appName, options, path,status.groups.selectedgroup) and status.groups.selectedgroup) or firstgroup)
+			end
+			
 			select.width = "fill"
 			select.height = "fill"
 
