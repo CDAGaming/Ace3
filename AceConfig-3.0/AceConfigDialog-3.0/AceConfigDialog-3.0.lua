@@ -3,7 +3,7 @@ AceConfigDialog-3.0
 
 ]]
 local LibStub = LibStub
-local MAJOR, MINOR = "AceConfigDialog-3.0", 4
+local MAJOR, MINOR = "AceConfigDialog-3.0", 5
 local lib = LibStub:NewLibrary(MAJOR, MINOR)
 
 if not lib then return end
@@ -1059,6 +1059,16 @@ local function FeedOptions(appName, options,container,rootframe,path,group,inlin
 				elseif v.type == "description" then
 					control = gui:Create("Label")
 					control:SetText(name)
+					local iconCoords = GetOptionsMemberValue("iconCoords",v, options, path, appName)
+					local icon = GetOptionsMemberValue("icon",v, options, path, appName)
+					
+					if type(icon) == 'string' then
+						if type(iconCoords) == 'table' then
+							control:SetImage(icon, unpack(iconCoords))
+						else
+							control:SetImage(icon)
+						end
+					end
 					control.width = "fill"					
 				end
 
