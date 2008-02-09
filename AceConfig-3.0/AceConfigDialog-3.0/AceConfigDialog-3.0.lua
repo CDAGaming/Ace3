@@ -3,7 +3,7 @@ AceConfigDialog-3.0
 
 ]]
 local LibStub = LibStub
-local MAJOR, MINOR = "AceConfigDialog-3.0", 6
+local MAJOR, MINOR = "AceConfigDialog-3.0", 7
 local lib = LibStub:NewLibrary(MAJOR, MINOR)
 
 if not lib then return end
@@ -14,7 +14,6 @@ lib.frame = lib.frame or CreateFrame("Frame")
 
 local gui = LibStub("AceGUI-3.0")
 local reg = LibStub("AceConfigRegistry-3.0")
-local con = LibStub("AceConsole-3.0")
 
 local select = select
 local pairs = pairs
