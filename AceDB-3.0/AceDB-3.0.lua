@@ -340,6 +340,9 @@ function DBObjectLib:SetProfile(name)
 		error("Usage: AceDBObject:SetProfile(name): 'name' - string expected.", 2)
 	end
 	
+	-- changing to the same profile, dont do anything
+	if name == self.keys.profile then return end
+	
 	local oldProfile = self.profile
 	local defaults = self.defaults and self.defaults.profile
 	
@@ -380,16 +383,19 @@ function DBObjectLib:GetProfiles(tbl)
 		tbl = {}
 	end
 
+	local curProfile = self.keys.profile
+	
 	local i = 0
 	for profileKey in pairs(self.profiles) do
 		i = i + 1
 		tbl[i] = profileKey
+		if curProfile and profileKey == curProfile then curProfile = nil end
 	end
 
 	-- Add the current profile, if it hasn't been created yet
-	if rawget(self, "profile") == nil then
+	if curProfile then
 		i = i + 1
-		tbl[i] = self.keys.profile
+		tbl[i] = curProfile
 	end
 	
 	return tbl, i
