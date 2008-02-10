@@ -3,7 +3,7 @@ AceConfigDialog-3.0
 
 ]]
 local LibStub = LibStub
-local MAJOR, MINOR = "AceConfigDialog-3.0", 7
+local MAJOR, MINOR = "AceConfigDialog-3.0", 8
 local lib = LibStub:NewLibrary(MAJOR, MINOR)
 
 if not lib then return end
@@ -172,11 +172,14 @@ local stringIsLiteral = {
 	icon = true,
 	usage = true,
 	width = true,
+	image = true,
 }
 
 --Is Never a function or method
 local allIsLiteral = {
 	type = true,
+	imageWidth = true,
+	imageHeight = true,
 }
 
 --gets the value for a member that could be a function
@@ -1057,15 +1060,28 @@ local function FeedOptions(appName, options,container,rootframe,path,group,inlin
 				elseif v.type == "description" then
 					control = gui:Create("Label")
 					control:SetText(name)
-					local iconCoords = GetOptionsMemberValue("iconCoords",v, options, path, appName)
-					local icon = GetOptionsMemberValue("icon",v, options, path, appName)
+					local imageCoords = GetOptionsMemberValue("imageCoords",v, options, path, appName)
+					local image, width, height = GetOptionsMemberValue("image",v, options, path, appName)
 					
-					if type(icon) == 'string' then
-						if type(iconCoords) == 'table' then
-							control:SetImage(icon, unpack(iconCoords))
-						else
-							control:SetImage(icon)
+					if type(image) == 'string' then
+						if not width then
+							width = GetOptionsMemberValue("imageWidth",v, options, path, appName)
 						end
+						if not height then
+							height = GetOptionsMemberValue("imageHeight",v, options, path, appName)
+						end
+						if type(imageCoords) == 'table' then
+							control:SetImage(image, unpack(imageCoords))
+						else
+							control:SetImage(image)
+						end
+						if type(width) ~= "number" then
+							width = 32
+						end
+						if type(height) ~= "number" then
+							height = 32
+						end
+						control:SetImageSize(width, height)
 					end
 					control.width = "fill"					
 				end
