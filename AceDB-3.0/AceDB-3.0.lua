@@ -23,7 +23,7 @@ local DBObjectLib = {}
 
 -- Simple shallow copy for copying defaults
 local function copyTable(src, dest)
-	if not type(dest) == "table" then dest = {} end
+	if type(dest) ~= "table" then dest = {} end
 	for k,v in pairs(src) do
 		if type(v) == "table" then
 			-- try to index the key first so that the metatable creates the defaults, if set, and use that table
