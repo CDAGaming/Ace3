@@ -136,6 +136,10 @@ function AceGUI:Release(widget)
 	widget.frame:ClearAllPoints()
 	widget.frame:Hide()
 	widget.frame:SetParent(nil)
+	if widget.content then
+		widget.content.width = nil
+		widget.content.height = nil
+	end
 	del(widget,widget.type)
 end
 
@@ -272,6 +276,8 @@ do
 	
 	local function ContentResize(this)
 		if this.lastwidth ~= this:GetWidth() then
+			this.width = this:GetWidth()
+			this.height = this:GetHeight()
 			this.obj:DoLayout()
 		end
 	end
@@ -496,6 +502,7 @@ AceGUI:RegisterLayout("Flow",
 
 			if child.width == "fill" then
 				child:SetWidth(width)
+				frame:SetPoint("RIGHT",content,"RIGHT",0,0)
 				
 				usedwidth = 0
 				rowstart = frame

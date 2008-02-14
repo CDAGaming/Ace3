@@ -1444,3 +1444,33 @@ function lib:Open(appName, container)
 	end
 	del(path)
 end
+
+--2.4 Specific Stuff
+if InterfaceOptions_AddCategory then
+
+	lib.BlizOptions = lib.BlizOptions or {}
+
+	local function FeedToBlizPanel(widget, event)
+		lib:Open(widget.userdata.appName, widget)
+	end
+	
+	local function ClearBlizPanel(widget, event)
+		widget:ReleaseChildren()
+	end
+	
+	function lib:AddToBlizOptions(appName, name, parent)
+		local BlizOptions = lib.BlizOptions
+		if not BlizOptions[appName] then
+			local group = gui:Create("BlizOptionsGroup")
+			BlizOptions[appName] = group
+			group:SetName(name, parent)
+			group.userdata.appName = appName
+			group:SetCallback("OnShow", FeedToBlizPanel)
+			group:SetCallback("OnHide", ClearBlizPanel)
+			InterfaceOptions_AddCategory(group.frame)
+		else
+			error(("%s has already been added to the Blizzard Options Window"):format(appName), 2)
+		end
+	end
+
+end
