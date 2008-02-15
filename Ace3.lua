@@ -71,6 +71,27 @@ function Ace3:Open()
 	frame:Show()
 end
 
+--2.4 Specific Stuff
+if InterfaceOptions_AddCategory then
+	local function FeedToBlizPanel(widget, event)
+		dialog:FeedIcons(widget)
+	end
+	
+	local function ClearBlizPanel(widget, event)
+		widget:ReleaseChildren()
+	end
+	
+	local function InitAddonConfigPanel()
+		local group = gui:Create("BlizOptionsGroup")
+		group:SetName("Ace3")
+	
+		group:SetCallback("OnShow", FeedToBlizPanel)
+		group:SetCallback("OnHide", ClearBlizPanel)
+		InterfaceOptions_AddCategory(group.frame)
+	end
+	InitAddonConfigPanel()
+end
+
 function Ace3:PrintCmd(input)
 	input = input:trim():match("^(.-);*$")
 	local func, err = loadstring("LibStub(\"AceConsole-3.0\"):Print(" .. input .. ")")

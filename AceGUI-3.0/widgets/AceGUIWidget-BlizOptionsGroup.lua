@@ -34,7 +34,7 @@ local AceGUI = LibStub("AceGUI-3.0")
 
 do
 	local Type = "BlizOptionsGroup"
-	local Version = 1
+	local Version = 2
 	
 	local function Aquire(self)
 
@@ -117,8 +117,8 @@ do
 		local content = CreateFrame("Frame",nil,frame)
 		self.content = content
 		content.obj = self
-		content:SetPoint("TOPLEFT",frame,"TOPLEFT",0,0)
-		content:SetPoint("BOTTOMRIGHT",frame,"BOTTOMRIGHT",0,0)
+		content:SetPoint("TOPLEFT",frame,"TOPLEFT",10,-10)
+		content:SetPoint("BOTTOMRIGHT",frame,"BOTTOMRIGHT",-10,10)
 		
 		AceGUI:RegisterAsContainer(self)
 		return self

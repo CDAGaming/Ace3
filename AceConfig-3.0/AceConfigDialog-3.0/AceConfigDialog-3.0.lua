@@ -3,7 +3,7 @@ AceConfigDialog-3.0
 
 ]]
 local LibStub = LibStub
-local MAJOR, MINOR = "AceConfigDialog-3.0", 8
+local MAJOR, MINOR = "AceConfigDialog-3.0", 9
 local lib = LibStub:NewLibrary(MAJOR, MINOR)
 
 if not lib then return end
@@ -1471,6 +1471,49 @@ if InterfaceOptions_AddCategory then
 		else
 			error(("%s has already been added to the Blizzard Options Window"):format(appName), 2)
 		end
+	end
+	
+	local function OpenConfig(widget, event)
+		lib:Open(widget.userdata.appName)
+	end
+	
+	function lib:FeedIcons(widget)
+	
+		local scroll = gui:Create("ScrollFrame")
+		widget:SetLayout("Fill")
+		widget:AddChild(scroll)
+		scroll:SetLayout("Flow")
+			
+		local heading = gui:Create("Heading")
+		heading:SetText("Ace3 Addons")
+		heading.width = "fill"
+		scroll:AddChild(heading)
+		for appName in reg:IterateOptionsTables() do
+			local app = reg:GetOptionsTable(appName)
+			if not app then
+				error(("%s isn't registed with AceConfigRegistry, unable to open config"):format(appName), 2)
+			end
+			local options = app("dialog", MAJOR)
+			
+			local control = gui:Create("Icon")
+		
+			control.userdata.appName = appName
+			control:SetCallback("OnClick", OpenConfig)
+			local path = new()
+			local name = GetOptionsMemberValue("name", options, options, path, appName)
+			local icon = GetOptionsMemberValue("icon", options, options, path, appName)
+			if not icon then
+				icon = "Interface\\Icons\\INV_Misc_EngGizmos_20"
+			end
+			local iconCoords = GetOptionsMemberValue("iconCoords", options, options, path, appName)
+			if type(iconCoords) == 'table' then
+				control:SetImage(icon, unpack(iconCoords))
+			else
+				control:SetImage(icon)
+			end
+			control:SetText(name or appName)
+			scroll:AddChild(control)
+		end			
 	end
 
 end
