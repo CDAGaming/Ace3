@@ -3,7 +3,7 @@ AceConfigDialog-3.0
 
 ]]
 local LibStub = LibStub
-local MAJOR, MINOR = "AceConfigDialog-3.0", 9
+local MAJOR, MINOR = "AceConfigDialog-3.0", 10
 local lib = LibStub:NewLibrary(MAJOR, MINOR)
 
 if not lib then return end
@@ -1376,6 +1376,12 @@ local function RefreshOnUpdate(this)
 		if lib.OpenFrames[appName] then
 			lib:Open(appName)
 		end
+		if lib.BlizOptions and lib.BlizOptions[appName] then
+			local widget = lib.BlizOptions[appName]
+			if widget.frame:IsVisible() then
+				lib:Open(widget.userdata.appName, widget)
+			end
+		end
 		this.apps[appName] = nil
 	end
 	this:SetScript("OnUpdate", nil)
@@ -1463,7 +1469,7 @@ if InterfaceOptions_AddCategory then
 		if not BlizOptions[appName] then
 			local group = gui:Create("BlizOptionsGroup")
 			BlizOptions[appName] = group
-			group:SetName(name, parent)
+			group:SetName(name or appName, parent)
 			group.userdata.appName = appName
 			group:SetCallback("OnShow", FeedToBlizPanel)
 			group:SetCallback("OnHide", ClearBlizPanel)
