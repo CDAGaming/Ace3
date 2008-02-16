@@ -95,6 +95,10 @@ local function removeDefaults(db, defaults, blocker)
 						-- if the key was not explicitly specified in the defaults table, just strip everything from * and ** tables
 						if defaults[key] == nil then
 							removeDefaults(value, v)
+							-- if the table is empty afterwards, remove it
+							if not next(value) then
+								db[key] = nil
+							end
 						-- if it was specified, only strip ** content, but block values which were set in the key table
 						elseif k == "**" then 
 							removeDefaults(value, v, defaults[key])
