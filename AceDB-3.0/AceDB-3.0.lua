@@ -49,6 +49,7 @@ local function copyDefaults(dest, src)
 				local mt = {
 					-- This handles the lookup and creation of new subtables
 					__index = function(t,k)
+							if k == nil then return nil end
 							local tbl = {}
 							copyDefaults(tbl, v)
 							rawset(t, k, tbl)
@@ -64,7 +65,7 @@ local function copyDefaults(dest, src)
 				end
 			else
 				-- Values are not tables, so this is just a simple return
-				local mt = {__index = function() return v end}
+				local mt = {__index = function(t,k) return k~=nil and v or nil end}
 				setmetatable(dest, mt)
 			end
 		elseif type(v) == "table" then

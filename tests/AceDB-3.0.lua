@@ -212,5 +212,5 @@ do
 	testdb:SetProfile("testprofile")
 	testdb:SetProfile("testprofile2")
 	testdb:SetProfile("testprofile")
-	serialize(testdb:GetProfiles())
+	assert(#testdb:GetProfiles() == 3)
 end
