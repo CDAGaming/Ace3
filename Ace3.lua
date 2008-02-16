@@ -71,6 +71,19 @@ function Ace3:Open()
 	frame:Show()
 end
 
+local function RefreshOnUpdate(this)
+	select:SetGroup(selectedgroup)
+	this:SetScript("OnUpdate", nil)
+end
+
+function Ace3:ConfigTableChanged(event, appName)
+	if selectedgroup == appName then
+		frame.frame:SetScript("OnUpdate", RefreshOnUpdate)
+	end
+end
+
+reg.RegisterCallback(Ace3, "ConfigTableChange", "ConfigTableChanged")
+
 --2.4 Specific Stuff
 if InterfaceOptions_AddCategory then
 	local function FeedToBlizPanel(widget, event)
