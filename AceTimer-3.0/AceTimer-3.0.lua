@@ -382,6 +382,15 @@ function AceTimer:Embed(target)
 	return target
 end
 
+--AceTimer:OnEmbedDisable( target )
+-- target (object) - target object that AceTimer is embedded in.
+--
+-- cancel all timers registered for the object
+function AceTimer:OnEmbedDisable( target )
+	target:CancelAllTimers()
+end
+
+
 for addon in pairs(AceTimer.embeds) do
 	AceTimer:Embed(addon)
 end
