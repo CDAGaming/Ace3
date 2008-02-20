@@ -1,5 +1,5 @@
 --[[ $Id$ ]]
-local ACEGUI_MAJOR, ACEGUI_MINOR = "AceGUI-3.0", 2
+local ACEGUI_MAJOR, ACEGUI_MINOR = "AceGUI-3.0", 3
 local AceGUI, oldminor = LibStub:NewLibrary(ACEGUI_MAJOR, ACEGUI_MINOR)
 
 if not AceGUI then return end -- No upgrade needed

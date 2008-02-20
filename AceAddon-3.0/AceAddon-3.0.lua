@@ -1,5 +1,5 @@
 --[[ $Id$ ]]
-local MAJOR, MINOR = "AceAddon-3.0", 1
+local MAJOR, MINOR = "AceAddon-3.0", 2
 local AceAddon, oldminor = LibStub:NewLibrary(MAJOR, MINOR)
 
 if not AceAddon then return end -- No Upgrade needed.
