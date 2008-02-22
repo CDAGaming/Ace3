@@ -5,9 +5,9 @@ local AceGUI = LibStub("AceGUI-3.0")
 --------------------------
 do
 	local Type = "ColorPicker"
-	local Version = 3
+	local Version = 4
 	
-	local function Aquire(self)
+	local function Acquire(self)
 		self:SetColor(0,0,0,1)
 	end
 	
@@ -93,7 +93,7 @@ do
 		self.type = Type
 
 		self.Release = Release
-		self.Aquire = Aquire
+		self.Acquire = Acquire
 		
 		self.SetLabel = SetLabel
 		self.SetColor = SetColor
