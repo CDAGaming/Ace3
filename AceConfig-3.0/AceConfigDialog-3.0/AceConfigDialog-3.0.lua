@@ -981,7 +981,7 @@ local function FeedOptions(appName, options,container,rootframe,path,group,inlin
 					control:SetSliderValues(v.min or 0,v.max or 100, v.bigStep or v.step or 0)
 					control:SetIsPercent(v.isPercent)
 					local value = GetOptionsMemberValue("get",v, options, path, appName)
-					if type ~= "number" then
+					if type(value) ~= "number" then
 						value = 0
 					end
 					control:SetValue(value)
