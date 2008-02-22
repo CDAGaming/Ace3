@@ -5,9 +5,10 @@ local AceGUI = LibStub("AceGUI-3.0")
 --------------------------
 do
 	local Type = "ColorPicker"
-	local Version = 2
+	local Version = 3
 	
 	local function Aquire(self)
+		self:SetColor(0,0,0,1)
 	end
 	
 	local function SetLabel(self, text)
@@ -66,7 +67,7 @@ do
 			ColorPickerFrame:SetColorRGB(r, g, b)
 			
 			ColorPickerFrame.cancelFunc = function()
-				ColorCallback(self,r,g,b,a)
+				ColorCallback(self,r,g,b,a,true)
 			end
 			ShowUIPanel(ColorPickerFrame)
 		end
@@ -119,7 +120,7 @@ do
 		colorSwatch:SetTexture("Interface\\ChatFrame\\ChatFrameColorSwatch")
 		local texture = frame:CreateTexture(nil, "OVERLAY")
 		colorSwatch.texture = texture
-		texture:SetTexture(1, 1, 1)
+		texture:SetTexture(1, 1, 1, 1)
 		texture:SetWidth(13.8)
 		texture:SetHeight(13.8)
 		texture:Show()
