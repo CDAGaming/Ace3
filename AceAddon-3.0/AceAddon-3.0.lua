@@ -111,7 +111,7 @@ end
 function AceAddon:EmbedLibraries(addon, ...)
 	for i=1,select("#", ... ) do
 		local libname = select(i, ...)
-		self:EmbedLibrary(addon, libname, false, 3)
+		self:EmbedLibrary(addon, libname, false, 4)
 	end
 end
 
