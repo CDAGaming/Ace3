@@ -4,6 +4,9 @@ local AceDBOptions, oldminor = LibStub:NewLibrary(ACEDBO_MAJOR, ACEDBO_MINOR)
 
 if not AceDBOptions then return end -- No upgrade needed
 
+AceDBOptions.optionTables = AceDBOptions.optionTables or {}
+AceDBOptions.handlers = AceDBOptions.handlers or {}
+
 local L = setmetatable({}, {__index = function(t, k) return k end})
 
 local defaultProfiles
@@ -82,11 +85,13 @@ function OptionsHandlerPrototype:DeleteProfile(info, value)
 end
 
 local function getOptionsHandler(db)
-	local handler = { db = db }
+	local handler = AceDBOptions.handlers[db] or { db = db }
+	
 	for k,v in pairs(OptionsHandlerPrototype) do
 		handler[k] = v
 	end
 	
+	AceDBOptions.handlers[db] = handler
 	return handler
 end
 
@@ -172,15 +177,21 @@ function AceDBOptions:GetOptionsTable(db)
 		generateDefaultProfiles(db)
 	end
 	
-	local handler = getOptionsHandler(db)
+	local tbl = AceDBOptions.optionTables[db] or {
+			type = "group",
+			name = L["Profiles"],
+			desc = L["Manage Profiles"],
+		}
 	
-	local tbl = {
-		type = "group",
-		name = L["Profiles"],
-		desc = L["Manage Profiles"],
-		args = optionsTable,
-		handler = handler,
-	}
-	
+	tbl.handler = getOptionsHandler(db)
+	tbl.args = optionsTable
+
+	AceDBOptions.optionTables[db] = tbl
 	return tbl
+end
+
+-- upgrade existing tables
+for db,tbl in pairs(AceDBOptions.optionTables) do
+	tbl.handler = getOptionsHandler(db)
+	tbl.args = optionsTable
 end
