@@ -40,28 +40,37 @@ local function getProfileList(db, common, nocurrent)
 	return profiles
 end
 
-local function generateDefaultProfiles(db)
-	defaultProfiles = {
-		["Default"] = L["Default"],
-		[db.keys.char] = db.keys.char,
-		[db.keys.realm] = db.keys.realm,
-		[db.keys.class] = UnitClass("player")
-	}
-end
-
+--[[
+	OptionsHandlerPrototype
+	prototype class for handling the options in a sane way
+]]
 local OptionsHandlerPrototype = {}
+
+--[[ Reset the profile ]]
 function OptionsHandlerPrototype:Reset()
 	self.db:ResetProfile()
 end
 
+--[[ Set the profile to value ]]
 function OptionsHandlerPrototype:SetProfile(info, value)
 	self.db:SetProfile(value)
 end
 
+--[[ returns the currently active profile ]]
 function OptionsHandlerPrototype:GetCurrentProfile()
 	return self.db:GetCurrentProfile()
 end
 
+--[[ 
+	List all active profiles
+	you can control the output with the .arg variable
+	currently four modes are supported
+	
+	(empty) - return all available profiles
+	"nocurrent" - returns all available profiles except the currently active profile
+	"common" - returns all avaialble profiles + some commonly used profiles ("char - realm", "realm", "class", "Default")
+	"both" - common except the active profile
+]]
 function OptionsHandlerPrototype:ListProfiles(info)
 	local arg = info.arg
 	local profiles
@@ -71,20 +80,39 @@ function OptionsHandlerPrototype:ListProfiles(info)
 		profiles = getProfileList(self.db, nil, true)
 	elseif arg == "both" then -- currently not used
 		profiles = getProfileList(self.db, true, true)
+	else
+		profiles = getProfileList(self.db)
 	end
 	
 	return profiles
 end
 
+--[[ Copy a profile ]]
 function OptionsHandlerPrototype:CopyProfile(info, value)
 	self.db:CopyProfile(value)
 end
 
+--[[ Delete a profile from the db ]]
 function OptionsHandlerPrototype:DeleteProfile(info, value)
 	self.db:DeleteProfile(value)
 end
 
+--[[ fill defaultProfiles with some generic values ]]
+local function generateDefaultProfiles(db)
+	defaultProfiles = {
+		["Default"] = L["Default"],
+		[db.keys.char] = db.keys.char,
+		[db.keys.realm] = db.keys.realm,
+		[db.keys.class] = UnitClass("player")
+	}
+end
+
+--[[ create and return a handler object for the db, or upgrade it if it already existed ]]
 local function getOptionsHandler(db)
+	if not defaultProfiles then
+		generateDefaultProfiles(db)
+	end
+	
 	local handler = AceDBOptions.handlers[db] or { db = db }
 	
 	for k,v in pairs(OptionsHandlerPrototype) do
@@ -97,6 +125,9 @@ end
 
 local returnFalse = function() return false end
 
+--[[
+	the real options table 
+]]
 local optionsTable = {
 	desc = {
 		order = 1,
@@ -172,11 +203,13 @@ local optionsTable = {
 	},
 }
 
-function AceDBOptions:GetOptionsTable(db)
-	if not defaultProfiles then
-		generateDefaultProfiles(db)
-	end
+--[[
+	GetOptionsTable(db)
+	db - the database object to create the options table for
 	
+	creates and returns a option table to be used in your addon
+]]
+function AceDBOptions:GetOptionsTable(db)
 	local tbl = AceDBOptions.optionTables[db] or {
 			type = "group",
 			name = L["Profiles"],
