@@ -123,8 +123,6 @@ local function getOptionsHandler(db)
 	return handler
 end
 
-local returnFalse = function() return false end
-
 --[[
 	the real options table 
 ]]
@@ -156,7 +154,7 @@ local optionsTable = {
 		desc = L["Create a new empty profile."],
 		type = "input",
 		order = 30,
-		get = returnFalse,
+		get = false,
 		set = "SetProfile",
 	},
 	choose = {
@@ -179,7 +177,7 @@ local optionsTable = {
 		type = "select",
 		name = L["Copy From"],
 		desc = L["Copy the settings from another profile into the active profile."],
-		get = returnFalse,
+		get = false,
 		set = "CopyProfile",
 		values = "ListProfiles",
 		arg = "nocurrent",
@@ -194,7 +192,7 @@ local optionsTable = {
 		type = "select",
 		name = L["Delete a Profile"],
 		desc = L["Deletes a profile from the database."],
-		get = returnFalse,
+		get = false,
 		set = "DeleteProfile",
 		values = "ListProfiles",
 		arg = "nocurrent",
