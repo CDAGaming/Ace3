@@ -417,7 +417,7 @@ end
 -- name (string) - The name of the profile to be deleted
 --
 -- Deletes a named profile.  This profile must not be the active profile.
-function DBObjectLib:DeleteProfile(name)
+function DBObjectLib:DeleteProfile(name, silent)
 	if type(name) ~= "string" then
 		error("Usage: AceDBObject:DeleteProfile(name): 'name' - string expected.", 2)
 	end
@@ -426,7 +426,7 @@ function DBObjectLib:DeleteProfile(name)
 		error("Cannot delete the active profile in an AceDBObject.", 2)
 	end
 	
-	if not rawget(self.sv.profiles, name) then
+	if not rawget(self.sv.profiles, name) and not silent then
 		error("Cannot delete profile '" .. name .. "'. It does not exist.", 2)
 	end
 	
@@ -437,7 +437,7 @@ function DBObjectLib:DeleteProfile(name)
 	-- populate to child namespaces
 	if self.children then
 		for _, db in pairs(self.children) do
-			DBObjectLib.DeleteProfile(db, name)
+			DBObjectLib.DeleteProfile(db, name, true)
 		end
 	end
 end
