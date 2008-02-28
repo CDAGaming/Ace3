@@ -24,12 +24,14 @@ local DBObjectLib = {}
 -- Simple shallow copy for copying defaults
 local function copyTable(src, dest)
 	if type(dest) ~= "table" then dest = {} end
-	for k,v in pairs(src) do
-		if type(v) == "table" then
-			-- try to index the key first so that the metatable creates the defaults, if set, and use that table
-			v = copyTable(v, dest[k])
+	if type(src) == "table" then
+		for k,v in pairs(src) do
+			if type(v) == "table" then
+				-- try to index the key first so that the metatable creates the defaults, if set, and use that table
+				v = copyTable(v, dest[k])
+			end
+			dest[k] = v
 		end
-		dest[k] = v
 	end
 	return dest
 end
@@ -447,7 +449,7 @@ end
 --
 -- Copies a named profile into the current profile, overwriting any conflicting
 -- settings.
-function DBObjectLib:CopyProfile(name)
+function DBObjectLib:CopyProfile(name, silent)
 	if type(name) ~= "string" then
 		error("Usage: AceDBObject:CopyProfile(name): 'name' - string expected.", 2)
 	end
@@ -456,7 +458,7 @@ function DBObjectLib:CopyProfile(name)
 		error("Cannot have the same source and destination profiles.", 2)
 	end
 	
-	if not rawget(self.sv.profiles, name) then
+	if not rawget(self.sv.profiles, name) and not silent then
 		error("Cannot copy profile '" .. name .. "'. It does not exist.", 2)
 	end
 	
@@ -474,7 +476,7 @@ function DBObjectLib:CopyProfile(name)
 	-- populate to child namespaces
 	if self.children then
 		for _, db in pairs(self.children) do
-			DBObjectLib.CopyProfile(db, name)
+			DBObjectLib.CopyProfile(db, name, true)
 		end
 	end
 end
