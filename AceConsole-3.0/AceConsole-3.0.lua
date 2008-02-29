@@ -165,9 +165,7 @@ function AceConsole:GetArgs(str, numargs, startpos)
 				
 				pos=strfind(str, "|h", pos+2)	-- second |h
 				if not pos then break end
-			end
-			
-			if strsub(str,pos, pos+1) == "|T" then
+			elseif strsub(str,pos, pos+1) == "|T" then
 				-- It's a |T....|t  texture
 				pos=strfind(str, "|t", pos+2)
 				if not pos then break end
