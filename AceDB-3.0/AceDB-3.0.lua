@@ -1,5 +1,5 @@
 --[[ $Id$ ]]
-local ACEDB_MAJOR, ACEDB_MINOR = "AceDB-3.0", 3
+local ACEDB_MAJOR, ACEDB_MINOR = "AceDB-3.0", 4
 local AceDB, oldminor = LibStub:NewLibrary(ACEDB_MAJOR, ACEDB_MINOR)
 
 if not AceDB then return end -- No upgrade needed
@@ -9,7 +9,7 @@ local pairs, next = pairs, next
 local rawget, rawset = rawget, rawset
 local setmetatable = setmetatable
 
-AceDB.db_registry = setmetatable(AceDB.db_registry or {}, {__mode = "k"})
+AceDB.db_registry = AceDB.db_registry or {}
 AceDB.frame = AceDB.frame or CreateFrame("Frame")
 
 local CallbackHandler
@@ -273,6 +273,7 @@ local function initdb(sv, defaults, defaultProfile, olddb, parent)
 	db.sv = sv
 	--db.sv_name = name
 	db.defaults = defaults
+	db.parent = parent
 	
 	-- store the DB in the registry
 	AceDB.db_registry[db] = true
@@ -608,4 +609,15 @@ function AceDB:New(tbl, defaults, defaultProfile)
 	end
 	
 	return initdb(tbl, defaults, defaultProfile)
+end
+
+-- upgrade existing databases
+for db in pairs(AceDB.db_registry) do
+	if not db.parent then
+		for name,func in pairs(DBObjectLib) do
+			db[name] = func
+		end
+	else
+		db.RegisterDefaults = DBObjectLib.RegisterDefaults
+	end
 end
