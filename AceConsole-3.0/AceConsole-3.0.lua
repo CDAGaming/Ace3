@@ -167,6 +167,12 @@ function AceConsole:GetArgs(str, numargs, startpos)
 				if not pos then break end
 			end
 			
+			if strsub(str,pos, pos+1) == "|T" then
+				-- It's a |T....|t  texture
+				pos=strfind(str, "|t", pos+2)
+				if not pos then break end
+			end
+			
 			pos=pos+2 -- skip past this escape (last |h if it was a hyperlink)
 		
 		else
