@@ -1,5 +1,5 @@
 --[[ $Id$ ]]
-local MAJOR,MINOR = "AceConsole-3.0", 3
+local MAJOR,MINOR = "AceConsole-3.0", 4
 
 local AceConsole, oldminor = LibStub:NewLibrary(MAJOR, MINOR)
 
