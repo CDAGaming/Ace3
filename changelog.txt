@@ -1,11 +1,11 @@
-Ace3 Beta - Revision xxxxx (Xxx xxth, 2008)
+Ace3 Beta - $Revision$ (Xxx xxth, 2008)
 -------------------------------------------
 - AceDBOptions-3.0: new library to provide a Ace3Options table to control the AceDB-3.0 profiles (nevcairiel)
 - AceDB-3.0: add "silent" option to DeleteProfile and CopyProfile when we deal with namespaces (nevcairiel)
 - AceDB-3.0: implement library upgrade path (nevcairiel)
-- AceConsole-3.0: treat |T|t texture links similar to |H|h|h links. (ammo)
 - AceDB-3.0: ACE-146: fix problem with non-table values overruling ['*']-type defaults (nevcairiel)
-- tests: adjust tests for AceGUI and AceConsole changes
+- AceConsole-3.0: treat |T|t texture links similar to |H|h|h links. (ammo)
+- tests: adjust tests for AceGUI and AceConsole changes (nevcairiel)
 
 Ace3 Beta - Revision 63220 (Feb 29th, 2008)
 -------------------------------------------
