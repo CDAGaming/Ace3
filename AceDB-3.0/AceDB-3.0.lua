@@ -61,7 +61,7 @@ local function copyDefaults(dest, src)
 				setmetatable(dest, mt)
 				-- handle already existing tables in the SV
 				for dk, dv in pairs(dest) do
-					if not rawget(src, dk) then
+					if not rawget(src, dk) and type(dv) == "table" then
 						copyDefaults(dv, v)
 					end
 				end
