@@ -149,7 +149,6 @@ do
 		
 		local dropdown = AceGUI:Create("Dropdown")
 		self.dropdown = dropdown
-		dropdown:SetStrict(true)
 		dropdown.frame:SetParent(frame)
 		dropdown.parentgroup = self
 		dropdown:SetCallback("OnValueChanged",SelectedGroup)

@@ -44,7 +44,7 @@ do
 	local count = 0
 	local function Constructor()
 		count = count + 1
-		local frame = CreateFrame("Button","AceGUI-3.0 Button"..count,UIParent,"UIPanelButtonTemplate2")
+		local frame = CreateFrame("Button","AceGUI30Button"..count,UIParent,"UIPanelButtonTemplate2")
 		local self = {}
 		self.type = Type
 		self.frame = frame
