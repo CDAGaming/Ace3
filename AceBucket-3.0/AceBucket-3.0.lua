@@ -138,7 +138,7 @@ local function RegisterBucket(self, event, interval, callback, isMessage)
 		if type(event) == "string" then
 			callback = event
 		else
-			error("Usage: RegisterBucket(event, interval, callback): cannot omit callback when event is not a string.", 3) end
+			error("Usage: RegisterBucket(event, interval, callback): cannot omit callback when event is not a string.", 3)
 		end
 	end
 	if not tonumber(interval) then error("Usage: RegisterBucket(event, interval, callback): 'interval' - number expected.", 3) end
