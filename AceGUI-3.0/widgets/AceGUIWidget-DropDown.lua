@@ -60,10 +60,6 @@ do
 		end
 	end
 	
-	local function Dropdown_OnEscapePressed(this)
-		this:ClearFocus()
-	end
-	
 	local function Dropdown_OnEnterPressed(this)
 		local self = this.obj
 		if not self.disabled then
@@ -265,6 +261,7 @@ do
 		dropdown:ClearAllPoints()
 		dropdown:SetPoint("TOPLEFT",frame,"TOPLEFT",-15,0)
 		dropdown:SetPoint("BOTTOMRIGHT",frame,"BOTTOMRIGHT",17,0)
+		dropdown:SetScript("OnHide", nil)
 		
 		-- fix anchoring of the dropdown
 		local left = _G[dropdown:GetName() .. "Left"]
