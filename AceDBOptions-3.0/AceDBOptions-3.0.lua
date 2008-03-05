@@ -7,7 +7,48 @@ if not AceDBOptions then return end -- No upgrade needed
 AceDBOptions.optionTables = AceDBOptions.optionTables or {}
 AceDBOptions.handlers = AceDBOptions.handlers or {}
 
-local L = setmetatable({}, {__index = function(t, k) return k end})
+--[[
+	Localization of AceDBOptions-3.0
+]]
+
+local L = {
+	default = "Default",
+	intro = "You can change the active database profile, so you can have different settings for every character, which will allow a very flexible configuration.",
+	reset_desc = "Reset the current profile back to its default values, in case your configuration is broken, or you simply want to start over.",
+	reset = "Reset Profile",
+	reset_sub = "Reset the current profile to the default",
+	choose_desc = "You can create a new profile by entering a new name in the editbox, or choosing one of the already exisiting profiles.",
+	new = "New",
+	new_sub = "Create a new empty profile.",
+	choose = "Choose",
+	choose_sub = "Select one of your currently available profiles.",
+	copy_desc = "Copy the settings from one existing profile into the currently active profile.",
+	copy = "Copy From",
+	copy_sub = "Copy the settings from another profile into the active profile.",
+	delete_desc = "Delete existing and unused profiles from the database to save space, and cleanup the SavedVariables file.",
+	delete = "Delete a Profile",
+	delete_sub = "Deletes a profile from the database.",
+	delete_confirm = "Are you sure you want to delete the selected profile?",
+	profiles = "Profiles",
+	profiles_sub = "Manage Profiles",
+}
+
+local LOCALE = GetLocale()
+if LOCALE == "deDE" then
+	
+elseif LOCALE == "frFR" then
+	
+elseif LOCALE == "esES" then
+	
+elseif LOCALE == "koKR" then
+	
+elseif LOCALE == "zhTW" then
+	
+elseif LOCALE == "zhCN" then
+	
+elseif LOCALE == "ruRU" then
+	
+end
 
 local defaultProfiles
 local tmpprofiles = {}
@@ -100,7 +141,7 @@ end
 --[[ fill defaultProfiles with some generic values ]]
 local function generateDefaultProfiles(db)
 	defaultProfiles = {
-		["Default"] = L["Default"],
+		["Default"] = L["default"],
 		[db.keys.char] = db.keys.char,
 		[db.keys.realm] = db.keys.realm,
 		[db.keys.class] = UnitClass("player")
@@ -130,36 +171,36 @@ local optionsTable = {
 	desc = {
 		order = 1,
 		type = "description",
-		name = L["You can change the active database profile, so you can have different settings for every character, which will allow a very flexible configuration."] .. "\n",
+		name = L["intro"] .. "\n",
 	},
 	descreset = {
 		order = 9,
 		type = "description",
-		name = L["Reset the current profile back to its default values, in case your configuration is broken, or you simply want to start over."],
+		name = L["reset_desc"],
 	},
 	reset = {
 		order = 10,
 		type = "execute",
-		name = L["Reset Profile"],
-		desc = L["Reset the current profile to the default"],
+		name = L["reset"],
+		desc = L["reset_sub"],
 		func = "Reset",
 	},
 	choosedesc = {
 		order = 20,
 		type = "description",
-		name = "\n" .. L["You can create a new profile by entering a new name in the editbox, or choosing one of the already exisiting profiles."],
+		name = "\n" .. L["choose_desc"],
 	},
 	new = {
-		name = L["New"],
-		desc = L["Create a new empty profile."],
+		name = L["new"],
+		desc = L["new_sub"],
 		type = "input",
 		order = 30,
 		get = false,
 		set = "SetProfile",
 	},
 	choose = {
-		name = L["Current"],
-		desc = L["Select one of your currently available profiles."],
+		name = L["choose"],
+		desc = L["choose_sub"],
 		type = "select",
 		order = 40,
 		get = "GetCurrentProfile",
@@ -170,13 +211,13 @@ local optionsTable = {
 	copydesc = {
 		order = 50,
 		type = "description",
-		name = "\n" .. L["Copy the settings from one existing profile into the currently active profile."],
+		name = "\n" .. L["copy_desc"],
 	},
 	copyfrom = {
 		order = 60,
 		type = "select",
-		name = L["Copy From"],
-		desc = L["Copy the settings from another profile into the active profile."],
+		name = L["copy"],
+		desc = L["copy_sub"],
 		get = false,
 		set = "CopyProfile",
 		values = "ListProfiles",
@@ -185,19 +226,19 @@ local optionsTable = {
 	deldesc = {
 		order = 70,
 		type = "description",
-		name = "\n" .. L["Delete existing and unused profiles from the database to save space, and cleanup the SavedVariables file."],
+		name = "\n" .. L["delete_desc"],
 	},
 	delete = {
 		order = 80,
 		type = "select",
-		name = L["Delete a Profile"],
-		desc = L["Deletes a profile from the database."],
+		name = L["delete"],
+		desc = L["delete_sub"],
 		get = false,
 		set = "DeleteProfile",
 		values = "ListProfiles",
 		arg = "nocurrent",
 		confirm = true,
-		confirmText = L["Are you sure you want to delete the selected profile?"],
+		confirmText = L["delete_confirm"],
 	},
 }
 
@@ -210,8 +251,8 @@ local optionsTable = {
 function AceDBOptions:GetOptionsTable(db)
 	local tbl = AceDBOptions.optionTables[db] or {
 			type = "group",
-			name = L["Profiles"],
-			desc = L["Manage Profiles"],
+			name = L["profiles"],
+			desc = L["profiles_sub"],
 		}
 	
 	tbl.handler = getOptionsHandler(db)
