@@ -10,7 +10,7 @@ local AceGUI = LibStub("AceGUI-3.0")
 ]]
 do
 	local Type = "Dropdown"
-	local Version = 4
+	local Version = 5
 	
 	local ControlBackdrop  = {
 		bgFile = "Interface\\Tooltips\\UI-Tooltip-Background",
@@ -107,7 +107,7 @@ do
 		self.disabled = disabled
 		if disabled then
 			self.text:SetTextColor(0.5,0.5,0.5)
-			self.text:Disable()
+			self.button:Disable()
 			self.label:SetTextColor(0.5,0.5,0.5)
 		else
 			self.button:Enable()
