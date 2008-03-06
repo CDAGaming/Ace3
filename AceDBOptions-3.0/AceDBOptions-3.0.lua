@@ -35,8 +35,8 @@ local L = {
 local LOCALE = GetLocale()
 if LOCALE == "deDE" then
 	L["default"] = "Standard"
-	L["intro"] = "Hier kannst du das aktive Datenbankprofile \195\164ndern, damit du verschiedene Einstellungen für jeden Charakter erstellen kannst, wodurch eine sehr flexible Konfiguration m\195\182glich wird." 
-	L["reset_desc"] = "Setzt das momentane Profil auf Standardwerte zur\195\188ck, für den Fall das mit der Konfiguration etwas schief lief oder weil du einfach neu starten willst."
+	L["intro"] = "Hier kannst du das aktive Datenbankprofile \195\164ndern, damit du verschiedene Einstellungen f\195\188r jeden Charakter erstellen kannst, wodurch eine sehr flexible Konfiguration m\195\182glich wird." 
+	L["reset_desc"] = "Setzt das momentane Profil auf Standardwerte zur\195\188ck, f\195\188r den Fall das mit der Konfiguration etwas schief lief oder weil du einfach neu starten willst."
 	L["reset"] = "Profil zur\195\188cksetzen"
 	L["reset_sub"] = "Das aktuelle Profil auf Standard zur\195\188cksetzen."
 	L["choose_desc"] = "Du kannst ein neues Profil erstellen, indem du einen neuen Namen in der Eingabebox 'Neu' eingibst, oder w\195\164hle eines der vorhandenen Profile aus."
