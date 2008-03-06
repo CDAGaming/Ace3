@@ -1,5 +1,5 @@
 --[[ $Id$ ]]
-local ACEDBO_MAJOR, ACEDBO_MINOR = "AceDBOptions-3.0", 0
+local ACEDBO_MAJOR, ACEDBO_MINOR = "AceDBOptions-3.0", 1
 local AceDBOptions, oldminor = LibStub:NewLibrary(ACEDBO_MAJOR, ACEDBO_MINOR)
 
 if not AceDBOptions then return end -- No upgrade needed
@@ -20,11 +20,10 @@ local L = {
 	choose_desc = "You can create a new profile by entering a new name in the editbox, or choosing one of the already exisiting profiles.",
 	new = "New",
 	new_sub = "Create a new empty profile.",
-	choose = "Choose",
+	choose = "Existing Profiles",
 	choose_sub = "Select one of your currently available profiles.",
 	copy_desc = "Copy the settings from one existing profile into the currently active profile.",
 	copy = "Copy From",
-	copy_sub = "Copy the settings from another profile into the active profile.",
 	delete_desc = "Delete existing and unused profiles from the database to save space, and cleanup the SavedVariables file.",
 	delete = "Delete a Profile",
 	delete_sub = "Deletes a profile from the database.",
@@ -35,7 +34,24 @@ local L = {
 
 local LOCALE = GetLocale()
 if LOCALE == "deDE" then
-	
+	L["default"] = "Standard"
+	L["intro"] = "Hier kannst du das aktive Datenbankprofile \195\164ndern, damit du verschiedene Einstellungen für jeden Charakter erstellen kannst, wodurch eine sehr flexible Konfiguration m\195\182glich wird." 
+	L["reset_desc"] = "Setzt das momentane Profil auf Standardwerte zur\195\188ck, für den Fall das mit der Konfiguration etwas schief lief oder weil du einfach neu starten willst."
+	L["reset"] = "Profil zur\195\188cksetzen"
+	L["reset_sub"] = "Das aktuelle Profil auf Standard zur\195\188cksetzen."
+	L["choose_desc"] = "Du kannst ein neues Profil erstellen, indem du einen neuen Namen in der Eingabebox 'Neu' eingibst, oder w\195\164hle eines der vorhandenen Profile aus."
+	L["new"] = "Neu"
+	L["new_sub"] = "Ein neues Profil erstellen."
+	L["choose"] = "Vorhandene Profile"
+	L["choose_sub"] = "W\195\164hlt ein bereits vorhandenes Profil aus."
+	L["copy_desc"] = "Kopiere die Einstellungen von einem vorhandenen Profil in das aktive Profil."
+	L["copy"] = "Kopieren von..."
+	L["delete_desc"] = "L\195\182sche vorhandene oder unbenutzte Profile aus der Datenbank um Platz zu sparen und um die SavedVariables Datei 'sauber' zu halten."
+	L["delete"] = "Profil l\195\182schen"
+	L["delete_sub"] = "L\195\182scht ein Profil aus der Datenbank."
+	L["delete_confirm"] = "Willst du das ausgew\195\164hlte Profil wirklich l\195\182schen?"
+	L["profiles"] = "Profile"
+	L["profiles_sub"] = "Profile verwalten"
 elseif LOCALE == "frFR" then
 	
 elseif LOCALE == "esES" then
@@ -217,7 +233,7 @@ local optionsTable = {
 		order = 60,
 		type = "select",
 		name = L["copy"],
-		desc = L["copy_sub"],
+		desc = L["copy_desc"],
 		get = false,
 		set = "CopyProfile",
 		values = "ListProfiles",
