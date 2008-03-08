@@ -9,7 +9,7 @@
 		stopped, and the bucket is only listening for the next event to happen, basicly back in initial state.
 ]]
 
-local MAJOR, MINOR = "AceBucket-3.0", 1
+local MAJOR, MINOR = "AceBucket-3.0", 2
 local AceBucket, oldminor = LibStub:NewLibrary(MAJOR, MINOR)
 
 if not AceBucket then return end -- No Upgrade needed

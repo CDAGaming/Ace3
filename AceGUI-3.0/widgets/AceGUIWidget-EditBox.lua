@@ -11,7 +11,7 @@ local AceGUI = LibStub("AceGUI-3.0")
 ]]
 do
 	local Type = "EditBox"
-	local Version = 3
+	local Version = 4
 	
 	local function Acquire(self)
 		self:SetDisabled(false)
