@@ -3,7 +3,7 @@ AceConfigDialog-3.0
 
 ]]
 local LibStub = LibStub
-local MAJOR, MINOR = "AceConfigDialog-3.0", 11
+local MAJOR, MINOR = "AceConfigDialog-3.0", 12
 local lib = LibStub:NewLibrary(MAJOR, MINOR)
 
 if not lib then return end
@@ -1155,8 +1155,9 @@ local function GroupExists(appName, options, path, uniquevalue)
 		temppath[i] = v
 		group = GetSubOption(group, v)
 		
-		if not group or CheckOptionHidden(group, options, temppath, appName) then 
+		if not group or group.type ~= "group" or CheckOptionHidden(group, options, temppath, appName) then 
 			del(feedpath)
+			del(temppath)
 			return false 
 		end
 	end
