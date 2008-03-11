@@ -71,9 +71,26 @@ elseif LOCALE == "frFR" then
 	L["delete_confirm"] = "Etes-vous s\195\187r de vouloir supprimer le profil s\195\169lectionn\195\169 ?"
 	L["profiles"] = "Profils"
 	L["profiles_sub"] = "Gestion des profils"
-elseif LOCALE == "esES" then
-	
 elseif LOCALE == "koKR" then
+    L["default"] = "기본값"
+	L["intro"] = "모든 캐릭터의 다양한 설정과 사용중인 데이터베이스 프로필, 어느것이던지 매우 다루기 쉽게 바꿀수 있습니다." 
+	L["reset_desc"] = "단순히 다시 새롭게 구성을 원하는 경우, 현재 프로필 기본값으로 초기화 합니다."
+	L["reset"] = "프로필 초기화"
+	L["reset_sub"] = "현재의 프로필을 기본값으로 초기화 합니다"
+	L["choose_desc"] = "새로운 이름을 입력창에 입력하여 새 프로필이나, 이미 있는 프로필 하나를 선택하여 새로운 프로필을 만들 수 있습니다."
+	L["new"] = "새 프로필"
+	L["new_sub"] = "새로운 프로필을 만듭니다."
+	L["choose"] = "프로필 선택"
+	L["choose_sub"] = "당신이 현재 이용할수 있는 프로필을 선택합니다."
+	L["copy_desc"] = "현재 사용중인 프로필에, 선택한 프로필의 설정을 복사합니다."
+	L["copy"] = "복사"
+	L["delete_desc"] = "데이터베이스에 사용중이거나 저장된 프로파일의 삭제로 SavedVariables파일의 정리와 공간 절약이 됩니다."
+	L["delete"] = "프로필 삭제"
+	L["delete_sub"] = "데이터베이스의 프로필을 삭제합니다."
+	L["delete_confirm"] = "정말로 선택한 프로필의 삭제를 원하십니까?"
+	L["profiles"] = "프로필"
+	L["profiles_sub"] = "프로필 설정"
+elseif LOCALE == "esES" then
 	
 elseif LOCALE == "zhTW" then
 	
