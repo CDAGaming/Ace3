@@ -3,7 +3,7 @@ AceConfigDialog-3.0
 
 ]]
 local LibStub = LibStub
-local MAJOR, MINOR = "AceConfigDialog-3.0", 12
+local MAJOR, MINOR = "AceConfigDialog-3.0", 13
 local lib = LibStub:NewLibrary(MAJOR, MINOR)
 
 if not lib then return end
@@ -72,6 +72,8 @@ end
 local function safecall(func, ...)
 	return Dispatchers[select('#', ...)](func, ...)
 end
+
+local width_multiplier = 170
 
 --[[
 Group Types
@@ -444,18 +446,18 @@ local function OptionOnMouseOver(widget, event)
 	local path = user.path
 	local appName = user.appName
 
-	GameTooltip_SetDefaultAnchor(GameTooltip, widget.frame)
+	GameTooltip:SetOwner(widget.frame, "ANCHOR_TOPRIGHT")
 	local name = GetOptionsMemberValue("name", opt, options, path, appName)
 	local desc = GetOptionsMemberValue("desc", opt, options, path, appName)
 	local usage = GetOptionsMemberValue("usage", opt, options, path, appName)
 	
-	GameTooltip:SetText(name, 1, 1, 1, 1)
+	GameTooltip:SetText(name, 1, .82, 0, 1)
 	
 	if opt.type == 'multiselect' then
 		GameTooltip:AddLine(user.text,0.5, 0.5, 0.8, 1)
 	end	
 	if type(desc) == "string" then
-		GameTooltip:AddLine(desc, NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b, 1)
+		GameTooltip:AddLine(desc, 1, 1, 1, 1)
 	end
 	if type(usage) == "string" then
 		GameTooltip:AddLine("Usage: "..usage, NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b, 1)
@@ -1038,13 +1040,13 @@ local function FeedOptions(appName, options,container,rootframe,path,group,inlin
 							InjectInfo(check, options, v, path, rootframe, appName)
 							control:AddChild(check)
 							if width == "double" then
-								check:SetWidth(400)
+								check:SetWidth(width_multiplier * 2)
 							elseif width == "half" then
-								check:SetWidth(100)
+								check:SetWidth(width_multiplier / 2)
 							elseif width == "full" then
 								check.width = "fill"
 							else
-								check:SetWidth(200)
+								check:SetWidth(width_multiplier)
 							end
 						end
 						control:ResumeLayout()
@@ -1105,13 +1107,13 @@ local function FeedOptions(appName, options,container,rootframe,path,group,inlin
 					if control.width ~= "fill" then
 						local width = GetOptionsMemberValue("width",v,options,path,appName)
 						if width == "double" then
-							control:SetWidth(400)
+							control:SetWidth(width_multiplier * 2)
 						elseif width == "half" then
-							control:SetWidth(100)
+							control:SetWidth(width_multiplier / 2)
 						elseif width == "full" then
 							control.width = "fill"
 						else
-							control:SetWidth(200)
+							control:SetWidth(width_multiplier)
 						end
 					end
 					if control.SetDisabled then
@@ -1493,6 +1495,7 @@ if InterfaceOptions_AddCategory then
 			local group = gui:Create("BlizOptionsGroup")
 			BlizOptions[appName] = group
 			group:SetName(name or appName, parent)
+			group:SetTitle(name or appName)
 			group.userdata.appName = appName
 			group:SetCallback("OnShow", FeedToBlizPanel)
 			group:SetCallback("OnHide", ClearBlizPanel)

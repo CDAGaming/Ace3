@@ -5,7 +5,7 @@ local AceGUI = LibStub("AceGUI-3.0")
 --------------------------
 do
 	local Type = "Label"
-	local Version = 4
+	local Version = 5
 	
 	local function Acquire(self)
 		self:SetText("")
@@ -110,7 +110,7 @@ do
 		frame:SetHeight(18)
 		frame:SetWidth(200)
 		frame:SetScript("OnSizeChanged", OnFrameResize)
-		local label = frame:CreateFontString(nil,"BACKGROUND","GameFontNormal")
+		local label = frame:CreateFontString(nil,"BACKGROUND","GameFontHighlightSmall")
 		label:SetPoint("TOPLEFT",frame,"TOPLEFT",0,0)
 		label:SetWidth(200)
 		label:SetJustifyH("LEFT")

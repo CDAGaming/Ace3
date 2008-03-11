@@ -84,6 +84,7 @@ end
 
 reg.RegisterCallback(Ace3, "ConfigTableChange", "ConfigTableChanged")
 
+--[[
 --2.4 Specific Stuff
 if InterfaceOptions_AddCategory then
 	local function FeedToBlizPanel(widget, event)
@@ -104,6 +105,7 @@ if InterfaceOptions_AddCategory then
 	end
 	InitAddonConfigPanel()
 end
+]]
 
 function Ace3:PrintCmd(input)
 	input = input:trim():match("^(.-);*$")

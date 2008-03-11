@@ -5,7 +5,7 @@ local AceGUI = LibStub("AceGUI-3.0")
 --------------------------
 do
 	local Type = "ColorPicker"
-	local Version = 5
+	local Version = 6
 	
 	local function Acquire(self)
 		self.HasAlpha = false
@@ -95,7 +95,7 @@ do
 		if self.disabled then
 			self.text:SetTextColor(0.5,0.5,0.5)
 		else
-			self.text:SetTextColor(1,.82,0)
+			self.text:SetTextColor(1,1,1)
 		end
 	end
 
@@ -115,10 +115,10 @@ do
 		self.frame = frame
 		frame.obj = self
 		
-		local text = frame:CreateFontString(nil,"OVERLAY","GameFontNormal")
+		local text = frame:CreateFontString(nil,"OVERLAY","GameFontHighlight")
 		self.text = text
 		text:SetJustifyH("LEFT")
-		text:SetTextColor(1,.82,0)
+		text:SetTextColor(1,1,1)
 		frame:SetHeight(24)
 		frame:SetWidth(200)
 		text:SetHeight(24)

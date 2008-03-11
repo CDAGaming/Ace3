@@ -10,7 +10,7 @@ local AceGUI = LibStub("AceGUI-3.0")
 ]]
 do
 	local Type = "Dropdown"
-	local Version = 5
+	local Version = 7
 	
 	local ControlBackdrop  = {
 		bgFile = "Interface\\Tooltips\\UI-Tooltip-Background",
@@ -285,6 +285,9 @@ do
 		local text = _G[dropdown:GetName() .. "Text"]
 		self.text = text
 		text.obj = self
+		text:ClearAllPoints()
+		text:SetPoint("RIGHT", right, "RIGHT" ,-43, 2)
+		text:SetPoint("LEFT", left, "LEFT", 25, 2)
 		
 		local pullout = CreateFrame("Frame",nil,UIParent)
 		self.pullout = pullout
@@ -297,10 +300,10 @@ do
 		pullout:SetClampedToScreen(true)
 		pullout:Hide()
 	
-		local label = frame:CreateFontString(nil,"OVERLAY","GameFontNormal")
+		local label = frame:CreateFontString(nil,"OVERLAY","GameFontNormalSmall")
 		label:SetPoint("TOPLEFT",frame,"TOPLEFT",0,0)
 		label:SetPoint("TOPRIGHT",frame,"TOPRIGHT",0,0)
-		label:SetJustifyH("CENTER")
+		label:SetJustifyH("LEFT")
 		label:SetHeight(18)
 		label:Hide()
 		self.label = label
