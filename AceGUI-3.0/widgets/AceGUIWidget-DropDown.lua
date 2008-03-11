@@ -10,7 +10,7 @@ local AceGUI = LibStub("AceGUI-3.0")
 ]]
 do
 	local Type = "Dropdown"
-	local Version = 7
+	local Version = 8
 	
 	local ControlBackdrop  = {
 		bgFile = "Interface\\Tooltips\\UI-Tooltip-Background",
@@ -301,8 +301,8 @@ do
 		pullout:Hide()
 	
 		local label = frame:CreateFontString(nil,"OVERLAY","GameFontNormalSmall")
-		label:SetPoint("TOPLEFT",frame,"TOPLEFT",0,0)
-		label:SetPoint("TOPRIGHT",frame,"TOPRIGHT",0,0)
+		label:SetPoint("TOPLEFT",frame,"TOPLEFT",0,-2)
+		label:SetPoint("TOPRIGHT",frame,"TOPRIGHT",0,-2)
 		label:SetJustifyH("LEFT")
 		label:SetHeight(18)
 		label:Hide()
