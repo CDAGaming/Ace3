@@ -1,4 +1,4 @@
---[[ $Id$ ]]
+ï»¿--[[ $Id$ ]]
 local ACEDBO_MAJOR, ACEDBO_MINOR = "AceDBOptions-3.0", 3
 local AceDBOptions, oldminor = LibStub:NewLibrary(ACEDBO_MAJOR, ACEDBO_MINOR)
 
@@ -72,24 +72,24 @@ elseif LOCALE == "frFR" then
 	L["profiles"] = "Profils"
 	L["profiles_sub"] = "Gestion des profils"
 elseif LOCALE == "koKR" then
-    L["default"] = "±âº»°ª"
-	L["intro"] = "¸ðµç Ä³¸¯ÅÍÀÇ ´Ù¾çÇÑ ¼³Á¤°ú »ç¿ëÁßÀÎ µ¥ÀÌÅÍº£ÀÌ½º ÇÁ·ÎÇÊ, ¾î´À°ÍÀÌ´øÁö ¸Å¿ì ´Ù·ç±â ½±°Ô ¹Ù²Ü¼ö ÀÖ½À´Ï´Ù." 
-	L["reset_desc"] = "´Ü¼øÈ÷ ´Ù½Ã »õ·Ó°Ô ±¸¼ºÀ» ¿øÇÏ´Â °æ¿ì, ÇöÀç ÇÁ·ÎÇÊ ±âº»°ªÀ¸·Î ÃÊ±âÈ­ ÇÕ´Ï´Ù."
-	L["reset"] = "ÇÁ·ÎÇÊ ÃÊ±âÈ­"
-	L["reset_sub"] = "ÇöÀçÀÇ ÇÁ·ÎÇÊÀ» ±âº»°ªÀ¸·Î ÃÊ±âÈ­ ÇÕ´Ï´Ù"
-	L["choose_desc"] = "»õ·Î¿î ÀÌ¸§À» ÀÔ·ÂÃ¢¿¡ ÀÔ·ÂÇÏ¿© »õ ÇÁ·ÎÇÊÀÌ³ª, ÀÌ¹Ì ÀÖ´Â ÇÁ·ÎÇÊ ÇÏ³ª¸¦ ¼±ÅÃÇÏ¿© »õ·Î¿î ÇÁ·ÎÇÊÀ» ¸¸µé ¼ö ÀÖ½À´Ï´Ù."
-	L["new"] = "»õ ÇÁ·ÎÇÊ"
-	L["new_sub"] = "»õ·Î¿î ÇÁ·ÎÇÊÀ» ¸¸µì´Ï´Ù."
-	L["choose"] = "ÇÁ·ÎÇÊ ¼±ÅÃ"
-	L["choose_sub"] = "´ç½ÅÀÌ ÇöÀç ÀÌ¿ëÇÒ¼ö ÀÖ´Â ÇÁ·ÎÇÊÀ» ¼±ÅÃÇÕ´Ï´Ù."
-	L["copy_desc"] = "ÇöÀç »ç¿ëÁßÀÎ ÇÁ·ÎÇÊ¿¡, ¼±ÅÃÇÑ ÇÁ·ÎÇÊÀÇ ¼³Á¤À» º¹»çÇÕ´Ï´Ù."
-	L["copy"] = "º¹»ç"
-	L["delete_desc"] = "µ¥ÀÌÅÍº£ÀÌ½º¿¡ »ç¿ëÁßÀÌ°Å³ª ÀúÀåµÈ ÇÁ·ÎÆÄÀÏÀÇ »èÁ¦·Î SavedVariablesÆÄÀÏÀÇ Á¤¸®¿Í °ø°£ Àý¾àÀÌ µË´Ï´Ù."
-	L["delete"] = "ÇÁ·ÎÇÊ »èÁ¦"
-	L["delete_sub"] = "µ¥ÀÌÅÍº£ÀÌ½ºÀÇ ÇÁ·ÎÇÊÀ» »èÁ¦ÇÕ´Ï´Ù."
-	L["delete_confirm"] = "Á¤¸»·Î ¼±ÅÃÇÑ ÇÁ·ÎÇÊÀÇ »èÁ¦¸¦ ¿øÇÏ½Ê´Ï±î?"
-	L["profiles"] = "ÇÁ·ÎÇÊ"
-	L["profiles_sub"] = "ÇÁ·ÎÇÊ ¼³Á¤"
+    L["default"] = "ê¸°ë³¸ê°’"
+	L["intro"] = "ëª¨ë“  ìºë¦­í„°ì˜ ë‹¤ì–‘í•œ ì„¤ì •ê³¼ ì‚¬ìš©ì¤‘ì¸ ë°ì´í„°ë² ì´ìŠ¤ í”„ë¡œí•„, ì–´ëŠê²ƒì´ë˜ì§€ ë§¤ìš° ë‹¤ë£¨ê¸° ì‰½ê²Œ ë°”ê¿€ìˆ˜ ìžˆìŠµë‹ˆë‹¤." 
+	L["reset_desc"] = "ë‹¨ìˆœížˆ ë‹¤ì‹œ ìƒˆë¡­ê²Œ êµ¬ì„±ì„ ì›í•˜ëŠ” ê²½ìš°, í˜„ìž¬ í”„ë¡œí•„ ê¸°ë³¸ê°’ìœ¼ë¡œ ì´ˆê¸°í™” í•©ë‹ˆë‹¤."
+	L["reset"] = "í”„ë¡œí•„ ì´ˆê¸°í™”"
+	L["reset_sub"] = "í˜„ìž¬ì˜ í”„ë¡œí•„ì„ ê¸°ë³¸ê°’ìœ¼ë¡œ ì´ˆê¸°í™” í•©ë‹ˆë‹¤"
+	L["choose_desc"] = "ìƒˆë¡œìš´ ì´ë¦„ì„ ìž…ë ¥ì°½ì— ìž…ë ¥í•˜ì—¬ ìƒˆ í”„ë¡œí•„ì´ë‚˜, ì´ë¯¸ ìžˆëŠ” í”„ë¡œí•„ í•˜ë‚˜ë¥¼ ì„ íƒí•˜ì—¬ ìƒˆë¡œìš´ í”„ë¡œí•„ì„ ë§Œë“¤ ìˆ˜ ìžˆìŠµë‹ˆë‹¤."
+	L["new"] = "ìƒˆ í”„ë¡œí•„"
+	L["new_sub"] = "ìƒˆë¡œìš´ í”„ë¡œí•„ì„ ë§Œë“­ë‹ˆë‹¤."
+	L["choose"] = "í”„ë¡œí•„ ì„ íƒ"
+	L["choose_sub"] = "ë‹¹ì‹ ì´ í˜„ìž¬ ì´ìš©í• ìˆ˜ ìžˆëŠ” í”„ë¡œí•„ì„ ì„ íƒí•©ë‹ˆë‹¤."
+	L["copy_desc"] = "í˜„ìž¬ ì‚¬ìš©ì¤‘ì¸ í”„ë¡œí•„ì—, ì„ íƒí•œ í”„ë¡œí•„ì˜ ì„¤ì •ì„ ë³µì‚¬í•©ë‹ˆë‹¤."
+	L["copy"] = "ë³µì‚¬"
+	L["delete_desc"] = "ë°ì´í„°ë² ì´ìŠ¤ì— ì‚¬ìš©ì¤‘ì´ê±°ë‚˜ ì €ìž¥ëœ í”„ë¡œíŒŒì¼ì˜ ì‚­ì œë¡œ SavedVariablesíŒŒì¼ì˜ ì •ë¦¬ì™€ ê³µê°„ ì ˆì•½ì´ ë©ë‹ˆë‹¤."
+	L["delete"] = "í”„ë¡œí•„ ì‚­ì œ"
+	L["delete_sub"] = "ë°ì´í„°ë² ì´ìŠ¤ì˜ í”„ë¡œí•„ì„ ì‚­ì œí•©ë‹ˆë‹¤."
+	L["delete_confirm"] = "ì •ë§ë¡œ ì„ íƒí•œ í”„ë¡œí•„ì˜ ì‚­ì œë¥¼ ì›í•˜ì‹­ë‹ˆê¹Œ?"
+	L["profiles"] = "í”„ë¡œí•„"
+	L["profiles_sub"] = "í”„ë¡œí•„ ì„¤ì •"
 elseif LOCALE == "esES" then
 	
 elseif LOCALE == "zhTW" then
