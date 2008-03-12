@@ -1,4 +1,4 @@
-﻿--[[ $Id$ ]]
+--[[ $Id$ ]]
 local ACEDBO_MAJOR, ACEDBO_MINOR = "AceDBOptions-3.0", 3
 local AceDBOptions, oldminor = LibStub:NewLibrary(ACEDBO_MAJOR, ACEDBO_MINOR)
 
@@ -72,7 +72,7 @@ elseif LOCALE == "frFR" then
 	L["profiles"] = "Profils"
 	L["profiles_sub"] = "Gestion des profils"
 elseif LOCALE == "koKR" then
-    L["default"] = "기본값"
+	L["default"] = "기본값"
 	L["intro"] = "모든 캐릭터의 다양한 설정과 사용중인 데이터베이스 프로필, 어느것이던지 매우 다루기 쉽게 바꿀수 있습니다." 
 	L["reset_desc"] = "단순히 다시 새롭게 구성을 원하는 경우, 현재 프로필 기본값으로 초기화 합니다."
 	L["reset"] = "프로필 초기화"
