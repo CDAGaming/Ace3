@@ -10,7 +10,7 @@ local AceGUI = LibStub("AceGUI-3.0")
 ]]
 do
 	local Type = "Dropdown"
-	local Version = 9
+	local Version = 10
 	local ControlBackdrop  = {
 		bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background",
 		edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Border",
@@ -132,7 +132,7 @@ do
 	local function BuildPullout(self)
 		local list = self.list
 		local lines = self.lines
-		local totalheight = 10
+		local totalheight = 22
 		self:ClearPullout()
 		self.pullout:SetFrameLevel(self.frame:GetFrameLevel()+1000)
 		if type(list) == "table" then
@@ -159,14 +159,14 @@ do
 					lines[i].check:Hide()
 				end
 				lines[i]:Show()
-				totalheight = totalheight + 18
+				totalheight = totalheight + 16
 				i = i + 1
 			end
 			for k in pairs(ddsort) do
 				ddsort[k] = nil
 			end
 		end
-		self.pullout:SetHeight(totalheight + 2)
+		self.pullout:SetHeight(totalheight)
 		fixlevels(self.pullout,self.pullout:GetChildren())
 	end
 
