@@ -51,7 +51,7 @@ end
 
 do
 	local Type = "TreeGroup"
-	local Version = 4
+	local Version = 5
 
 	local PaneBackdrop  = {
 		bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
