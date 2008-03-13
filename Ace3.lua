@@ -77,7 +77,7 @@ local function RefreshOnUpdate(this)
 end
 
 function Ace3:ConfigTableChanged(event, appName)
-	if selectedgroup == appName then
+	if selectedgroup == appName and frame then
 		frame.frame:SetScript("OnUpdate", RefreshOnUpdate)
 	end
 end
