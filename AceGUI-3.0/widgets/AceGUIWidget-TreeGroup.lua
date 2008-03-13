@@ -370,8 +370,8 @@ do
 				buttons[buttonnum] = button
 				button:SetParent(treeframe)
 				button:SetFrameLevel(treeframe:GetFrameLevel()+1)
+				button:ClearAllPoints()
 				if i == 1 then
-					button:ClearAllPoints()
 					if self.showscroll then
 						button:SetPoint("TOPRIGHT", self.treeframe,"TOPRIGHT",-22,-10)
 						button:SetPoint("TOPLEFT", self.treeframe, "TOPLEFT", 0, -10)
@@ -380,8 +380,6 @@ do
 						button:SetPoint("TOPLEFT", self.treeframe, "TOPLEFT", 0, -10)
 					end
 				else
-					button:SetParent(self.treeframe)
-					button:ClearAllPoints()
 					button:SetPoint("TOPRIGHT", buttons[buttonnum-1], "BOTTOMRIGHT",0,0)
 					button:SetPoint("TOPLEFT", buttons[buttonnum-1], "BOTTOMLEFT",0,0)
 				end
@@ -533,7 +531,7 @@ do
 		self.scrollbar = scrollbar
 		local scrollbg = scrollbar:CreateTexture(nil,"BACKGROUND")
 		scrollbg:SetAllPoints(scrollbar)
-		scrollbg:SetTexture(0,0,0,1)
+		scrollbg:SetTexture(0,0,0,0.4)
 		scrollbar.obj = self
 		self.noupdate = true
 		scrollbar:SetPoint("TOPRIGHT",treeframe,"TOPRIGHT",-10,-26)
