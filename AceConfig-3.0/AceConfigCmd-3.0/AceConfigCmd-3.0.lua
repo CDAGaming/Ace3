@@ -13,7 +13,7 @@ REQUIRES: AceConsole-3.0 for command registration (loaded on demand)
 -- TODO: plugin args
 
 
-local MAJOR, MINOR = "AceConfigCmd-3.0", 3
+local MAJOR, MINOR = "AceConfigCmd-3.0", 4
 local lib = LibStub:NewLibrary(MAJOR, MINOR)
 
 if not lib then return end
@@ -202,19 +202,21 @@ local function showhelp(info, inputpos, tab, noHead)
 	
 	for _,k in ipairs(sortTbl) do
 		local v = refTbl[k]
-		-- recursively show all inline groups
-		local name, desc = v.name, v.desc
-		if type(name) == "function" then
-			name = callfunction(info, v, 'name')
-		end
-		if type(desc) == "function" then
-			desc = callfunction(info, v, 'desc')
-		end
-		if v.type == "group" and pickfirstset(v.cmdInline, v.inline, false) then
-			print("  "..(desc or name)..":")
-			showhelp(info, inputpos, v, true)
-		else
-			print("  |cffffff78"..k.."|r - "..(desc or name or ""))
+		if not pickfirstset(v.cmdHidden, v.hidden, false) then
+			-- recursively show all inline groups
+			local name, desc = v.name, v.desc
+			if type(name) == "function" then
+				name = callfunction(info, v, 'name')
+			end
+			if type(desc) == "function" then
+				desc = callfunction(info, v, 'desc')
+			end
+			if v.type == "group" and pickfirstset(v.cmdInline, v.inline, false) then
+				print("  "..(desc or name)..":")
+				showhelp(info, inputpos, v, true)
+			else
+				print("  |cffffff78"..k.."|r - "..(desc or name or ""))
+			end
 		end
 	end
 end
