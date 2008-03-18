@@ -1099,7 +1099,8 @@ local function FeedOptions(appName, options,container,rootframe,path,group,inlin
 						end
 						control:SetImageSize(width, height)
 					end
-					control.width = "fill"					
+					local width = GetOptionsMemberValue("width",v,options,path,appName)
+					control.width = not width and "fill"
 				end
 
 				--Common Init
