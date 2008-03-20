@@ -5,7 +5,7 @@ local AceGUI = LibStub("AceGUI-3.0")
 --------------------------
 do
 	local Type = "ColorPicker"
-	local Version = 6
+	local Version = 7
 	
 	local function Acquire(self)
 		self.HasAlpha = false
@@ -21,7 +21,7 @@ do
 		self.g = g
 		self.b = b
 		self.a = a or 1
-		self.colorSwatch.texture:SetTexture(r,g,b)
+		self.colorSwatch:SetVertexColor(r,g,b,a)
 	end
 
 	local function Control_OnEnter(this)
@@ -128,14 +128,14 @@ do
 	
 		local colorSwatch = frame:CreateTexture(nil, "OVERLAY")
 		self.colorSwatch = colorSwatch
-		colorSwatch:SetWidth(24)
-		colorSwatch:SetHeight(24)
+		colorSwatch:SetWidth(19)
+		colorSwatch:SetHeight(19)
 		colorSwatch:SetTexture("Interface\\ChatFrame\\ChatFrameColorSwatch")
-		local texture = frame:CreateTexture(nil, "OVERLAY")
+		local texture = frame:CreateTexture(nil, "BACKGROUND")
 		colorSwatch.texture = texture
-		texture:SetTexture(1, 1, 1, 1)
-		texture:SetWidth(13.8)
-		texture:SetHeight(13.8)
+		texture:SetTexture(1, 1, 1)
+		texture:SetWidth(16)
+		texture:SetHeight(16)
 		texture:Show()
 	
 		local highlight = frame:CreateTexture(nil, "BACKGROUND")
