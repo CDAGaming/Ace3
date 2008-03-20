@@ -73,6 +73,7 @@ local function callmethod(info, inputpos, tab, methodtype, ...)
 	end
 
 	info.arg = tab.arg
+	info.option = tab
 
 	if type(method)=="function" then
 		return method(info, ...)
@@ -92,6 +93,7 @@ local function callfunction(info, tab, methodtype, ...)
 	local method = tab[methodtype]
 
 	info.arg = tab.arg
+	info.option = tab
 	
 	if type(method)=="function" then
 		return method(info, ...)
@@ -682,6 +684,8 @@ function lib:HandleCommand(slashcmd, appName, input)
 		input = input,
 		self = self,
 		handler = self
+		uiType = "cmd",
+		uiName = MAJOR,
 	}
 	
 	handle(info, 1, options, 0)  -- (info, inputpos, table, depth)
