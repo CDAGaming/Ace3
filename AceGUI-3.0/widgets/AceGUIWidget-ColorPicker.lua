@@ -133,13 +133,20 @@ do
 		colorSwatch:SetTexture("Interface\\ChatFrame\\ChatFrameColorSwatch")
 		local texture = frame:CreateTexture(nil, "BACKGROUND")
 		colorSwatch.texture = texture
-		texture:SetTexture("Tileset\\Generic\\Checkers")
-		texture:SetDesaturated(true)
-		texture:SetVertexColor(1,1,1,0.75)
-		texture:SetTexCoord(.25,0,0.5,.25)
 		texture:SetWidth(16)
 		texture:SetHeight(16)
+		texture:SetTexture(1,1,1)
 		texture:Show()
+		
+		local checkers = frame:CreateTexture(nil, "BACKGROUND")
+		colorSwatch.checkers = checkers
+		checkers:SetTexture("Tileset\\Generic\\Checkers")
+		checkers:SetDesaturated(true)
+		checkers:SetVertexColor(1,1,1,0.75)
+		checkers:SetTexCoord(.25,0,0.5,.25)
+		checkers:SetWidth(14)
+		checkers:SetHeight(14)
+		checkers:Show()
 	
 		local highlight = frame:CreateTexture(nil, "BACKGROUND")
 		self.highlight = highlight
@@ -149,6 +156,7 @@ do
 		highlight:Hide()
 	
 		texture:SetPoint("CENTER", colorSwatch, "CENTER")
+		checkers:SetPoint("CENTER", colorSwatch, "CENTER")
 		colorSwatch:SetPoint("LEFT", frame, "LEFT", 0, 0)
 		text:SetPoint("LEFT",colorSwatch,"RIGHT",2,0)
 		text:SetPoint("RIGHT",frame,"RIGHT")
