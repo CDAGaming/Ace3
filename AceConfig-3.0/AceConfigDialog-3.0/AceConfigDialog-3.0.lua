@@ -228,6 +228,11 @@ local function GetOptionsMemberValue(membername, option, options, path, appName,
 		info.options = options
 		info[0] = appName
 		info.arg = option.arg
+		info.handler = handler
+		info.option = option
+		info.type = option.type
+		info.uiType = 'dialog'
+		info.uiName = MAJOR
 	
 		local a, b, c ,d 
 		--using 4 returns for the get of a color type, increase if a type needs more
@@ -560,6 +565,11 @@ local function ActivateControl(widget, event, ...)
 	info.options = options
 	info[0] = user.appName
 	info.arg = option.arg
+	info.handler = handler
+	info.option = option
+	info.type = option.type
+	info.uiType = 'dialog'
+	info.uiName = MAJOR
 
 	local name
 	if type(option.name) == "function" then
