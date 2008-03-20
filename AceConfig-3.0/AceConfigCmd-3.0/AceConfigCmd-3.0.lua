@@ -74,6 +74,7 @@ local function callmethod(info, inputpos, tab, methodtype, ...)
 
 	info.arg = tab.arg
 	info.option = tab
+	info.type = tab.type
 
 	if type(method)=="function" then
 		return method(info, ...)
@@ -94,6 +95,7 @@ local function callfunction(info, tab, methodtype, ...)
 
 	info.arg = tab.arg
 	info.option = tab
+	info.type = tab.type
 	
 	if type(method)=="function" then
 		return method(info, ...)
