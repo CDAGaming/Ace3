@@ -3,7 +3,7 @@ AceConfigDialog-3.0
 
 ]]
 local LibStub = LibStub
-local MAJOR, MINOR = "AceConfigDialog-3.0", 13
+local MAJOR, MINOR = "AceConfigDialog-3.0", 14
 local lib = LibStub:NewLibrary(MAJOR, MINOR)
 
 if not lib then return end
@@ -969,7 +969,11 @@ local function FeedOptions(appName, options,container,rootframe,path,group,inlin
 					end
 					
 					if v.multiline then
-						control:SetHeight(115)
+						local lines = 4
+						if type(v.multiline) == "number" then
+							lines = v.multiline
+						end
+						control:SetHeight(60 + (14*lines))
 					end
 					control:SetLabel(name)
 					control:SetCallback("OnEnterPressed",ActivateControl)
