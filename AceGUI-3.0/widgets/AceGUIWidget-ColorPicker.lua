@@ -5,7 +5,7 @@ local AceGUI = LibStub("AceGUI-3.0")
 --------------------------
 do
 	local Type = "ColorPicker"
-	local Version = 7
+	local Version = 8
 	
 	local function Acquire(self)
 		self.HasAlpha = false
@@ -133,7 +133,10 @@ do
 		colorSwatch:SetTexture("Interface\\ChatFrame\\ChatFrameColorSwatch")
 		local texture = frame:CreateTexture(nil, "BACKGROUND")
 		colorSwatch.texture = texture
-		texture:SetTexture(1, 1, 1)
+		texture:SetTexture("Tileset\\Generic\\Checkers")
+		texture:SetDesaturated(true)
+		texture:SetVertexColor(1,1,1,0.75)
+		texture:SetTexCoord(.25,0,0.5,.25)
 		texture:SetWidth(16)
 		texture:SetHeight(16)
 		texture:Show()
