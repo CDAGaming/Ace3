@@ -683,7 +683,7 @@ function lib:HandleCommand(slashcmd, appName, input)
 		options = options,
 		input = input,
 		self = self,
-		handler = self
+		handler = self,
 		uiType = "cmd",
 		uiName = MAJOR,
 	}
