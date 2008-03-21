@@ -1,5 +1,5 @@
 --[[ $Id$ ]]
-local ACEDBO_MAJOR, ACEDBO_MINOR = "AceDBOptions-3.0", 3
+local ACEDBO_MAJOR, ACEDBO_MINOR = "AceDBOptions-3.0", 4
 local AceDBOptions, oldminor = LibStub:NewLibrary(ACEDBO_MAJOR, ACEDBO_MINOR)
 
 if not AceDBOptions then return end -- No upgrade needed
@@ -165,12 +165,12 @@ end
 function OptionsHandlerPrototype:ListProfiles(info)
 	local arg = info.arg
 	local profiles
-	if arg == "common" then
+	if arg == "common" and not self.noDefaultProfiles then
 		profiles = getProfileList(self.db, true, nil)
 	elseif arg == "nocurrent" then
 		profiles = getProfileList(self.db, nil, true)
 	elseif arg == "both" then -- currently not used
-		profiles = getProfileList(self.db, true, true)
+		profiles = getProfileList(self.db, (not self.noDefaultProfiles) and true, true)
 	else
 		profiles = getProfileList(self.db)
 	end
@@ -199,12 +199,12 @@ local function generateDefaultProfiles(db)
 end
 
 --[[ create and return a handler object for the db, or upgrade it if it already existed ]]
-local function getOptionsHandler(db)
+local function getOptionsHandler(db, noDefaultProfiles)
 	if not defaultProfiles then
 		generateDefaultProfiles(db)
 	end
 	
-	local handler = AceDBOptions.handlers[db] or { db = db }
+	local handler = AceDBOptions.handlers[db] or { db = db, noDefaultProfiles = noDefaultProfiles }
 	
 	for k,v in pairs(OptionsHandlerPrototype) do
 		handler[k] = v
@@ -298,14 +298,14 @@ local optionsTable = {
 	
 	creates and returns a option table to be used in your addon
 ]]
-function AceDBOptions:GetOptionsTable(db)
+function AceDBOptions:GetOptionsTable(db, noDefaultProfiles)
 	local tbl = AceDBOptions.optionTables[db] or {
 			type = "group",
 			name = L["profiles"],
 			desc = L["profiles_sub"],
 		}
 	
-	tbl.handler = getOptionsHandler(db)
+	tbl.handler = getOptionsHandler(db, noDefaultProfiles)
 	tbl.args = optionsTable
 
 	AceDBOptions.optionTables[db] = tbl
