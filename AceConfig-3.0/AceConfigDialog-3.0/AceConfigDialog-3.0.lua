@@ -3,7 +3,7 @@ AceConfigDialog-3.0
 
 ]]
 local LibStub = LibStub
-local MAJOR, MINOR = "AceConfigDialog-3.0", 14
+local MAJOR, MINOR = "AceConfigDialog-3.0", 15
 local lib = LibStub:NewLibrary(MAJOR, MINOR)
 
 if not lib then return end
@@ -1515,6 +1515,7 @@ if InterfaceOptions_AddCategory then
 			group:SetCallback("OnShow", FeedToBlizPanel)
 			group:SetCallback("OnHide", ClearBlizPanel)
 			InterfaceOptions_AddCategory(group.frame)
+			return group.frame
 		else
 			error(("%s has already been added to the Blizzard Options Window"):format(appName), 2)
 		end
