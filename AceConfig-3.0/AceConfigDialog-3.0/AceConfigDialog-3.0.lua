@@ -3,7 +3,7 @@ AceConfigDialog-3.0
 
 ]]
 local LibStub = LibStub
-local MAJOR, MINOR = "AceConfigDialog-3.0", 16
+local MAJOR, MINOR = "AceConfigDialog-3.0", 17
 local lib = LibStub:NewLibrary(MAJOR, MINOR)
 
 if not lib then return end
@@ -1466,6 +1466,12 @@ function lib:Open(appName, container)
 			f:SetTitle(name or "")
 		end
 		local status = lib:GetStatusTable(appName)
+		if not status.width then
+			status.width =  700
+		end
+		if not status.height then
+			status.height = 500
+		end
 		if f.SetStatusTable then
 			f:SetStatusTable(status)
 		end
