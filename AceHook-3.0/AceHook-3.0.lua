@@ -295,7 +295,7 @@ function AceHook:Unhook(obj, method)
 	
 	local uid
 	if obj then
-		uid = registry[self][obj][method]
+		uid = registry[self][obj] and registry[self][obj][method]
 	else
 		uid = registry[self][method]
 	end
