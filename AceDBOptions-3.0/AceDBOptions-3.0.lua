@@ -1,5 +1,5 @@
 --[[ $Id$ ]]
-local ACEDBO_MAJOR, ACEDBO_MINOR = "AceDBOptions-3.0", 5
+local ACEDBO_MAJOR, ACEDBO_MINOR = "AceDBOptions-3.0", 6
 local AceDBOptions, oldminor = LibStub:NewLibrary(ACEDBO_MAJOR, ACEDBO_MINOR)
 
 if not AceDBOptions then return end -- No upgrade needed
