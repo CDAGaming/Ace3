@@ -1,5 +1,5 @@
 --[[ $Id$ ]]
-local ACEDB_MAJOR, ACEDB_MINOR = "AceDB-3.0", 6
+local ACEDB_MAJOR, ACEDB_MINOR = "AceDB-3.0", 7
 local AceDB, oldminor = LibStub:NewLibrary(ACEDB_MAJOR, ACEDB_MINOR)
 
 if not AceDB then return end -- No upgrade needed
@@ -265,6 +265,7 @@ local function initdb(sv, defaults, defaultProfile, olddb, parent)
 	else
 		-- hack this one in
 		db.RegisterDefaults = DBObjectLib.RegisterDefaults
+		db.ResetProfile = DBObjectLib.ResetProfile
 	end
 	
 	-- Set some properties in the database object
@@ -484,9 +485,10 @@ function DBObjectLib:CopyProfile(name, silent)
 end
 
 -- DBObject:ResetProfile()
--- 
+-- noChildren (boolean) - if set to true, the reset will not be populated to the child namespaces of this DB object
+--
 -- Resets the current profile
-function DBObjectLib:ResetProfile()
+function DBObjectLib:ResetProfile(noChildren)
 	local profile = self.profile
 	
 	for k,v in pairs(profile) do
@@ -499,7 +501,7 @@ function DBObjectLib:ResetProfile()
 	end
 	
 	-- populate to child namespaces
-	if self.children then
+	if self.children and not dontResetNamespaces then
 		for _, db in pairs(self.children) do
 			DBObjectLib.ResetProfile(db)
 		end
