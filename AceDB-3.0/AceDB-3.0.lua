@@ -501,7 +501,7 @@ function DBObjectLib:ResetProfile(noChildren)
 	end
 	
 	-- populate to child namespaces
-	if self.children and not dontResetNamespaces then
+	if self.children and not noChildren then
 		for _, db in pairs(self.children) do
 			DBObjectLib.ResetProfile(db)
 		end
