@@ -1,5 +1,5 @@
 --[[ $Id$ ]]
-local MAJOR,MINOR = "AceConsole-3.0", 4
+local MAJOR,MINOR = "AceConsole-3.0", 5
 
 local AceConsole, oldminor = LibStub:NewLibrary(MAJOR, MINOR)
 
@@ -53,13 +53,26 @@ function AceConsole:RegisterChatCommand( command, func, persist, silent )
 	
 	if persist==nil then persist=true end	-- I'd rather have my addon's "/addon enable" around if the author screws up. Having some extra slash regged when it shouldnt be isn't as destructive. True is a better default. /Mikk
 	
-	local name = "ACECONSOLE_"..command:upper()
-	if SlashCmdList[name] then
-		if not silent then
-			geterrorhandler()(tostring(self)..": Chat Command '"..command.."' already exists, will not overwrite.")
+	local ucommand = command:upper()
+	local name = "ACECONSOLE_"..command:upper() -- no slash here yet.
+	ucommand = "/"..ucommand -- add slash for existance comparison
+	-- following code is almost a straight rip from blizzard slashcommand handling but only used for checking.
+	for index, v in pairs(SlashCmdList) do
+		local i = 1
+		local cmdString = _G["SLASH_"..index..i]
+		while( cmdString ) do
+			cmdString = cmdString:upper()
+			if cmdString == ucommand then
+				if not silent then
+					geterrorhandler()(tostring(self)..": Chat Command '"..command.."' already exists, will not overwrite.")
+				end
+				return
+			end
+			i = i + 1
+			cmdString = _G["SLASH_"..index..i]
 		end
-		return
 	end
+	
 	if type( func ) == "string" then
 		SlashCmdList[name] = function(input)
 			self[func](self, input)
