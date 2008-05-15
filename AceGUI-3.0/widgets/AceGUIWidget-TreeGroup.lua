@@ -51,7 +51,7 @@ end
 
 do
 	local Type = "TreeGroup"
-	local Version = 6
+	local Version = 7
 
 	local PaneBackdrop  = {
 		bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
@@ -334,7 +334,7 @@ do
 		
 		local numlines = #lines
 		
-		local maxlines = (math.floor(((self.treeframe:GetHeight()or 0) - 20 ) / 20))
+		local maxlines = (math.floor(((self.treeframe:GetHeight()or 0) - 20 ) / 18))
 		
 		local first, last
 		
