@@ -5,7 +5,7 @@ local AceGUI = LibStub("AceGUI-3.0")
 --------------------------
 do
 	local Type = "Slider"
-	local Version = 4
+	local Version = 3
 	
 	local function Acquire(self)
 		self:SetDisabled(false)
@@ -200,12 +200,12 @@ do
 		self.hightext:SetPoint("TOPRIGHT",slider,"BOTTOMRIGHT",-2,3)
 	
 	
-		local editbox = CreateFrame("EditBox",nil,frame, "InputBoxTemplate")
+		local editbox = CreateFrame("EditBox",nil,frame)
 		editbox:SetAutoFocus(false)
 		editbox:SetFontObject(GameFontHighlightSmall)
 		editbox:SetPoint("TOP",slider,"BOTTOM",0,0)
-		editbox:SetHeight(12)
-		editbox:SetWidth(40)
+		editbox:SetHeight(14)
+		editbox:SetWidth(100)
 		editbox:SetJustifyH("CENTER")
 		editbox:EnableMouse(true)
 		editbox:SetScript("OnEscapePressed",EditBox_OnEscapePressed)
