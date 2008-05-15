@@ -29,7 +29,7 @@ local _G = getfenv()
 
 local AceGUI = LibStub("AceGUI-3.0")
 
-local Version = 4
+local Version = 5
 ---------------------
 -- Common Elements --
 ---------------------
@@ -216,7 +216,7 @@ do
 		button:SetWidth(80)
 		button:SetHeight(20)
 		button:SetPoint("BOTTOMLEFT",frame,"BOTTOMLEFT",0,2)
-		button:SetText("Apply")
+		button:SetText(ACCEPT)
 		button:SetScript("OnClick", Button_OnClick)
 		button:Disable()
 		button:Hide()

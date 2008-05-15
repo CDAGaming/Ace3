@@ -11,8 +11,8 @@ local AceGUI = LibStub("AceGUI-3.0")
 ]]
 do
 	local Type = "EditBox"
-	local Version = 5
-	
+	local Version = 6
+
 	local function Acquire(self)
 		self:SetDisabled(false)
 		self.showbutton = true
@@ -183,10 +183,10 @@ do
 		self.label = label
 		
 		local button = CreateFrame("Button",nil,editbox,"UIPanelButtonTemplate")
-		button:SetWidth(20)
+		button:SetWidth(40)
 		button:SetHeight(20)
 		button:SetPoint("RIGHT",editbox,"RIGHT",-2,0)
-		button:SetText("OK")
+		button:SetText(OKAY)
 		button:SetScript("OnClick", Button_OnClick)
 		button:Hide()
 		
