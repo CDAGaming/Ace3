@@ -122,7 +122,20 @@ do
 		status[button.uniquevalue] = not status[button.uniquevalue]
 		self:RefreshTree()
 	end
-
+    
+    local function Button_OnEnter(this)
+        GameTooltip:SetOwner(this, "ANCHOR_NONE")
+        GameTooltip:SetPoint("LEFT",this,"RIGHT")
+        GameTooltip:SetText(this.text:GetText(), 1, .82, 0, 1)
+    
+		GameTooltip:Show()
+	end
+	
+	local function Button_OnLeave(this)
+		GameTooltip:Hide()
+	end
+    
+    
 	local buttoncount = 1
 	local function CreateButton(self)
 		local button = CreateFrame("Button",("AceGUI30TreeButton%d"):format(buttoncount),self.treeframe, "InterfaceOptionsButtonTemplate")
@@ -131,6 +144,8 @@ do
 
 		button:SetScript("OnClick",ButtonOnClick)
 		button:SetScript("OnDoubleClick", ButtonOnDoubleClick)
+		button:SetScript("OnEnter",Button_OnEnter)
+		button:SetScript("OnLeave",Button_OnLeave)
 
 		button.toggle.button = button
 		button.toggle:SetScript("OnClick",ExpandOnClick)
