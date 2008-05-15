@@ -1,5 +1,5 @@
 --[[ $Id$ ]]
-local ACEGUI_MAJOR, ACEGUI_MINOR = "AceGUI-3.0", 8
+local ACEGUI_MAJOR, ACEGUI_MINOR = "AceGUI-3.0", 9
 local AceGUI, oldminor = LibStub:NewLibrary(ACEGUI_MAJOR, ACEGUI_MINOR)
 
 if not AceGUI then return end -- No upgrade needed
@@ -175,7 +175,7 @@ end
 -- e.g. Dropdowns opening, Editboxes gaining kb focus
 -----
 function AceGUI:SetFocus(widget)
-	if self.FocusedWidget then
+	if self.FocusedWidget and self.FocusedWidget ~= widget then
 		safecall(self.FocusedWidget.ClearFocus, self.FocusedWidget)
 	end
 	self.FocusedWidget = widget
