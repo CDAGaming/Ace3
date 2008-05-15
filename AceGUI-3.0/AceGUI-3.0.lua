@@ -1,5 +1,5 @@
 --[[ $Id$ ]]
-local ACEGUI_MAJOR, ACEGUI_MINOR = "AceGUI-3.0", 7
+local ACEGUI_MAJOR, ACEGUI_MINOR = "AceGUI-3.0", 8
 local AceGUI, oldminor = LibStub:NewLibrary(ACEGUI_MAJOR, ACEGUI_MINOR)
 
 if not AceGUI then return end -- No upgrade needed
@@ -110,22 +110,23 @@ end
 
 -- Gets a widget Object
 
-local warned = {}
 function AceGUI:Create(type)
 	local reg = WidgetRegistry
 	if reg[type] then
 		local widget = new(type,reg[type])
+
 		if widget.Acquire then
-			widget:Acquire()
+			widget.OnAcquire = widget.Acquire
+			widget.Acquire = nil
 		elseif widget.Aquire then
-			if not warned[type] then
-				DEFAULT_CHAT_FRAME:AddMessage(("AceGUI: Warning, Widget type %s uses the deprecated Aquire, this should be updated to Acquire"):format(type))
-				warned[type] = true
-			end
-			widget.Acquire = widget.Aquire
-			widget:Acquire()
+			widget.OnAcquire = widget.Aquire
+			widget.Aquire = nil
+		end
+		
+		if widget.OnAcquire then
+			widget:OnAcquire()
 		else
-			error(("Widget type %s doesn't supply an Acquire Function"):format(type))
+			error(("Widget type %s doesn't supply an OnAcquire Function"):format(type))
 		end		
 		safecall(widget.ResumeLayout, widget)
 		return widget
@@ -144,7 +145,16 @@ function AceGUI:Release(widget)
 		widget.events[k] = nil
 	end
 	widget.width = nil
-	widget:Release()
+	if widget.Release then
+		widget.OnRelease = widget.Release
+		widget.Release = nil
+	end
+	if widget.OnRelease then
+		widget:OnRelease()
+	else
+		error(("Widget type %s doesn't supply an OnRelease Function"):format(type))
+	end
+	
 	--widget.frame:SetParent(nil)
 	widget.frame:ClearAllPoints()
 	widget.frame:Hide()
@@ -156,14 +166,39 @@ function AceGUI:Release(widget)
 	del(widget,widget.type)
 end
 
+-----------
+-- Focus --
+-----------
+
+-----
+-- Called when a widget has taken focus
+-- e.g. Dropdowns opening, Editboxes gaining kb focus
+-----
+function AceGUI:SetFocus(widget)
+	if self.FocusedWidget then
+		safecall(self.FocusedWidget.ClearFocus, self.FocusedWidget)
+	end
+	self.FocusedWidget = widget
+end
+
+-----
+-- Called when something has happened that could cause widgets with focus to drop it
+-- e.g. titlebar of a frame being clicked
+-----
+function AceGUI:ClearFocus()
+	if self.FocusedWidget then
+		safecall(self.FocusedWidget.ClearFocus, self.FocusedWidget)
+		self.FocusedWidget = nil
+	end
+end
 
 -------------
 -- Widgets --
 -------------
 --[[
 	Widgets must provide the following functions
-		Acquire() - Called when the object is acquired, should set everything to a default hidden state
-		Release() - Called when the object is Released, should remove any anchors and hide the Widget
+		OnAcquire() - Called when the object is acquired, should set everything to a default hidden state
+		OnRelease() - Called when the object is Released, should remove any anchors and hide the Widget
 		
 	And the following members
 		frame - the frame or derivitive object that will be treated as the widget for size and anchoring purposes
@@ -235,6 +270,14 @@ do
 		if self.OnHeightSet then
 			self:OnHeightSet(height)
 		end
+	end
+
+	WidgetBase.IsVisible = function(self)
+		return self.frame:IsVisible()
+	end
+	
+	WidgetBase.IsShown= function(self)
+		return self.frame:IsShown()
 	end
 		
 --	local function LayoutOnUpdate(this)

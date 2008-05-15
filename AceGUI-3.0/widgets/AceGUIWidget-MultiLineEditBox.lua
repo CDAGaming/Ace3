@@ -29,7 +29,7 @@ local _G = getfenv()
 
 local AceGUI = LibStub("AceGUI-3.0")
 
-local Version = 5
+local Version = 6
 ---------------------
 -- Common Elements --
 ---------------------
@@ -102,14 +102,15 @@ do
 			ClearCursor()
 		end
 		self.button:Disable()
+		AceGUI:ClearFocus()
 	end
 	
-	function MultiLineEditBox:Acquire()
+	function MultiLineEditBox:OnAcquire()
 		self:SetDisabled(false)
 		self:ShowButton(true)
 	end
 	
-	function MultiLineEditBox:Release()
+	function MultiLineEditBox:OnRelease()
 		self.frame:ClearAllPoints()
 		self.frame:Hide()
 		self:SetDisabled(false)

@@ -5,16 +5,16 @@ local AceGUI = LibStub("AceGUI-3.0")
 --------------------------
 do
 	local Type = "Slider"
-	local Version = 3
+	local Version = 4
 	
-	local function Acquire(self)
+	local function OnAcquire(self)
 		self:SetDisabled(false)
 		self:SetSliderValues(0,100,1)
 		self:SetIsPercent(nil)
 		self:SetValue(0)
 	end
 	
-	local function Release(self)
+	local function OnRelease(self)
 		self.frame:ClearAllPoints()
 		self.frame:Hide()
 		self.slider:EnableMouseWheel(false)
@@ -143,6 +143,7 @@ do
 	
 	local function FrameOnMouseDown(this)
 		this.obj.slider:EnableMouseWheel(true)
+		AceGUI:ClearFocus()
 	end
 	
 	local SliderBackdrop  = {
@@ -157,8 +158,8 @@ do
 		local self = {}
 		self.type = Type
 
-		self.Release = Release
-		self.Acquire = Acquire
+		self.OnRelease = OnRelease
+		self.OnAcquire = OnAcquire
 		
 		self.frame = frame
 		frame.obj = self

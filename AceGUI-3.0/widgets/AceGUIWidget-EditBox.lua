@@ -11,14 +11,14 @@ local AceGUI = LibStub("AceGUI-3.0")
 ]]
 do
 	local Type = "EditBox"
-	local Version = 6
+	local Version = 7
 
-	local function Acquire(self)
+	local function OnAcquire(self)
 		self:SetDisabled(false)
 		self.showbutton = true
 	end
 	
-	local function Release(self)
+	local function OnRelease(self)
 		self.frame:ClearAllPoints()
 		self.frame:Hide()
 		self:SetDisabled(false)
@@ -80,6 +80,7 @@ do
 			ClearCursor()
 		end
 		HideButton(self)
+		AceGUI:ClearFocus()
 	end
 	
 	local function EditBox_OnTextChanged(this)
@@ -140,8 +141,8 @@ do
 		local self = {}
 		self.type = Type
 
-		self.Release = Release
-		self.Acquire = Acquire
+		self.OnRelease = OnRelease
+		self.OnAcquire = OnAcquire
 
 		self.SetDisabled = SetDisabled
 		self.SetText = SetText
@@ -168,6 +169,7 @@ do
 		editbox:SetScript("OnTextChanged",EditBox_OnTextChanged)
 		editbox:SetScript("OnReceiveDrag", EditBox_OnReceiveDrag)
 		editbox:SetScript("OnMouseDown", EditBox_OnReceiveDrag)
+
 		editbox:SetTextInsets(0,0,3,3)
 		editbox:SetMaxLetters(256)
 		

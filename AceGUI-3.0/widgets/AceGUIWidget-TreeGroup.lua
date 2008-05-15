@@ -26,8 +26,8 @@ end
 -------------
 --[[
 	Widgets must provide the following functions
-		Acquire() - Called when the object is aquired, should set everything to a default hidden state
-		Release() - Called when the object is Released, should remove any anchors and hide the Widget
+		OnAcquire() - Called when the object is aquired, should set everything to a default hidden state
+		OnRelease() - Called when the object is Released, should remove any anchors and hide the Widget
 		
 	And the following members
 		frame - the frame or derivitive object that will be treated as the widget for size and anchoring purposes
@@ -51,7 +51,7 @@ end
 
 do
 	local Type = "TreeGroup"
-	local Version = 7
+	local Version = 8
 
 	local PaneBackdrop  = {
 		bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
@@ -60,11 +60,11 @@ do
 		insets = { left = 3, right = 3, top = 5, bottom = 3 }
 	}
 
-	local function Acquire(self)
+	local function OnAcquire(self)
 
 	end
 	
-	local function Release(self)
+	local function OnRelease(self)
 		self.frame:ClearAllPoints()
 		self.frame:Hide()
 		self.status = nil
@@ -105,6 +105,7 @@ do
 			this:LockHighlight()
 			self:RefreshTree()
 		end
+		AceGUI:ClearFocus()
 	end
 	
 	local function ExpandOnClick(this)
@@ -216,6 +217,7 @@ do
 		local status = self.status or self.localstatus
 		status.scrollvalue = value
 		self:RefreshTree()
+		AceGUI:ClearFocus()
 	end
 	
 	-- called to set an external table to store status in
@@ -519,8 +521,8 @@ do
 		treeframe:SetBackdropBorderColor(0.4,0.4,0.4)
 		
 		self.treeframe = treeframe
-		self.Release = Release
-		self.Acquire = Acquire
+		self.OnRelease = OnRelease
+		self.OnAcquire = OnAcquire
 		
 		self.SetTree = SetTree
 		self.RefreshTree = RefreshTree

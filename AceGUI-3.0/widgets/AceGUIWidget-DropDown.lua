@@ -10,7 +10,7 @@ local AceGUI = LibStub("AceGUI-3.0")
 ]]
 do
 	local Type = "Dropdown"
-	local Version = 10
+	local Version = 11
 	local ControlBackdrop  = {
 		bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background",
 		edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Border",
@@ -20,16 +20,18 @@ do
 		insets = { left = 11, right = 12, top = 12, bottom = 11 },
 	}
 
-	local function Acquire(self)
+	local function OnAcquire(self)
 		self:SetLabel("")
 	end
 	
-	local function Release(self)
+	local function OnRelease(self)
 		self.frame:ClearAllPoints()
 		self.frame:Hide()
 		self:SetLabel(nil)
 		self.list = nil
 		self:SetDisabled(false)
+		self.open = nil
+		self.pullout:Hide()
 	end
 
 	local function Control_OnEnter(this)
@@ -69,17 +71,24 @@ do
 		end
 	end
 	
+	local function ClearFocus(self)
+		self.open = nil
+		self.pullout:Hide()
+	end
+	
 	local function Dropdown_TogglePullout(this)
 		local self = this.obj
 		if self.open then
 			self.open = nil
 			self.pullout:Hide()
+			AceGUI:ClearFocus()
 		else
 			self.open = true
 			self:BuildPullout()
 			if self.lines[1] and self.lines[1]:IsShown() then
 				self.pullout:Show()
 			end
+			AceGUI:SetFocus(self)
 		end
 	end
 	
@@ -240,8 +249,10 @@ do
 		self.dropdown = dropdown
 		self.type = Type
 
-		self.Release = Release
-		self.Acquire = Acquire
+		self.OnRelease = OnRelease
+		self.OnAcquire = OnAcquire
+		
+		self.ClearFocus = ClearFocus
 
 		self.CreateLine = CreateLine
 		self.ClearPullout = ClearPullout

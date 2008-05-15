@@ -5,15 +5,15 @@ local AceGUI = LibStub("AceGUI-3.0")
 --------------------------
 do
 	local Type = "Label"
-	local Version = 6
+	local Version = 7
 	
-	local function Acquire(self)
+	local function OnAcquire(self)
 		self:SetText("")
 		self:SetImage(nil)
 		self:SetColor()
 	end
 	
-	local function Release(self)
+	local function OnRelease(self)
 		self.frame:ClearAllPoints()
 		self.frame:Hide()
 	end
@@ -106,8 +106,8 @@ do
 		local self = {}
 		self.type = Type
 		
-		self.Release = Release
-		self.Acquire = Acquire
+		self.OnRelease = OnRelease
+		self.OnAcquire = OnAcquire
 		self.SetText = SetText
 		self.SetColor = SetColor
 		self.frame = frame

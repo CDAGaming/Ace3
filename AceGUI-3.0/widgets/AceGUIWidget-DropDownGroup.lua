@@ -40,13 +40,13 @@ local AceGUI = LibStub("AceGUI-3.0")
 ]]
 do
 	local Type = "DropdownGroup"
-	local Version = 5
+	local Version = 6
 	
-	local function Acquire(self)
+	local function OnAcquire(self)
 		self.dropdown:SetText("")
 	end
 	
-	local function Release(self)
+	local function OnRelease(self)
 		self.frame:ClearAllPoints()
 		self.frame:Hide()
 		self.dropdown.list = nil
@@ -118,10 +118,10 @@ do
 		local self = {}
 		self.type = Type
 
-		self.Release = Release
-		self.Acquire = Acquire
-		self.SetTitle = SetTitle
+		self.OnRelease = OnRelease
+		self.OnAcquire = OnAcquire
 		
+		self.SetTitle = SetTitle
 		self.SetGroupList = SetGroupList
 		self.SetGroup = SetGroup
 		self.SetStatusTable = SetStatusTable

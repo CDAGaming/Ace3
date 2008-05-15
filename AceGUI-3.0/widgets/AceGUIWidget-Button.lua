@@ -5,12 +5,12 @@ local AceGUI = LibStub("AceGUI-3.0")
 --------------------------
 do
 	local Type = "Button"
-	local Version = 5
+	local Version = 6
 	
-	local function Acquire(self)
+	local function OnAcquire(self)
 	end
 	
-	local function Release(self)
+	local function OnRelease(self)
 		self.frame:ClearAllPoints()
 		self.frame:Hide()
 		self:SetDisabled(false)
@@ -18,6 +18,7 @@ do
 	
 	local function Button_OnClick(this)
 		this.obj:Fire("OnClick")
+		AceGUI:ClearFocus()
 	end
 	
 	local function Button_OnEnter(this)
@@ -66,8 +67,8 @@ do
 		frame:SetHeight(24)
 		frame:SetWidth(200)
 	
-		self.Release = Release
-		self.Acquire = Acquire
+		self.OnRelease = OnRelease
+		self.OnAcquire = OnAcquire
 		
 		self.frame = frame
 		frame.obj = self

@@ -10,7 +10,7 @@ local AceGUI = LibStub("AceGUI-3.0")
 ]]
 do
 	local Type = "Frame"
-	local Version = 3
+	local Version = 4
 
 	local FrameBackdrop = {
 		bgFile="Interface\\DialogFrame\\UI-DialogBox-Background",
@@ -44,7 +44,12 @@ do
 	end
 	
 	local function frameOnMouseDown(this)
+		AceGUI:ClearFocus()
+	end
+	
+	local function titleOnMouseDown(this)
 		this:GetParent():StartMoving()
+		AceGUI:ClearFocus()
 	end
 	
 	local function frameOnMouseUp(this)
@@ -60,18 +65,21 @@ do
 	
 	local function sizerseOnMouseDown(this)
 		this:GetParent():StartSizing("BOTTOMRIGHT")
+		AceGUI:ClearFocus()
 	end
 	
 	local function sizersOnMouseDown(this)
 		this:GetParent():StartSizing("BOTTOM")
+		AceGUI:ClearFocus()
 	end
 	
 	local function sizereOnMouseDown(this)
 		this:GetParent():StartSizing("RIGHT")
+		AceGUI:ClearFocus()
 	end
 	
 	local function sizerOnMouseUp(this)
-		this:GetParent():StopMovingOrSizing() 
+		this:GetParent():StopMovingOrSizing()
 	end
 
 	local function SetTitle(self,title)
@@ -90,13 +98,13 @@ do
 		self.frame:Show()
 	end
 	
-	local function Acquire(self)
+	local function OnAcquire(self)
 		self.frame:SetParent(UIParent)
 		self.frame:SetFrameStrata("FULLSCREEN_DIALOG")
 		self:ApplyStatus()
 	end
 	
-	local function Release(self)
+	local function OnRelease(self)
 		self.status = nil
 		for k in pairs(self.localstatus) do
 			self.localstatus[k] = nil
@@ -153,8 +161,8 @@ do
 		self.Hide = Hide
 		self.Show = Show
 		self.SetTitle =  SetTitle
-		self.Release = Release
-		self.Acquire = Acquire
+		self.OnRelease = OnRelease
+		self.OnAcquire = OnAcquire
 		self.SetStatusText = SetStatusText
 		self.SetStatusTable = SetStatusTable
 		self.ApplyStatus = ApplyStatus
@@ -172,6 +180,7 @@ do
 		frame:SetMovable(true)
 		frame:SetResizable(true)
 		frame:SetFrameStrata("FULLSCREEN_DIALOG")
+		frame:SetScript("OnMouseDown", frameOnMouseDown)
 		
 		frame:SetBackdrop(FrameBackdrop)
 		frame:SetBackdropColor(0,0,0,1)
@@ -210,7 +219,7 @@ do
 		local title = CreateFrame("Frame",nil,frame)
 		self.title = title
 		title:EnableMouse()
-		title:SetScript("OnMouseDown",frameOnMouseDown)
+		title:SetScript("OnMouseDown",titleOnMouseDown)
 		title:SetScript("OnMouseUp", frameOnMouseUp)
 		
 		

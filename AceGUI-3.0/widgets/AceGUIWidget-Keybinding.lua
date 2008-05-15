@@ -5,7 +5,7 @@ local AceGUI = LibStub("AceGUI-3.0")
 --------------------------
 do
 	local Type = "Keybinding"
-	local Version = 6
+	local Version = 7
 
 	local ControlBackdrop  = {
 		bgFile = "Interface\\Tooltips\\UI-Tooltip-Background",
@@ -42,6 +42,7 @@ do
 				self.waitingForKey = true
 			end
 		end
+		AceGUI:ClearFocus()
 	end
 
 	local ignoreKeys = nil
@@ -96,10 +97,10 @@ do
 		Keybinding_OnKeyDown(this, button)
 	end
 	
-	local function Acquire(self)
+	local function OnAcquire(self)
 	end
 	
-	local function Release(self)
+	local function OnRelease(self)
 		self.frame:ClearAllPoints()
 		self.frame:Hide()
 		self.waitingForKey = nil
@@ -181,8 +182,8 @@ do
 		msgframe:SetPoint("BOTTOM",button,"TOP",0,0)
 		msgframe:Hide()
 	
-		self.Release = Release
-		self.Acquire = Acquire
+		self.OnRelease = OnRelease
+		self.OnAcquire = OnAcquire
 		self.SetLabel = SetLabel
 		self.SetDisabled = SetDisabled
 		self.SetKey = SetKey
