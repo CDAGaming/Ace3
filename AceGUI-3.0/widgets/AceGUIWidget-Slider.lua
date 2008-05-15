@@ -5,7 +5,7 @@ local AceGUI = LibStub("AceGUI-3.0")
 --------------------------
 do
 	local Type = "Slider"
-	local Version = 4
+	local Version = 5
 	
 	local function OnAcquire(self)
 		self:SetDisabled(false)
@@ -206,13 +206,19 @@ do
 		editbox:SetFontObject(GameFontHighlightSmall)
 		editbox:SetPoint("TOP",slider,"BOTTOM",0,0)
 		editbox:SetHeight(14)
-		editbox:SetWidth(100)
+		editbox:SetWidth(70)
 		editbox:SetJustifyH("CENTER")
 		editbox:EnableMouse(true)
 		editbox:SetScript("OnEscapePressed",EditBox_OnEscapePressed)
 		editbox:SetScript("OnEnterPressed",EditBox_OnEnterPressed)
 		self.editbox = editbox
 		editbox.obj = self
+		
+		local bg = editbox:CreateTexture(nil,"BACKGROUND")
+		editbox.bg = bg
+		bg:SetTexture("Interface\\ChatFrame\\ChatFrameBackground")
+		bg:SetVertexColor(0,0,0,0.25)
+		bg:SetAllPoints(editbox)
 		
 		slider:SetThumbTexture("Interface\\Buttons\\UI-SliderBar-Button-Horizontal")
 	
