@@ -1,5 +1,5 @@
 --[[ $Id$ ]]
-local ACEGUI_MAJOR, ACEGUI_MINOR = "AceGUI-3.0", 9
+local ACEGUI_MAJOR, ACEGUI_MINOR = "AceGUI-3.0", 10
 local AceGUI, oldminor = LibStub:NewLibrary(ACEGUI_MAJOR, ACEGUI_MINOR)
 
 if not AceGUI then return end -- No upgrade needed
@@ -514,8 +514,9 @@ AceGUI:RegisterLayout("Flow",
 	 	
 	 	local frameoffset
 	 	local lastframeoffset
+	 	local oversize 
 		for i, child in ipairs(children) do
-			
+			oversize = nil
 			local frame = child.frame
 			local frameheight = frame.height or frame:GetHeight() or 0
 			local framewidth = frame.width or frame:GetWidth() or 0
@@ -532,6 +533,9 @@ AceGUI:RegisterLayout("Flow",
 				rowstart = frame
 				rowstartoffset = frameoffset
 				usedwidth = framewidth
+				if usedwidth > width then
+					oversize = true
+				end
 			else
 				-- if there isn't available width for the control start a new row
 				-- if a control is "fill" it will be on a row of its own full width
@@ -545,6 +549,9 @@ AceGUI:RegisterLayout("Flow",
 					rowheight = frameheight
 					rowoffset = frameoffset
 					usedwidth = frame.width or frame:GetWidth()
+					if usedwidth > width then
+						oversize = true
+					end
 				-- put the control on the current row, adding it to the width and checking if the height needs to be increased
 				else
 					--handles cases where the new height is higher than either control because of the offsets
@@ -573,6 +580,10 @@ AceGUI:RegisterLayout("Flow",
 				rowheight = frame.height or frame:GetHeight() or 0
 				rowoffset = child.alignoffset or (rowheight / 2)
 				rowstartoffset = rowoffset
+			elseif oversize then
+				if width > 1 then
+					frame:SetPoint("RIGHT",content,"RIGHT",0,0)
+				end
 			end
 			
 			if child.height == "fill" then
