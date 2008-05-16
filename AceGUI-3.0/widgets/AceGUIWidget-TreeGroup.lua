@@ -51,7 +51,10 @@ end
 
 do
 	local Type = "TreeGroup"
-	local Version = 8
+	local Version = 9
+	
+	local DEFAULT_TREE_WIDTH = 175
+	local DEFAULT_TREE_SIZABLE = true
 
 	local PaneBackdrop  = {
 		bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
@@ -60,11 +63,19 @@ do
 		insets = { left = 3, right = 3, top = 5, bottom = 3 }
 	}
 
+    local DraggerBackdrop  = {
+		bgFile = "Interface\\Tooltips\\UI-Tooltip-Background",
+		edgeFile = nil,
+		tile = true, tileSize = 16, edgeSize = 0,
+		insets = { left = 3, right = 3, top = 7, bottom = 7 }
+	}
+    
 	local function OnAcquire(self)
-
+		self:SetTreeWidth(DEFAULT_TREE_WIDTH,DEFAULT_TREE_SIZABLE)
 	end
 	
 	local function OnRelease(self)
+        
 		self.frame:ClearAllPoints()
 		self.frame:Hide()
 		self.status = nil
@@ -78,6 +89,8 @@ do
 			end
 		end
 		self.localstatus.scrollvalue = 0
+		self.localstatus.treewidth = DEFAULT_TREE_WIDTH
+		self.localstatus.treesizable = DEFAULT_TREE_SIZABLE
 	end
 	
 	local function GetButtonParents(line)
@@ -230,6 +243,13 @@ do
 		if not status.scrollvalue then
 			status.scrollvalue = 0
 		end
+		if not status.treewidth then
+			status.treewidth = DEFAULT_TREE_WIDTH
+		end
+		if not status.treesizable then
+			status.treesizable = DEFAULT_TREE_SIZABLE
+		end
+		self:SetTreeWidth(status.treewidth,status.treesizable)
 		self:RefreshTree()
 	end
 
@@ -494,6 +514,50 @@ do
 		end
 	end
 	
+    local function SetTreeWidth(self, treewidth, resizable)
+        if not resizable then
+            if type(treewidth) == 'number' then
+                resizable = false
+            elseif type(treewidth) == 'boolean' then
+                resizable = treewidth
+                treewidth = DEFAULT_TREE_WIDTH
+            else
+                resizable = false
+                treewidth = DEFAULT_TREE_WIDTH 
+            end
+        end
+        self.treeframe:SetWidth(treewidth)
+		self.dragger:EnableMouse(resizable)
+    end
+    
+	local function draggerLeave(this)
+		this:SetBackdropColor(1, 1, 1, 0)
+	end
+	
+	local function draggerEnter(this)
+		this:SetBackdropColor(1, 1, 1, 0.8)
+	end
+	
+	local function draggerDown(this)
+		local treeframe = this:GetParent()
+		treeframe:StartSizing("RIGHT")
+	end
+	
+	local function draggerUp(this)
+		local treeframe = this:GetParent()
+		local self = treeframe.obj
+		local frame = treeframe:GetParent()
+		treeframe:StopMovingOrSizing()
+		--treeframe:SetScript("OnUpdate", nil)
+		treeframe:SetUserPlaced(false)
+		treeframe:SetPoint("TOPLEFT",frame,"TOPLEFT",0,0)
+		treeframe:SetPoint("BOTTOMLEFT",frame,"BOTTOMLEFT",0,0)
+        treeframe.obj:Fire("OnTreeResize",treeframe:GetWidth())
+        
+        local status = self.status or self.localstatus
+    	status.treewidth = treeframe:GetWidth()
+	end
+
 	local createdcount = 0
 	local function Constructor()
 		local frame = CreateFrame("Frame",nil,UIParent)
@@ -510,7 +574,7 @@ do
 		treeframe.obj = self
 		treeframe:SetPoint("TOPLEFT",frame,"TOPLEFT",0,0)
 		treeframe:SetPoint("BOTTOMLEFT",frame,"BOTTOMLEFT",0,0)
-		treeframe:SetWidth(183)
+		treeframe:SetWidth(DEFAULT_TREE_WIDTH)
 		treeframe:SetScript("OnUpdate",FirstFrameUpdate)
 		treeframe:SetScript("OnSizeChanged",ResizeUpdate)
 		
@@ -520,11 +584,27 @@ do
 		treeframe:SetBackdropColor(0.1,0.1,0.1,0.5)
 		treeframe:SetBackdropBorderColor(0.4,0.4,0.4)
 		
+        treeframe:SetResizable(true)
+		treeframe:SetMinResize(100, 1)
+		treeframe:SetMaxResize(400,1600)
+		local dragger = CreateFrame("Frame", nil, treeframe)
+		dragger:SetWidth(8)
+		dragger:SetPoint("TOP", treeframe, "TOPRIGHT")
+		dragger:SetPoint("BOTTOM", treeframe, "BOTTOMRIGHT")
+		dragger:SetBackdrop(DraggerBackdrop)
+		dragger:SetBackdropColor(1, 1, 1, 0)
+		dragger:SetScript("OnMouseDown", draggerDown)
+		dragger:SetScript("OnMouseUp", draggerUp)
+		dragger:SetScript("OnEnter", draggerEnter)
+		dragger:SetScript("OnLeave", draggerLeave)
+		
+        self.dragger = dragger
 		self.treeframe = treeframe
 		self.OnRelease = OnRelease
 		self.OnAcquire = OnAcquire
 		
 		self.SetTree = SetTree
+        self.SetTreeWidth = SetTreeWidth
 		self.RefreshTree = RefreshTree
 		self.SetStatusTable = SetStatusTable
 		self.BuildLevel = BuildLevel
@@ -560,7 +640,7 @@ do
 
 		local border = CreateFrame("Frame",nil,frame)
 		self.border = border
-		border:SetPoint("TOPLEFT",frame,"TOPLEFT",179,0)
+		border:SetPoint("TOPLEFT",treeframe,"TOPRIGHT", 0,0)
 		border:SetPoint("BOTTOMRIGHT",frame,"BOTTOMRIGHT",0,0)
 		
 		border:SetBackdrop(PaneBackdrop)

@@ -29,7 +29,7 @@ local AceGUI = LibStub("AceGUI-3.0")
 --------------------------
 do
 	local Type = "TabGroup"
-	local Version = 4
+	local Version = 5
 
 	local PaneBackdrop  = {
 		bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
@@ -38,11 +38,11 @@ do
 		insets = { left = 3, right = 3, top = 5, bottom = 3 }
 	}
 	
-	local function Acquire(self)
+	local function OnAcquire(self)
 
 	end
 	
-	local function Release(self)
+	local function OnRelease(self)
 		self.frame:ClearAllPoints()
 		self.frame:Hide()
 		self.status = nil
@@ -245,8 +245,8 @@ do
 
 		self.localstatus = {}
 		
-		self.Release = Release
-		self.Acquire = Acquire
+		self.OnRelease = OnRelease
+		self.OnAcquire = OnAcquire
 		self.SetTitle = SetTitle
 		self.CreateTab = CreateTab
 		self.SelectTab = SelectTab
