@@ -51,7 +51,7 @@ end
 
 do
 	local Type = "TreeGroup"
-	local Version = 9
+	local Version = 10
 	
 	local DEFAULT_TREE_WIDTH = 175
 	local DEFAULT_TREE_SIZABLE = true
@@ -479,14 +479,29 @@ do
 		end
 	end
 	
+	local function frameOnSizeChanged(this)
+		this.obj:OnWidthSet(this:GetWidth())
+	end
+	
 	local function OnWidthSet(self, width)
+
 		local content = self.content
-		local contentwidth = width - 199
+		local treeframe = self.treeframe
+		local status = self.status or self.localstatus
+
+		local contentwidth = width - status.treewidth - 20
 		if contentwidth < 0 then
 			contentwidth = 0
 		end
 		content:SetWidth(contentwidth)
 		content.width = contentwidth
+		
+		local maxtreewidth = math.min(400, width - 50)
+		
+		if maxtreewidth > 100 and status.treewidth > maxtreewidth then
+			self:SetTreeWidth(maxtreewidth, status.treesizable)
+		end
+		treeframe:SetMaxResize(maxtreewidth,1600)
 	end
 	
 	
@@ -528,6 +543,10 @@ do
         end
         self.treeframe:SetWidth(treewidth)
 		self.dragger:EnableMouse(resizable)
+		
+		local status = self.status or self.localstatus
+    	status.treewidth = treewidth
+    	status.treesizable = resizable
     end
     
 	local function draggerLeave(this)
@@ -620,6 +639,7 @@ do
 		
 		self.frame = frame
 		frame.obj = self
+		frame:SetScript("OnSizeChanged", frameOnSizeChanged)
 		createdcount = createdcount + 1
 		local scrollbar = CreateFrame("Slider",("AceConfigDialogTreeGroup%dScrollBar"):format(createdcount),treeframe,"UIPanelScrollBarTemplate")
 		self.scrollbar = scrollbar
