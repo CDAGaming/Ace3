@@ -27,9 +27,10 @@ local AceGUI = LibStub("AceGUI-3.0")
 --------------------------
 -- Tab Group            --
 --------------------------
+
 do
 	local Type = "TabGroup"
-	local Version = 5
+	local Version = 6
 
 	local PaneBackdrop  = {
 		bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
@@ -51,34 +52,18 @@ do
 		end
 	end
 	
-	local function Tab_FixWidth(self)
-		self:SetScript("OnUpdate",nil)
-		self:SetWidth(self.text:GetWidth()+20)
-	end
-	
 	local function Tab_SetText(self, text)
-		self.text:SetText(text)
-		self:SetScript("OnUpdate",Tab_FixWidth)
+		self:_SetText(text)
+		PanelTemplates_TabResize(0, self)
 	end
 	
 	local function UpdateTabLook(self)
-		if self.selected then
-			self.left:SetAlpha(1)
-			self.right:SetAlpha(1)
-			self.middle:SetAlpha(1)
-			self.text:SetTextColor(1,1,1)
-			self:GetHighlightTexture():Hide()
-		else
-			self.left:SetAlpha(0.5)
-			self.right:SetAlpha(0.5)
-			self.middle:SetAlpha(0.5)
-			self.text:SetTextColor(1,0.82,0)
-			self:GetHighlightTexture():Show()
-		end
-		
 		if self.disabled then
-			self.text:SetTextColor(0.5,0.5,0.5)
-			self:GetHighlightTexture():Hide()
+			PanelTemplates_SetDisabledTabState(self)
+		elseif self.selected then
+			PanelTemplates_SelectTab(self)
+		else
+			PanelTemplates_DeselectTab(self)
 		end
 	end
 	
@@ -99,56 +84,17 @@ do
 	end
 	
 	local function CreateTab(self, id)
-		local tab = CreateFrame("Button",nil,self.border)
+		local tabname = "AceGUITabGroup"..self.num.."Tab"..id
+		local tab = CreateFrame("Button",tabname,self.border,"OptionsFrameTabButtonTemplate")
 		tab.obj = self
 		tab.id = id
-		tab:SetWidth(64)
-		tab:SetHeight(32)
 		
 		tab:SetScript("OnClick",Tab_OnClick)
-		
-		tab:SetHighlightTexture("Interface\\PaperDollInfoFrame\\UI-Character-Tab-Highlight")
-		tab:GetHighlightTexture():SetBlendMode("ADD")
-		tab:GetHighlightTexture():SetPoint("TOPLEFT",tab,"TOPLEFT",2,-7)
-		tab:GetHighlightTexture():SetPoint("BOTTOMRIGHT",tab,"BOTTOMRIGHT",-2,-3)
-		local left = tab:CreateTexture(nil,"BACKGROUND")
-		local middle = tab:CreateTexture(nil,"BACKGROUND")
-		local right = tab:CreateTexture(nil,"BACKGROUND")
-		local text = tab:CreateFontString(nil,"BACKGROUND","GameFontNormalSmall")
-		
-		tab.text = text
-		tab.left = left
-		tab.right = right
-		tab.middle = middle
+
+		tab._SetText = tab.SetText
 		tab.SetText = Tab_SetText
 		tab.SetSelected = Tab_SetSelected
 		tab.SetDisabled = Tab_SetDisabled
-		
-		text:SetPoint("LEFT",tab,"LEFT",5,-4)
-		text:SetPoint("RIGHT",tab,"RIGHT",-5,-4)
-		text:SetHeight(18)
-		text:SetText("")
-		
-		left:SetTexture("Interface\\ChatFrame\\ChatFrameTab")
-		middle:SetTexture("Interface\\ChatFrame\\ChatFrameTab")
-		right:SetTexture("Interface\\ChatFrame\\ChatFrameTab")
-		
-		left:SetWidth(16)
-		left:SetHeight(32)
-		middle:SetWidth(44)
-		middle:SetHeight(32)
-		right:SetWidth(16)
-		right:SetHeight(32)
-		
-		left:SetTexCoord(0,0.25,0,1)
-		middle:SetTexCoord(0.25,0.75,0,1)
-		right:SetTexCoord(0.75,1,0,1)
-		
-		left:SetPoint("TOPLEFT",tab,"TOPLEFT",0,0)
-		right:SetPoint("TOPRIGHT",tab,"TOPRIGHT",0,0)
-		
-		middle:SetPoint("LEFT",left,"RIGHT",0,0)
-		middle:SetPoint("RIGHT",right,"LEFT",0,0)
 		
 		return tab
 	end
@@ -195,22 +141,41 @@ do
 		for i, v in ipairs(tabs) do
 			v:Hide()
 		end
+		local row = 1
+
+		local usedwidth = 0
+		local width = self.frame:GetWidth()
+
 		for i, v in ipairs(tablist) do
 			local tab = tabs[i]
 			if not tab then
 				tab = self:CreateTab(i)
 				tabs[i] = tab
-				if i == 1 then
-					tab:SetPoint("BOTTOMLEFT",self.border,"TOPLEFT",0,-3)
-				else
-					tab:SetPoint("LEFT",tabs[i-1],"RIGHT",-3,0)
-				end					
 			end
+
 			tab:Show()
 			tab:SetText(v.text)
 			tab:SetDisabled(v.disabled)
 			tab.value = v.value
+			
+			local tabwidth = tab:GetWidth()
+			
+			tab:ClearAllPoints()
+			if i == 1 then
+				tab:SetPoint("TOPLEFT",self.frame,"TOPLEFT",0,-7-(row-1)*20 )
+				usedwidth = tab:GetWidth() 
+			else
+				usedwidth = usedwidth + tab:GetWidth() -10
+				if usedwidth > width then
+					row = row + 1
+					usedwidth = tab:GetWidth()-10
+					tab:SetPoint("TOPLEFT",self.frame,"TOPLEFT",0,-7-(row-1)*20 )
+				else
+					tab:SetPoint("LEFT",tabs[i-1],"RIGHT",-10,0)
+				end				
+			end			
 		end
+		self.border:SetPoint("TOPLEFT",self.frame,"TOPLEFT",3,-10-((row)*20))
 		if #tablist > 1 then
 			self:SelectTab(status.selected or tablist[1].value)
 		end
@@ -224,6 +189,7 @@ do
 		end
 		content:SetWidth(contentwidth)
 		content.width = contentwidth
+		BuildTabs(self)
 	end
 	
 	
@@ -238,10 +204,13 @@ do
 	end
 	
 
+
 	local function Constructor()
 		local frame = CreateFrame("Frame",nil,UIParent)
 		local self = {}
 		self.type = Type
+		
+		self.num = AceGUI:GetNextWidgetNum(Type)
 
 		self.localstatus = {}
 		
@@ -274,7 +243,7 @@ do
 		
 		local border = CreateFrame("Frame",nil,frame)
 		self.border = border
-		border:SetPoint("TOPLEFT",frame,"TOPLEFT",3,-37)
+		border:SetPoint("TOPLEFT",frame,"TOPLEFT",3,-27)
 		border:SetPoint("BOTTOMRIGHT",frame,"BOTTOMRIGHT",-3,3)
 		
 		border:SetBackdrop(PaneBackdrop)

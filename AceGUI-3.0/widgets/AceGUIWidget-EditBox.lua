@@ -11,7 +11,7 @@ local AceGUI = LibStub("AceGUI-3.0")
 ]]
 do
 	local Type = "EditBox"
-	local Version = 7
+	local Version = 8
 
 	local function OnAcquire(self)
 		self:SetDisabled(false)
@@ -132,14 +132,15 @@ do
 		end
 	end
 	
-	local count = 0
+
 	local function Constructor()
-		count = count + 1
+		local num  = AceGUI:GetNextWidgetNum(Type)
 		local frame = CreateFrame("Frame",nil,UIParent)
-		local editbox = CreateFrame("EditBox","AceGUI-3.0EditBox"..count,frame,"InputBoxTemplate")
+		local editbox = CreateFrame("EditBox","AceGUI-3.0EditBox"..num,frame,"InputBoxTemplate")
 		
 		local self = {}
 		self.type = Type
+		self.num = num
 
 		self.OnRelease = OnRelease
 		self.OnAcquire = OnAcquire

@@ -10,7 +10,7 @@ local AceGUI = LibStub("AceGUI-3.0")
 ]]
 do
 	local Type = "Dropdown"
-	local Version = 11
+	local Version = 12
 	local ControlBackdrop  = {
 		bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background",
 		edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Border",
@@ -240,12 +240,13 @@ do
 		return frame
 	end
 	
-	local count = 0
+
 	local function Constructor()
-		count = count + 1 
+		local num  = AceGUI:GetNextWidgetNum(Type)
 		local self = {}
+		self.num = num
 		local frame = CreateFrame("Frame",nil,UIParent)
-		local dropdown = CreateFrame("Frame","AceGUI30DropDown" .. count,frame, "UIDropDownMenuTemplate")
+		local dropdown = CreateFrame("Frame","AceGUI30DropDown" .. num,frame, "UIDropDownMenuTemplate")
 		self.dropdown = dropdown
 		self.type = Type
 

@@ -5,7 +5,7 @@ local AceGUI = LibStub("AceGUI-3.0")
 --------------------------
 do
 	local Type = "Button"
-	local Version = 6
+	local Version = 7
 	
 	local function OnAcquire(self)
 	end
@@ -42,11 +42,11 @@ do
 		end
 	end
 	
-	local count = 0
 	local function Constructor()
-		count = count + 1
-		local frame = CreateFrame("Button","AceGUI30Button"..count,UIParent,"UIPanelButtonTemplate2")
+		local num  = AceGUI:GetNextWidgetNum(Type)
+		local frame = CreateFrame("Button","AceGUI30Button"..num,UIParent,"UIPanelButtonTemplate2")
 		local self = {}
+		self.num = num
 		self.type = Type
 		self.frame = frame
 

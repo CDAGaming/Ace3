@@ -5,7 +5,7 @@ local AceGUI = LibStub("AceGUI-3.0")
 --------------------------
 do
 	local Type = "Keybinding"
-	local Version = 7
+	local Version = 8
 
 	local ControlBackdrop  = {
 		bgFile = "Interface\\Tooltips\\UI-Tooltip-Background",
@@ -126,15 +126,16 @@ do
 		self.label:SetText(label or "")
 	end
 
-	local count = 0
+
 	local function Constructor()
-		count = count + 1
+		local num  = AceGUI:GetNextWidgetNum(Type)
 		local frame = CreateFrame("Frame",nil,UIParent)
 		
-		local button = CreateFrame("Button","AceGUI-3.0 KeybindingButton"..count,frame,"UIPanelButtonTemplate2")
+		local button = CreateFrame("Button","AceGUI-3.0 KeybindingButton"..num,frame,"UIPanelButtonTemplate2")
 		
 		local self = {}
 		self.type = Type
+		self.num = num
 
 		local text = button:GetFontString()
 		text:SetPoint("LEFT",button,"LEFT",7,0)

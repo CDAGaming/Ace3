@@ -1,5 +1,5 @@
 --[[ $Id$ ]]
-local ACEGUI_MAJOR, ACEGUI_MINOR = "AceGUI-3.0", 10
+local ACEGUI_MAJOR, ACEGUI_MINOR = "AceGUI-3.0", 11
 local AceGUI, oldminor = LibStub:NewLibrary(ACEGUI_MAJOR, ACEGUI_MINOR)
 
 if not AceGUI then return end -- No upgrade needed
@@ -394,6 +394,16 @@ function AceGUI:GetLayout(Name)
 	return LayoutRegistry[Name]
 end
 
+AceGUI.counts = AceGUI.counts or {}
+
+function AceGUI:GetNextWidgetNum(type)
+	if not self.counts[type] then
+		self.counts[type] = 0
+	end
+	self.counts[type] = self.counts[type] + 1
+	return self.counts[type]
+end
+
 --[[ Widget Template
 
 --------------------------
@@ -402,11 +412,11 @@ end
 do
 	local Type = "Type"
 	
-	local function Acquire(self)
+	local function OnAcquire(self)
 
 	end
 	
-	local function Release(self)
+	local function OnRelease(self)
 		self.frame:ClearAllPoints()
 		self.frame:Hide()
 	end
@@ -417,8 +427,8 @@ do
 		local self = {}
 		self.type = Type
 
-		self.Release = Release
-		self.Acquire = Acquire
+		self.OnRelease = OnRelease
+		self.OnAcquire = OnAcquire
 		
 		self.frame = frame
 		frame.obj = self
