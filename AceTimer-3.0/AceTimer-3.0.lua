@@ -264,6 +264,7 @@ end
 -- Returns true if a timer was cancelled
 
 function AceTimer:CancelTimer(handle, silent)
+	if not handle then return end -- nil handle -> bail out without erroring
 	if type(handle)~="string" then
 		error(MAJOR..": CancelTimer(handle): 'handle' - expected a string", 2)	-- for now, anyway
 	end
