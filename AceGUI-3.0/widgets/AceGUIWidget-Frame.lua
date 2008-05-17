@@ -10,7 +10,7 @@ local AceGUI = LibStub("AceGUI-3.0")
 ]]
 do
 	local Type = "Frame"
-	local Version = 4
+	local Version = 5
 
 	local FrameBackdrop = {
 		bgFile="Interface\\DialogFrame\\UI-DialogBox-Background",
@@ -37,6 +37,8 @@ do
 		status.height = this:GetHeight()
 		status.top = this:GetTop()
 		status.left = this:GetLeft()
+		self:OnWidthSet(status.width)
+		self:OnHeightSet(status.height)
 	end
 	
 	local function closeOnClick(this)

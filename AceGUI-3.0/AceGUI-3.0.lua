@@ -1,5 +1,5 @@
 --[[ $Id$ ]]
-local ACEGUI_MAJOR, ACEGUI_MINOR = "AceGUI-3.0", 11
+local ACEGUI_MAJOR, ACEGUI_MINOR = "AceGUI-3.0", 12
 local AceGUI, oldminor = LibStub:NewLibrary(ACEGUI_MAJOR, ACEGUI_MINOR)
 
 if not AceGUI then return end -- No upgrade needed
@@ -464,6 +464,7 @@ AceGUI:RegisterLayout("List",
 	 function(content, children)
 	 
 	 	local height = 0
+	 	local width = content.width or content:GetWidth() or 0
 		for i, child in ipairs(children) do
 			
 			
@@ -477,6 +478,7 @@ AceGUI:RegisterLayout("List",
 			end
 			
 			if child.width == "fill" then
+				child:SetWidth(width)
 				frame:SetPoint("RIGHT",content,"RIGHT")
 				if child.OnWidthSet then
 					child:OnWidthSet(content.width or content:GetWidth())
@@ -496,7 +498,9 @@ AceGUI:RegisterLayout("List",
 AceGUI:RegisterLayout("Fill",
 	 function(content, children)
 		if children[1] then
-			children[1].frame:SetAllPoints(content)	
+			children[1]:SetWidth(content:GetWidth() or 0)
+			children[1]:SetHeight(content:GetHeight() or 0)
+			children[1].frame:SetAllPoints(content)
 			children[1].frame:Show()
 			safecall( content.obj.LayoutFinished, content.obj, nil, children[1].frame:GetHeight() )
 		end

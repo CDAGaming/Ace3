@@ -30,7 +30,7 @@ local AceGUI = LibStub("AceGUI-3.0")
 
 do
 	local Type = "TabGroup"
-	local Version = 6
+	local Version = 7
 
 	local PaneBackdrop  = {
 		bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
@@ -50,6 +50,7 @@ do
 		for k in pairs(self.localstatus) do
 			self.localstatus[k] = nil
 		end
+		self.tablist = nil
 	end
 	
 	local function Tab_SetText(self, text)
@@ -135,17 +136,18 @@ do
 	local function BuildTabs(self)
 		local status = self.status or self.localstatus
 		local tablist = self.tablist
-
+		
 		local tabs = self.tabs
 		
 		for i, v in ipairs(tabs) do
 			v:Hide()
 		end
+		if not tablist then return end
 		local row = 1
 
 		local usedwidth = 0
-		local width = self.frame:GetWidth()
-
+		local width = self.frame.width or self.frame:GetWidth() or 0
+		
 		for i, v in ipairs(tablist) do
 			local tab = tabs[i]
 			if not tab then
@@ -175,7 +177,8 @@ do
 				end				
 			end			
 		end
-		self.border:SetPoint("TOPLEFT",self.frame,"TOPLEFT",3,-10-((row)*20))
+		self.borderoffset = 10+((row)*20)
+		self.border:SetPoint("TOPLEFT",self.frame,"TOPLEFT",3,-self.borderoffset)
 		if #tablist > 1 then
 			self:SelectTab(status.selected or tablist[1].value)
 		end
@@ -195,7 +198,7 @@ do
 	
 	local function OnHeightSet(self, height)
 		local content = self.content
-		local contentheight = height - 26
+		local contentheight = height - (self.borderoffset + 23)
 		if contentheight < 0 then
 			contentheight = 0
 		end
@@ -203,7 +206,10 @@ do
 		content.height = contentheight
 	end
 	
-
+	local function frameOnSizeChanged(this)
+		local self = this.obj
+		self:OnWidthSet(this:GetWidth())
+	end
 
 	local function Constructor()
 		local frame = CreateFrame("Frame",nil,UIParent)
@@ -232,6 +238,7 @@ do
 		frame:SetHeight(100)
 		frame:SetWidth(100)
 		frame:SetFrameStrata("FULLSCREEN_DIALOG")
+		frame:SetScript("OnSizeChanged", frameOnSizeChanged)
 		
 		local titletext = frame:CreateFontString(nil,"OVERLAY","GameFontNormal")
 		titletext:SetPoint("TOPLEFT",frame,"TOPLEFT",14,0)
@@ -243,6 +250,7 @@ do
 		
 		local border = CreateFrame("Frame",nil,frame)
 		self.border = border
+		self.borderoffset = 27
 		border:SetPoint("TOPLEFT",frame,"TOPLEFT",3,-27)
 		border:SetPoint("BOTTOMRIGHT",frame,"BOTTOMRIGHT",-3,3)
 		
