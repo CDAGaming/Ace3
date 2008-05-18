@@ -16,7 +16,7 @@ local AceGUI = LibStub("AceGUI-3.0")
 ]]
 do
 	local Type = "DropdownGroup"
-	local Version = 7
+	local Version = 8
 	
 	local function OnAcquire(self)
 		self.dropdown:SetText("")
@@ -52,7 +52,7 @@ do
 	end
 	
 	local function SetGroupList(self,list)
-		self.dropdown.list = list
+		self.dropdown:SetList(list)
 	end
 	
 	-- called to set an external table to store status in
