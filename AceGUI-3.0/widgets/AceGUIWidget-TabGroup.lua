@@ -30,7 +30,7 @@ local AceGUI = LibStub("AceGUI-3.0")
 
 do
 	local Type = "TabGroup"
-	local Version = 8
+	local Version = 9
 
 	local PaneBackdrop  = {
 		bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
@@ -179,9 +179,6 @@ do
 		end
 		self.borderoffset = 10+((row)*20)
 		self.border:SetPoint("TOPLEFT",self.frame,"TOPLEFT",3,-self.borderoffset)
-		if #tablist > 1 then
-			self:SelectTab(status.selected or tablist[1].value)
-		end
 	end
 	
 	local function OnWidthSet(self, width)
