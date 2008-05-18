@@ -21,37 +21,13 @@ do
 	end
 end
 
--------------
--- Widgets --
--------------
---[[
-	Widgets must provide the following functions
-		OnAcquire() - Called when the object is aquired, should set everything to a default hidden state
-		OnRelease() - Called when the object is Released, should remove any anchors and hide the Widget
-		
-	And the following members
-		frame - the frame or derivitive object that will be treated as the widget for size and anchoring purposes
-		type - the type of the object, same as the name given to :RegisterWidget()
-		
-	Widgets contain a table called userdata, this is a safe place to store data associated with the wigdet
-	It will be cleared automatically when a widget is released
-	Placing values directly into a widget object should be avoided
-	
-	If the Widget can act as a container for other Widgets the following
-		content - frame or derivitive that children will be anchored to
-		
-	The Widget can supply the following Optional Members
-
-
-]]
-
 --------------
 -- TreeView --
 --------------
 
 do
 	local Type = "TreeGroup"
-	local Version = 10
+	local Version = 11
 	
 	local DEFAULT_TREE_WIDTH = 175
 	local DEFAULT_TREE_SIZABLE = true
@@ -479,10 +455,6 @@ do
 		end
 	end
 	
-	local function frameOnSizeChanged(this)
-		this.obj:OnWidthSet(this:GetWidth())
-	end
-	
 	local function OnWidthSet(self, width)
 
 		local content = self.content
@@ -639,7 +611,7 @@ do
 		
 		self.frame = frame
 		frame.obj = self
-		frame:SetScript("OnSizeChanged", frameOnSizeChanged)
+
 		createdcount = createdcount + 1
 		local scrollbar = CreateFrame("Slider",("AceConfigDialogTreeGroup%dScrollBar"):format(createdcount),treeframe,"UIPanelScrollBarTemplate")
 		self.scrollbar = scrollbar

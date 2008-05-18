@@ -1,5 +1,5 @@
 --[[ $Id$ ]]
-local ACEGUI_MAJOR, ACEGUI_MINOR = "AceGUI-3.0", 12
+local ACEGUI_MAJOR, ACEGUI_MINOR = "AceGUI-3.0", 13
 local AceGUI, oldminor = LibStub:NewLibrary(ACEGUI_MAJOR, ACEGUI_MINOR)
 
 if not AceGUI then return end -- No upgrade needed
@@ -212,7 +212,12 @@ end
 		content - frame or derivitive that children will be anchored to
 		
 	The Widget can supply the following Optional Members
-
+		:OnWidthSet(width) - Called when the width of the widget is changed
+		:OnHeightSet(height) - Called when the height of the widget is changed
+			Widgets should not use the OnSizeChanged events of thier frame or content members, use these methods instead
+			AceGUI already sets a handler to the event
+		:OnLayoutFinished(width, height) - called after a layout has finished, the width and height will be the width and height of the
+			area used for controls. These can be nil if the layout used the existing size to layout the controls.
 
 ]]
 
@@ -329,15 +334,25 @@ do
 		self.LayoutFunc = AceGUI:GetLayout(Layout)
 	end
 
+	local function FrameResize(this)
+		local self = this.obj
+		if this:GetWidth() and this:GetHeight() then
+			if self.OnWidthSet then
+				self:OnWidthSet(this:GetWidth())
+			end
+			if self.OnHeightSet then
+				self:OnHeightSet(this:GetHeight())
+			end
+		end
+	end
 	
 	local function ContentResize(this)
-		if this.lastwidth ~= this:GetWidth() then
+		if this:GetWidth() and this:GetHeight() then
 			this.width = this:GetWidth()
 			this.height = this:GetHeight()
 			this.obj:DoLayout()
 		end
 	end
-
 
 	setmetatable(WidgetContainerBase,{__index=WidgetBase})
 
@@ -347,7 +362,10 @@ do
 		widget.userdata = {}
 		widget.events = {}
 		widget.base = WidgetContainerBase
+		widget.content.obj = widget
+		widget.frame.obj = widget
 		widget.content:SetScript("OnSizeChanged",ContentResize)
+		widget.frame:SetScript("OnSizeChanged",FrameResize)
 		setmetatable(widget,{__index=WidgetContainerBase})
 		widget:SetLayout("List")
 	end
@@ -356,6 +374,8 @@ do
 		widget.userdata = {}
 		widget.events = {}
 		widget.base = WidgetBase
+		widget.frame.obj = widget
+		widget.frame:SetScript("OnSizeChanged",FrameResize)
 		setmetatable(widget,{__index=WidgetBase})
 	end
 end

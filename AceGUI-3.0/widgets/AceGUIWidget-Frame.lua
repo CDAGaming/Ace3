@@ -10,7 +10,7 @@ local AceGUI = LibStub("AceGUI-3.0")
 ]]
 do
 	local Type = "Frame"
-	local Version = 5
+	local Version = 6
 
 	local FrameBackdrop = {
 		bgFile="Interface\\DialogFrame\\UI-DialogBox-Background",
@@ -28,17 +28,6 @@ do
 
 	local function frameOnClose(this)
 		this.obj:Fire("OnClose")
-	end
-	
-	local function frameOnSizeChanged(this)
-		local self = this.obj
-		local status = self.status or self.localstatus
-		status.width = this:GetWidth()
-		status.height = this:GetHeight()
-		status.top = this:GetTop()
-		status.left = this:GetLeft()
-		self:OnWidthSet(status.width)
-		self:OnHeightSet(status.height)
 	end
 	
 	local function closeOnClick(this)
@@ -135,7 +124,7 @@ do
 	
 	local function OnWidthSet(self, width)
 		local content = self.content
-		local contentwidth = width - 44
+		local contentwidth = width - 34
 		if contentwidth < 0 then
 			contentwidth = 0
 		end
@@ -154,7 +143,6 @@ do
 		content.height = contentheight
 	end
 	
-
 	local function Constructor()
 		local frame = CreateFrame("Frame",nil,UIParent)
 		local self = {}
@@ -188,7 +176,6 @@ do
 		frame:SetBackdropColor(0,0,0,1)
 		frame:SetScript("OnHide",frameOnClose)
 		frame:SetMinResize(400,200)
-		frame:SetScript("OnSizeChanged", frameOnSizeChanged)
 		frame:SetToplevel(true)
 		
 		local closebutton = CreateFrame("Button",nil,frame,"UIPanelButtonTemplate")

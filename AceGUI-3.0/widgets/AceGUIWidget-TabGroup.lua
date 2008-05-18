@@ -30,7 +30,7 @@ local AceGUI = LibStub("AceGUI-3.0")
 
 do
 	local Type = "TabGroup"
-	local Version = 7
+	local Version = 8
 
 	local PaneBackdrop  = {
 		bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
@@ -205,11 +205,6 @@ do
 		content:SetHeight(contentheight)
 		content.height = contentheight
 	end
-	
-	local function frameOnSizeChanged(this)
-		local self = this.obj
-		self:OnWidthSet(this:GetWidth())
-	end
 
 	local function Constructor()
 		local frame = CreateFrame("Frame",nil,UIParent)
@@ -238,7 +233,6 @@ do
 		frame:SetHeight(100)
 		frame:SetWidth(100)
 		frame:SetFrameStrata("FULLSCREEN_DIALOG")
-		frame:SetScript("OnSizeChanged", frameOnSizeChanged)
 		
 		local titletext = frame:CreateFontString(nil,"OVERLAY","GameFontNormal")
 		titletext:SetPoint("TOPLEFT",frame,"TOPLEFT",14,0)
