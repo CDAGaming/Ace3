@@ -30,7 +30,7 @@ local AceGUI = LibStub("AceGUI-3.0")
 
 do
 	local Type = "TabGroup"
-	local Version = 10
+	local Version = 11
 
 	local PaneBackdrop  = {
 		bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
@@ -166,7 +166,7 @@ do
 			tab:ClearAllPoints()
 			if i == 1 then
 				tab:SetPoint("TOPLEFT",self.frame,"TOPLEFT",0,-7-(row-1)*20 )
-				usedwidth = tab:GetWidth() 
+				usedwidth = tab:GetWidth() -10
 				tabcount = tabcount + 1
 				rowstart = i
 			else
@@ -174,12 +174,7 @@ do
 				usedwidth = usedwidth + tab:GetWidth() -10
 				if usedwidth > width then
 					
-					local padding 
-					if row == 1 then
-						padding = (width - rowwidth) / (tabcount)
-					else
-						padding = (width - rowwidth - 10) / (tabcount)
-					end
+					local padding = (width - rowwidth - 10) / (tabcount)
 					for n = rowstart, i-1 do
 						PanelTemplates_TabResize(padding, tabs[n])
 					end
