@@ -30,7 +30,7 @@ local AceGUI = LibStub("AceGUI-3.0")
 
 do
 	local Type = "TabGroup"
-	local Version = 9
+	local Version = 10
 
 	local PaneBackdrop  = {
 		bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
@@ -144,7 +144,8 @@ do
 		end
 		if not tablist then return end
 		local row = 1
-
+		local tabcount = 0
+		local rowstart = 0
 		local usedwidth = 0
 		local width = self.frame.width or self.frame:GetWidth() or 0
 		
@@ -166,16 +167,36 @@ do
 			if i == 1 then
 				tab:SetPoint("TOPLEFT",self.frame,"TOPLEFT",0,-7-(row-1)*20 )
 				usedwidth = tab:GetWidth() 
+				tabcount = tabcount + 1
+				rowstart = i
 			else
+				local rowwidth = usedwidth
 				usedwidth = usedwidth + tab:GetWidth() -10
 				if usedwidth > width then
+					
+					local padding 
+					if row == 1 then
+						padding = (width - rowwidth) / (tabcount)
+					else
+						padding = (width - rowwidth - 10) / (tabcount)
+					end
+					for n = rowstart, i-1 do
+						PanelTemplates_TabResize(padding, tabs[n])
+					end
 					row = row + 1
+					tabcount = 1
+					rowstart = i
 					usedwidth = tab:GetWidth()-10
 					tab:SetPoint("TOPLEFT",self.frame,"TOPLEFT",0,-7-(row-1)*20 )
 				else
 					tab:SetPoint("LEFT",tabs[i-1],"RIGHT",-10,0)
+					tabcount = tabcount + 1
 				end				
 			end			
+		end
+		local padding = (width - usedwidth - 10) / (tabcount)
+		for n = rowstart, #tabs do
+			PanelTemplates_TabResize(padding, tabs[n])
 		end
 		self.borderoffset = 10+((row)*20)
 		self.border:SetPoint("TOPLEFT",self.frame,"TOPLEFT",3,-self.borderoffset)
