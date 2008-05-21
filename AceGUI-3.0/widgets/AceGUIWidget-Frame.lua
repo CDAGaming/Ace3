@@ -10,7 +10,7 @@ local AceGUI = LibStub("AceGUI-3.0")
 ]]
 do
 	local Type = "Frame"
-	local Version = 6
+	local Version = 7
 
 	local FrameBackdrop = {
 		bgFile="Interface\\DialogFrame\\UI-DialogBox-Background",
@@ -112,8 +112,8 @@ do
 	local function ApplyStatus(self)
 		local status = self.status or self.localstatus
 		local frame = self.frame
-		frame:SetWidth(status.width or 700)
-		frame:SetHeight(status.height or 500)
+		self:SetWidth(status.width or 700)
+		self:SetHeight(status.height or 500)
 		if status.top and status.left then
 			frame:SetPoint("TOP",UIParent,"BOTTOM",0,status.top)
 			frame:SetPoint("LEFT",UIParent,"LEFT",status.left,0)
