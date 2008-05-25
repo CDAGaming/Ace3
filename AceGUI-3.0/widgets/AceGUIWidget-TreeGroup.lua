@@ -27,7 +27,7 @@ end
 
 do
 	local Type = "TreeGroup"
-	local Version = 11
+	local Version = 12
 	
 	local DEFAULT_TREE_WIDTH = 175
 	local DEFAULT_TREE_SIZABLE = true
@@ -541,6 +541,8 @@ do
 		treeframe:StopMovingOrSizing()
 		--treeframe:SetScript("OnUpdate", nil)
 		treeframe:SetUserPlaced(false)
+		--Without this :GetHeight will get stuck on the current height, causing the tree contents to not resize
+		treeframe:SetHeight(0)
 		treeframe:SetPoint("TOPLEFT",frame,"TOPLEFT",0,0)
 		treeframe:SetPoint("BOTTOMLEFT",frame,"BOTTOMLEFT",0,0)
         treeframe.obj:Fire("OnTreeResize",treeframe:GetWidth())
