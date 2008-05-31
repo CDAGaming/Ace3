@@ -3,7 +3,7 @@ AceConfigDialog-3.0
 
 ]]
 local LibStub = LibStub
-local MAJOR, MINOR = "AceConfigDialog-3.0", 17
+local MAJOR, MINOR = "AceConfigDialog-3.0", 18
 local lib = LibStub:NewLibrary(MAJOR, MINOR)
 
 if not lib then return end
@@ -725,6 +725,9 @@ local function ActivateControl(widget, event, ...)
 					lib:Open(user.appName)
 				end
 			end
+		--multiselects don't cause a refresh on 'OnValueChanged' only 'OnClosed'
+		elseif option.type == "multiselect" then
+			user.valuechanged = true
 		else
 			if iscustom then
 				lib:Open(user.appName, user.rootframe)
@@ -748,8 +751,31 @@ local function ActivateSlider(widget, event, value)
 	ActivateControl(widget,event,value)
 end
 
+--called from a checkbox that is part of an internally created multiselect group
+--this type is safe to refresh on activation of one control
 local function ActivateMultiControl(widget, event, ...)
 	ActivateControl(widget, event, widget.userdata.value, ...)
+	local user = widget.userdata
+	local iscustom = user.rootframe.userdata.iscustom
+
+	if iscustom then
+		lib:Open(user.appName, user.rootframe)
+	else
+		lib:Open(user.appName)
+	end
+end
+
+local function MultiControlOnClosed(widget, event, ...)
+	local user = widget.userdata
+	if user.valuechanged then
+		local iscustom = user.rootframe.userdata.iscustom
+	
+		if iscustom then
+			lib:Open(user.appName, user.rootframe)
+		else
+			lib:Open(user.appName)
+		end
+	end
 end
 
 local function FrameOnClose(widget, event)
@@ -1022,22 +1048,51 @@ local function FeedOptions(appName, options,container,rootframe,path,group,inlin
 
 				elseif v.type == "multiselect" then
 					local values = GetOptionsMemberValue("values", v, options, path, appName)
-					
-					control = gui:Create("InlineGroup")
-					control:SetLayout("Flow")
-					control:SetTitle(name)
-					control.width = "fill"
-
-					local valuesort = new()
-
 					local disabled = CheckOptionDisabled(v, options, path, appName)
-
+					
+					local controlType = v.dialogControl or v.control
+					
+					local valuesort = new()
 					if values then
 						for value, text in pairs(values) do
 							tinsert(valuesort, value)
 						end
+					end
+					table.sort(valuesort)	
+						
+					if controlType then
+						control = gui:Create(controlType)
+						if not control then
+							error(("Invalid Custom Control Type - %s"):format(tostring(controlType)))
+						end
+						control:SetMultiselect(true)
+						control:SetLabel(name)
+						control:SetList(values)
+						control:SetDisabled(disabled)
+						control:SetCallback("OnValueChanged",ActivateControl)
+						control:SetCallback("OnClosed", MultiControlOnClosed)
+						local width = GetOptionsMemberValue("width",v,options,path,appName)
+						if width == "double" then
+							control:SetWidth(width_multiplier * 2)
+						elseif width == "half" then
+							control:SetWidth(width_multiplier / 2)
+						elseif width == "full" then
+							control.width = "fill"
+						else
+							control:SetWidth(width_multiplier)
+						end
+						--check:SetTriState(v.tristate)
+						for i = 1, #valuesort do
+							local key = valuesort[i]
+							local value = GetOptionsMemberValue("get",v, options, path, appName, key)
+							control:SetItemValue(key,value)
+						end
+					else
+						control = gui:Create("InlineGroup")
+						control:SetLayout("Flow")
+						control:SetTitle(name)
+						control.width = "fill"
 
-						table.sort(valuesort)
 						control:PauseLayout()
 						local width = GetOptionsMemberValue("width",v,options,path,appName)
 						for i = 1, #valuesort do
@@ -1065,7 +1120,10 @@ local function FeedOptions(appName, options,container,rootframe,path,group,inlin
 						end
 						control:ResumeLayout()
 						control:DoLayout()
+
+						
 					end
+					
 					del(valuesort)
 
 				elseif v.type == "color" then
