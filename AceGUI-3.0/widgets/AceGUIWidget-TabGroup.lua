@@ -30,7 +30,7 @@ local AceGUI = LibStub("AceGUI-3.0")
 
 do
 	local Type = "TabGroup"
-	local Version = 12
+	local Version = 13
 
 	local PaneBackdrop  = {
 		bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
@@ -84,6 +84,16 @@ do
 		UpdateTabLook(self)
 	end
 	
+	local function Tab_OnEnter(this)
+		local self = this.obj
+		self:Fire("OnTabEnter", self.tabs[this.id].value, this)
+	end
+	
+	local function Tab_OnLeave(this)
+		local self = this.obj
+		self:Fire("OnTabLeave", self.tabs[this.id].value, this)
+	end
+	
 	local function CreateTab(self, id)
 		local tabname = "AceGUITabGroup"..self.num.."Tab"..id
 		local tab = CreateFrame("Button",tabname,self.border,"OptionsFrameTabButtonTemplate")
@@ -91,7 +101,9 @@ do
 		tab.id = id
 		
 		tab:SetScript("OnClick",Tab_OnClick)
-
+		tab:SetScript("OnEnter",Tab_OnEnter)
+		tab:SetScript("OnLeave",Tab_OnLeave)
+		
 		tab._SetText = tab.SetText
 		tab.SetText = Tab_SetText
 		tab.SetSelected = Tab_SetSelected

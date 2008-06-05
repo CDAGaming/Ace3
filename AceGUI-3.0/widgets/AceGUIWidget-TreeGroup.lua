@@ -27,7 +27,7 @@ end
 
 do
 	local Type = "TreeGroup"
-	local Version = 12
+	local Version = 13
 	
 	local DEFAULT_TREE_WIDTH = 175
 	local DEFAULT_TREE_SIZABLE = true
@@ -48,6 +48,7 @@ do
     
 	local function OnAcquire(self)
 		self:SetTreeWidth(DEFAULT_TREE_WIDTH,DEFAULT_TREE_SIZABLE)
+		self:EnableButtonTooltips(true)
 	end
 	
 	local function OnRelease(self)
@@ -113,16 +114,30 @@ do
 		self:RefreshTree()
 	end
     
-    local function Button_OnEnter(this)
-        GameTooltip:SetOwner(this, "ANCHOR_NONE")
-        GameTooltip:SetPoint("LEFT",this,"RIGHT")
-        GameTooltip:SetText(this.text:GetText(), 1, .82, 0, 1)
+    local function EnableButtonTooltips(self, enable)
+    	self.enabletooltips = enable
+    end
     
-		GameTooltip:Show()
+    local function Button_OnEnter(this)
+    	local self = this.obj
+    	self:Fire("OnButtonEnter", this.uniquevalue, this)
+    	
+    	if self.enabletooltips then
+	        GameTooltip:SetOwner(this, "ANCHOR_NONE")
+	        GameTooltip:SetPoint("LEFT",this,"RIGHT")
+	        GameTooltip:SetText(this.text:GetText(), 1, .82, 0, 1)
+	    
+			GameTooltip:Show()
+		end
 	end
 	
 	local function Button_OnLeave(this)
-		GameTooltip:Hide()
+		local self = this.obj
+		self:Fire("OnButtonLeave", this.uniquevalue, this)
+		
+		if self.enabletooltips then
+			GameTooltip:Hide()
+		end
 	end
     
     
@@ -610,6 +625,7 @@ do
 		self.SelectByPath = SelectByPath
 		self.OnWidthSet = OnWidthSet
 		self.OnHeightSet = OnHeightSet		
+		self.EnableButtonTooltips = EnableButtonTooltips
 		
 		self.frame = frame
 		frame.obj = self

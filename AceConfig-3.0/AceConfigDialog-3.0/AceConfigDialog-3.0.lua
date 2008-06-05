@@ -3,7 +3,7 @@ AceConfigDialog-3.0
 
 ]]
 local LibStub = LibStub
-local MAJOR, MINOR = "AceConfigDialog-3.0", 18
+local MAJOR, MINOR = "AceConfigDialog-3.0", 19
 local lib = LibStub:NewLibrary(MAJOR, MINOR)
 
 if not lib then return end
@@ -1214,6 +1214,51 @@ local function BuildPath(path, ...)
 	end
 end
 
+
+local function TreeOnButtonEnter(widget, event, uniquevalue, button)
+	local user = widget.userdata
+	if not user then return end
+	local options = user.options
+	local option = user.option
+	local path = user.path
+	local appName = user.appName
+	
+	local feedpath = new()
+	for i = 1, #path do
+		feedpath[i] = path[i]
+	end
+
+	BuildPath(feedpath, string.split("\001", uniquevalue))
+	local group = options
+	for i = 1, #feedpath do
+		if not group then return end
+		group = GetSubOption(group, feedpath[i])
+	end
+
+	local name = GetOptionsMemberValue("name", group, options, feedpath, appName)
+	local desc = GetOptionsMemberValue("desc", group, options, feedpath, appName)
+	
+	GameTooltip:SetOwner(button, "ANCHOR_NONE")
+	if widget.type == "TabGroup" then
+		GameTooltip:SetPoint("BOTTOM",button,"TOP")	
+	else
+		GameTooltip:SetPoint("LEFT",button,"RIGHT")	
+	end
+
+	GameTooltip:SetText(name, 1, .82, 0, 1)
+	
+	if type(desc) == "string" then
+		GameTooltip:AddLine(desc, 1, 1, 1, 1)
+	end
+	
+	GameTooltip:Show()
+end
+
+local function TreeOnButtonLeave(widget, event, value, button)
+	GameTooltip:Hide()
+end
+
+
 local function GroupExists(appName, options, path, uniquevalue)
 	if not uniquevalue then return false end
 	
@@ -1267,7 +1312,6 @@ local function GroupSelected(widget, event, uniquevalue)
 
 	del(feedpath)
 end
-
 
 
 
@@ -1360,6 +1404,9 @@ function lib:FeedGroup(appName,options,container,rootframe,path)
 			local tab = gui:Create("TabGroup")
 			InjectInfo(tab, options, group, path, rootframe, appName)
 			tab:SetCallback("OnGroupSelected", GroupSelected)
+			tab:SetCallback("OnTabEnter", TreeOnButtonEnter)
+			tab:SetCallback("OnTabLeave", TreeOnButtonLeave)
+			
 			local status = lib:GetStatusTable(appName, path)
 			if not status.groups then
 				status.groups = {}
@@ -1415,12 +1462,15 @@ function lib:FeedGroup(appName,options,container,rootframe,path)
 
 			local tree = gui:Create("TreeGroup")
 			InjectInfo(tree, options, group, path, rootframe, appName)
-
+			tree:EnableButtonTooltips(false)
+			
 			tree.width = "fill"
 			tree.height = "fill"
 
 			tree:SetCallback("OnGroupSelected", GroupSelected)
-
+			tree:SetCallback("OnButtonEnter", TreeOnButtonEnter)
+			tree:SetCallback("OnButtonLeave", TreeOnButtonLeave)
+			
 			local status = lib:GetStatusTable(appName, path)
 			if not status.groups then
 				status.groups = {}
