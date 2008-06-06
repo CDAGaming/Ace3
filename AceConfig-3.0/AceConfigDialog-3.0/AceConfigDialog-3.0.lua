@@ -3,7 +3,7 @@ AceConfigDialog-3.0
 
 ]]
 local LibStub = LibStub
-local MAJOR, MINOR = "AceConfigDialog-3.0", 21
+local MAJOR, MINOR = "AceConfigDialog-3.0", 22
 local lib = LibStub:NewLibrary(MAJOR, MINOR)
 
 if not lib then return end
@@ -226,6 +226,7 @@ local function GetOptionsMemberValue(membername, option, options, path, appName,
 		end
 		
 		info.options = options
+		info.appName = appName
 		info[0] = appName
 		info.arg = option.arg
 		info.handler = handler
@@ -630,7 +631,7 @@ local function ActivateControl(widget, event, ...)
 	end
 
 	info.options = options
-	info[0] = user.appName
+	info.appName = user.appName
 	info.arg = option.arg
 	info.handler = handler
 	info.option = option
