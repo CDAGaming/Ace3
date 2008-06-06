@@ -3,7 +3,7 @@ AceConfigDialog-3.0
 
 ]]
 local LibStub = LibStub
-local MAJOR, MINOR = "AceConfigDialog-3.0", 20
+local MAJOR, MINOR = "AceConfigDialog-3.0", 21
 local lib = LibStub:NewLibrary(MAJOR, MINOR)
 
 if not lib then return end
@@ -828,7 +828,7 @@ local function ActivateMultiControl(widget, event, ...)
 	ActivateControl(widget, event, widget.userdata.value, ...)
 	local user = widget.userdata
 	local iscustom = user.rootframe.userdata.iscustom
-	local basepath = usr.rootframe.userdata.basepath
+	local basepath = user.rootframe.userdata.basepath
 	if iscustom then
 		lib:Open(user.appName, user.rootframe, basepath and unpack(basepath))
 	else
@@ -840,7 +840,7 @@ local function MultiControlOnClosed(widget, event, ...)
 	local user = widget.userdata
 	if user.valuechanged then
 		local iscustom = user.rootframe.userdata.iscustom
-		local basepath = usr.rootframe.userdata.basepath
+		local basepath = user.rootframe.userdata.basepath
 		if iscustom then
 			lib:Open(user.appName, user.rootframe, basepath and unpack(basepath))
 		else
