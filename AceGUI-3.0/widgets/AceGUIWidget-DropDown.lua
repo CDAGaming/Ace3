@@ -344,7 +344,7 @@ end
 
 do 
 	local widgetType = "Dropdown"
-	local widgetVersion = 16
+	local widgetVersion = 17
 	
 	--[[ Static data ]]--
 	
@@ -621,6 +621,8 @@ do
 		self.GetMultiselect = GetMultiselect
 		self.SetItemValue = SetItemValue
 		self.SetItemDisabled = SetItemDisabled
+		
+		self.alignoffset = 31
 		
 		frame:SetHeight(44)
 		frame:SetWidth(200)
