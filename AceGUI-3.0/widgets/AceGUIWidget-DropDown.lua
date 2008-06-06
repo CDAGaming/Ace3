@@ -344,7 +344,7 @@ end
 
 do 
 	local widgetType = "Dropdown"
-	local widgetVersion = 15
+	local widgetVersion = 16
 	
 	--[[ Static data ]]--
 	
@@ -449,6 +449,7 @@ do
 		self:SetText("")
 		self:SetLabel("")
 		self:SetDisabled(false)
+		self:SetMultiselect(false)
 		
 		self.value = nil
 		self.list = nil		

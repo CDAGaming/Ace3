@@ -3,7 +3,7 @@ AceConfigDialog-3.0
 
 ]]
 local LibStub = LibStub
-local MAJOR, MINOR = "AceConfigDialog-3.0", 19
+local MAJOR, MINOR = "AceConfigDialog-3.0", 20
 local lib = LibStub:NewLibrary(MAJOR, MINOR)
 
 if not lib then return end
@@ -443,6 +443,73 @@ function lib:GetStatusTable(appName, path)
 	return status.status
 end
 
+--[[
+	Sets the given path to be selected
+]]
+function lib:SelectGroup(appName, ...)
+	local path = new()
+
+	
+	local app = reg:GetOptionsTable(appName)
+	if not app then
+		error(("%s isn't registed with AceConfigRegistry, unable to open config"):format(appName), 2)
+	end
+	local options = app("dialog", MAJOR)
+	local group = options
+	local status = self:GetStatusTable(appName, path)
+	if not status.groups then
+		status.groups = {}
+	end
+	status = status.groups
+	local treevalue 
+	local treestatus 
+	
+	for n = 1, select('#',...) do
+		local key = select(n, ...)
+
+		if group.childGroups == "tab" or group.childGroups == "select" then
+			--if this is a tab or select group, select the group
+			status.selected = key
+			--children of this group are no longer extra levels of a tree
+			treevalue = nil
+		else
+			--tree group by default
+			if treevalue then
+				--this is an extra level of a tree group, build a uniquevalue for it
+				treevalue = treevalue.."\001"..key
+			else
+				--this is the top level of a tree group, the uniquevalue is the same as the key
+				treevalue = key
+				if not status.groups then
+					status.groups = {}
+				end
+				--save this trees status table for any extra levels or groups
+				treestatus = status
+			end
+			--make sure that the tree entry is open, and select it.
+			--the selected group will be overwritten if a child is the final target but still needs to be open
+			treestatus.selected = treevalue
+			treestatus.groups[treevalue] = true
+			
+		end
+		
+		--move to the next group in the path
+		group = GetSubOption(group, key)
+		if not group then 
+			break
+		end
+		tinsert(path, key)
+		status = self:GetStatusTable(appName, path)
+		if not status.groups then
+			status.groups = {}
+		end
+		status = status.groups
+	end
+	
+	del(path)
+	reg:NotifyChange(appName)
+end	
+
 local function OptionOnMouseOver(widget, event)
 	--show a tooltip/set the status bar to the desc text
 	local user = widget.userdata
@@ -483,7 +550,7 @@ local function GetFuncName(option)
 		return 'set'
 	end
 end
-local function confirmPopup(appName, rootframe, info, message, func, ...)
+local function confirmPopup(appName, rootframe, basepath, info, message, func, ...)
 	if not StaticPopupDialogs["ACECONFIGDIALOG30_CONFIRM_DIALOG"] then
 		StaticPopupDialogs["ACECONFIGDIALOG30_CONFIRM_DIALOG"] = {}
 	end
@@ -500,7 +567,7 @@ local function confirmPopup(appName, rootframe, info, message, func, ...)
 		if dialog and oldstrata then
 			dialog:SetFrameStrata(oldstrata)
 		end
-		lib:Open(appName, rootframe)
+		lib:Open(appName, rootframe, basepath and unpack(basepath))
 		del(info)
 	end
 	t.OnCancel = function()
@@ -677,17 +744,19 @@ local function ActivateControl(widget, event, ...)
 				
 				local iscustom = user.rootframe.userdata.iscustom
 				local rootframe
+				
 				if iscustom then
 					rootframe = user.rootframe
 				end
+				local basepath = user.rootframe.userdata.basepath
 				if type(func) == "string" then
 					if handler and handler[func] then
-						confirmPopup(user.appName, rootframe, info, confirmText, handler[func], handler, info, ...)
+						confirmPopup(user.appName, rootframe, basepath, info, confirmText, handler[func], handler, info, ...)
 					else
 						error(string.format("Method %s doesn't exist in handler for type func", func))
 					end
 				elseif type(func) == "function" then
-					confirmPopup(user.appName, rootframe, info, confirmText, func, info, ...)
+					confirmPopup(user.appName, rootframe, basepath, info, confirmText, func, info, ...)
 				end
 				--func will be called and info deleted when the confirm dialog is responded to
 				return
@@ -708,21 +777,23 @@ local function ActivateControl(widget, event, ...)
 
 
 		local iscustom = user.rootframe.userdata.iscustom
+		local basepath = user.rootframe.userdata.basepath
 		--full refresh of the frame, some controls dont cause this on all events
 		if option.type == "color" then
 			if event == "OnValueConfirmed" then
+				
 				if iscustom then
-					lib:Open(user.appName, user.rootframe)
+					lib:Open(user.appName, user.rootframe, basepath and unpack(basepath))
 				else
-					lib:Open(user.appName)
+					lib:Open(user.appName, basepath and unpack(basepath))
 				end
 			end
 		elseif option.type == "range" then
 			if event == "OnMouseUp" then
 				if iscustom then
-					lib:Open(user.appName, user.rootframe)
+					lib:Open(user.appName, user.rootframe, basepath and unpack(basepath))
 				else
-					lib:Open(user.appName)
+					lib:Open(user.appName, basepath and unpack(basepath))
 				end
 			end
 		--multiselects don't cause a refresh on 'OnValueChanged' only 'OnClosed'
@@ -730,9 +801,9 @@ local function ActivateControl(widget, event, ...)
 			user.valuechanged = true
 		else
 			if iscustom then
-				lib:Open(user.appName, user.rootframe)
+				lib:Open(user.appName, user.rootframe, basepath and unpack(basepath))
 			else
-				lib:Open(user.appName)
+				lib:Open(user.appName, basepath and unpack(basepath))
 			end
 		end
 
@@ -757,11 +828,11 @@ local function ActivateMultiControl(widget, event, ...)
 	ActivateControl(widget, event, widget.userdata.value, ...)
 	local user = widget.userdata
 	local iscustom = user.rootframe.userdata.iscustom
-
+	local basepath = usr.rootframe.userdata.basepath
 	if iscustom then
-		lib:Open(user.appName, user.rootframe)
+		lib:Open(user.appName, user.rootframe, basepath and unpack(basepath))
 	else
-		lib:Open(user.appName)
+		lib:Open(user.appName, basepath and unpack(basepath))
 	end
 end
 
@@ -769,11 +840,11 @@ local function MultiControlOnClosed(widget, event, ...)
 	local user = widget.userdata
 	if user.valuechanged then
 		local iscustom = user.rootframe.userdata.iscustom
-	
+		local basepath = usr.rootframe.userdata.basepath
 		if iscustom then
-			lib:Open(user.appName, user.rootframe)
+			lib:Open(user.appName, user.rootframe, basepath and unpack(basepath))
 		else
-			lib:Open(user.appName)
+			lib:Open(user.appName, basepath and unpack(basepath))
 		end
 	end
 end
@@ -1308,7 +1379,7 @@ local function GroupSelected(widget, event, uniquevalue)
 	end
 
 	widget:ReleaseChildren()
-	lib:FeedGroup(user.appName,options,widget,rootframe,feedpath,group)
+	lib:FeedGroup(user.appName,options,widget,rootframe,feedpath)
 
 	del(feedpath)
 end
@@ -1330,7 +1401,7 @@ Rules:
 		if its parent is a tree group, its already a node on a tree
 --]]
 
-function lib:FeedGroup(appName,options,container,rootframe,path)
+function lib:FeedGroup(appName,options,container,rootframe,path, isRoot)
 	local group = options
 	--follow the path to get to the curent group
 	local inline
@@ -1374,7 +1445,7 @@ function lib:FeedGroup(appName,options,container,rootframe,path)
 	local scroll
 
 	--Add a scrollframe if we are not going to add a group control, this is the inverse of the conditions for that later on
-	if (not (hasChildGroups and not inline)) or (grouptype ~= "tab" and grouptype ~= "select" and parenttype == "tree") then
+	if (not (hasChildGroups and not inline)) or (grouptype ~= "tab" and grouptype ~= "select" and (parenttype == "tree" and not isRoot)) then
 		if container.type ~= "InlineGroup" then
 			scroll = gui:Create("ScrollFrame")
 			scroll:SetLayout("flow")
@@ -1448,7 +1519,7 @@ function lib:FeedGroup(appName,options,container,rootframe,path)
 			end
 			
 			if firstgroup then
-				select:SetGroup( (GroupExists(appName, options, path,status.groups.selectedgroup) and status.groups.selectedgroup) or firstgroup)
+				select:SetGroup( (GroupExists(appName, options, path,status.groups.selected) and status.groups.selected) or firstgroup)
 			end
 			
 			select.width = "fill"
@@ -1458,8 +1529,7 @@ function lib:FeedGroup(appName,options,container,rootframe,path)
 
 		--assume tree group by default
 		--if parenttype is tree then this group is already a node on that tree
-		elseif parenttype ~= "tree" then
-
+		elseif (parenttype ~= "tree") or isRoot then
 			local tree = gui:Create("TreeGroup")
 			InjectInfo(tree, options, group, path, rootframe, appName)
 			tree:EnableButtonTooltips(false)
@@ -1514,12 +1584,14 @@ end
 local function RefreshOnUpdate(this)
 	for appName in pairs(this.apps) do
 		if lib.OpenFrames[appName] then
-			lib:Open(appName)
+			local user = lib.OpenFrames[appName].userdata
+			lib:Open(appName, user.basepath and unpack(user.basepath))
 		end
 		if lib.BlizOptions and lib.BlizOptions[appName] then
 			local widget = lib.BlizOptions[appName]
+			local user = widget.userdata
 			if widget.frame:IsVisible() then
-				lib:Open(widget.userdata.appName, widget)
+				lib:Open(widget.userdata.appName, widget, user.basepath and unpack(user.basepath))
 			end
 		end
 		this.apps[appName] = nil
@@ -1545,7 +1617,8 @@ function lib:SetDefaultSize(appName, width, height)
 	end
 end
 
-function lib:Open(appName, container)
+-- :Open(appName, [container], [path ...])
+function lib:Open(appName, container, ...)
 	if not old_CloseSpecialWindows then
 		old_CloseSpecialWindows = CloseSpecialWindows
 		CloseSpecialWindows = function()
@@ -1564,14 +1637,24 @@ function lib:Open(appName, container)
 	local path = new()
 	local name = GetOptionsMemberValue("name", options, options, path, appName)
 	
+	--If an optional path is specified add it to the path table before feeding the options
+	--as container is optional as well it may contain the first element of the path
+	if type(container) == "string" then
+		tinsert(path, container)
+		container = nil
+	end
+	for n = 1, select('#',...) do
+		tinsert(path, (select(n, ...)))
+	end
+	
 	--if a container is given feed into that
 	if container then
 		f = container
 		f:ReleaseChildren()
 		f.userdata.appName = appName
 		f.userdata.iscustom = true
-		if f.SetTitle then
-			f:SetTitle(name or "")
+		if #path > 0 then
+			f.userdata.basepath = copy(path)
 		end
 		local status = lib:GetStatusTable(appName)
 		if not status.width then
@@ -1593,12 +1676,15 @@ function lib:Open(appName, container)
 		f:ReleaseChildren()
 		f:SetCallback("OnClose", FrameOnClose)
 		f.userdata.appName = appName
+		if #path > 0 then
+			f.userdata.basepath = copy(path)
+		end
 		f:SetTitle(name or "")
 		local status = lib:GetStatusTable(appName)
 		f:SetStatusTable(status)
 	end
 
-	self:FeedGroup(appName,options,f,f,path)
+	self:FeedGroup(appName,options,f,f,path,true)
 	if f.Show then
 		f:Show()
 	end
@@ -1608,26 +1694,41 @@ end
 lib.BlizOptions = lib.BlizOptions or {}
 
 local function FeedToBlizPanel(widget, event)
-	lib:Open(widget.userdata.appName, widget)
+	local path = widget.userdata.path
+	lib:Open(widget.userdata.appName, widget, path and unpack(path))
 end
 
 local function ClearBlizPanel(widget, event)
 	widget:ReleaseChildren()
 end
 
-function lib:AddToBlizOptions(appName, name, parent)
+function lib:AddToBlizOptions(appName, name, parent, ...)
 	local BlizOptions = lib.BlizOptions
-	if not BlizOptions[appName] then
+	
+	local key = appName
+	for n = 1, select('#', ...) do
+		key = key..'\001'..select(n, ...)
+	end
+	
+	if not BlizOptions[key] then
 		local group = gui:Create("BlizOptionsGroup")
-		BlizOptions[appName] = group
+		BlizOptions[key] = group
 		group:SetName(name or appName, parent)
+
 		group:SetTitle(name or appName)
 		group.userdata.appName = appName
+		if select('#', ...) > 0 then
+			local path = {}
+			for n = 1, select('#',...) do
+				tinsert(path, (select(n, ...)))
+			end
+			group.userdata.path = path
+		end
 		group:SetCallback("OnShow", FeedToBlizPanel)
 		group:SetCallback("OnHide", ClearBlizPanel)
 		InterfaceOptions_AddCategory(group.frame)
 		return group.frame
 	else
-		error(("%s has already been added to the Blizzard Options Window"):format(appName), 2)
+		error(("%s has already been added to the Blizzard Options Window with the given path"):format(appName), 2)
 	end
 end
