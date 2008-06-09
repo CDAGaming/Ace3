@@ -30,7 +30,7 @@ local AceGUI = LibStub("AceGUI-3.0")
 
 do
 	local Type = "TabGroup"
-	local Version = 13
+	local Version = 14
 
 	local PaneBackdrop  = {
 		bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
@@ -210,7 +210,7 @@ do
 		--Fix for single tabs being left on the last row, move a tab from the row above if applicable
 		if numrows > 1 then
 			--if the last row has only one tab
-			if rowends[numrows] == numtabs then
+			if rowends[numrows-1] == numtabs-1 then
 				--if there are more than 2 tabs in the 2nd last row
 				if (numrows == 2 and rowends[numrows-1] > 2) or (rowends[numrows] - rowends[numrows-1] > 2) then
 					--move 1 tab from the second last row to the last
