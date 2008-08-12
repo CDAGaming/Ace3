@@ -3,7 +3,7 @@ AceConfigDialog-3.0
 
 ]]
 local LibStub = LibStub
-local MAJOR, MINOR = "AceConfigDialog-3.0", 22
+local MAJOR, MINOR = "AceConfigDialog-3.0", 23
 local lib = LibStub:NewLibrary(MAJOR, MINOR)
 
 if not lib then return end
@@ -706,7 +706,7 @@ local function ActivateControl(widget, event, ...)
 		--call confirm func/method
 		if type(confirm) == "string" then
 			if handler and handler[confirm] then
-				success, confirm = safecall(handler[confirm],handler, info)
+				success, confirm = safecall(handler[confirm], handler, info, ...)
 				if success and type(confirm) == "string" then
 					confirmText = confirm
 					confirm = true
@@ -717,7 +717,7 @@ local function ActivateControl(widget, event, ...)
 				error(string.format("Method %s doesn't exist in handler for type confirm", confirm))
 			end
 		elseif type(confirm) == "function" then
-			success, confirm = safecall(confirm,info)
+			success, confirm = safecall(confirm, info, ...)
 			if success and type(confirm) == "string" then
 				confirmText = confirm
 				confirm = true
