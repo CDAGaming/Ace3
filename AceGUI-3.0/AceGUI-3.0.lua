@@ -1,5 +1,5 @@
 --[[ $Id$ ]]
-local ACEGUI_MAJOR, ACEGUI_MINOR = "AceGUI-3.0", 13
+local ACEGUI_MAJOR, ACEGUI_MINOR = "AceGUI-3.0", 14
 local AceGUI, oldminor = LibStub:NewLibrary(ACEGUI_MAJOR, ACEGUI_MINOR)
 
 if not AceGUI then return end -- No upgrade needed
@@ -138,13 +138,7 @@ function AceGUI:Release(widget)
 	safecall( widget.PauseLayout, widget )
 	widget:Fire("OnRelease")
 	safecall( widget.ReleaseChildren, widget )
-	for k in pairs(widget.userdata) do
-		widget.userdata[k] = nil
-	end
-	for k in pairs(widget.events) do
-		widget.events[k] = nil
-	end
-	widget.width = nil
+
 	if widget.Release then
 		widget.OnRelease = widget.Release
 		widget.Release = nil
@@ -154,7 +148,13 @@ function AceGUI:Release(widget)
 	else
 		error(("Widget type %s doesn't supply an OnRelease Function"):format(type))
 	end
-	
+	for k in pairs(widget.userdata) do
+		widget.userdata[k] = nil
+	end
+	for k in pairs(widget.events) do
+		widget.events[k] = nil
+	end
+	widget.width = nil	
 	--widget.frame:SetParent(nil)
 	widget.frame:ClearAllPoints()
 	widget.frame:Hide()

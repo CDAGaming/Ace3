@@ -3,7 +3,7 @@ AceConfigDialog-3.0
 
 ]]
 local LibStub = LibStub
-local MAJOR, MINOR = "AceConfigDialog-3.0", 23
+local MAJOR, MINOR = "AceConfigDialog-3.0", 24
 local lib = LibStub:NewLibrary(MAJOR, MINOR)
 
 if not lib then return end
@@ -11,6 +11,9 @@ if not lib then return end
 lib.OpenFrames = lib.OpenFrames or {}
 lib.Status = lib.Status or {}
 lib.frame = lib.frame or CreateFrame("Frame")
+
+lib.frame.apps = lib.frame.apps or {}
+lib.frame.closing = lib.frame.closing or {}
 
 local gui = LibStub("AceGUI-3.0")
 local reg = LibStub("AceConfigRegistry-3.0")
@@ -1566,23 +1569,22 @@ end
 
 local old_CloseSpecialWindows
 
-function lib:CloseAll()
-	local closed
-	for k, v in pairs(self.OpenFrames) do
-		v:Hide()
-		closed = true
-	end
-	return closed
-end
-
-function lib:Close(appName)
-	if self.OpenFrames[appName] then
-		self.OpenFrames[appName]:Hide()
-		return true
-	end
-end
 
 local function RefreshOnUpdate(this)
+	for appName in pairs(this.closing) do
+		if lib.OpenFrames[appName] then
+			lib.OpenFrames[appName]:Hide()
+		end
+		this.closing[appName] = nil
+	end
+	
+	if this.closeAll then
+		for k, v in pairs(lib.OpenFrames) do
+			v:Hide()
+		end
+		this.closeAll = nil
+	end
+	
 	for appName in pairs(this.apps) do
 		if lib.OpenFrames[appName] then
 			local user = lib.OpenFrames[appName].userdata
@@ -1600,10 +1602,23 @@ local function RefreshOnUpdate(this)
 	this:SetScript("OnUpdate", nil)
 end
 
-function lib:ConfigTableChanged(event, appName)
-	if not lib.frame.apps then
-		lib.frame.apps = {}
+function lib:CloseAll()
+	lib.frame.closeAll = true
+	lib.frame:SetScript("OnUpdate", RefreshOnUpdate)
+	if next(self.OpenFrames) then
+		return true
 	end
+end
+
+function lib:Close(appName)
+	if self.OpenFrames[appName] then
+		lib.frame.closing[appName] = true
+		lib.frame:SetScript("OnUpdate", RefreshOnUpdate)
+		return true
+	end
+end
+
+function lib:ConfigTableChanged(event, appName)
 	lib.frame.apps[appName] = true
 	lib.frame:SetScript("OnUpdate", RefreshOnUpdate)
 end
