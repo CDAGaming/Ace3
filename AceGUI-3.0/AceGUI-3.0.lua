@@ -1,5 +1,5 @@
 --[[ $Id$ ]]
-local ACEGUI_MAJOR, ACEGUI_MINOR = "AceGUI-3.0", 15
+local ACEGUI_MAJOR, ACEGUI_MINOR = "AceGUI-3.0", 16
 local AceGUI, oldminor = LibStub:NewLibrary(ACEGUI_MAJOR, ACEGUI_MINOR)
 
 if not AceGUI then return end -- No upgrade needed
@@ -129,6 +129,11 @@ function AceGUI:Create(type)
 			widget.Aquire = nil
 		end
 		
+		if rawget(widget,'Release') then
+			widget.OnRelease = rawget(widget,'Release') 
+			widget.Release = nil
+		end
+		
 		if widget.OnAcquire then
 			widget:OnAcquire()
 		else
@@ -145,10 +150,6 @@ function AceGUI:Release(widget)
 	widget:Fire("OnRelease")
 	safecall( widget.ReleaseChildren, widget )
 
-	if rawget(widget,'Release') then
-		widget.OnRelease = widget.Release
-		widget.Release = nil
-	end
 	if widget.OnRelease then
 		widget:OnRelease()
 	else
