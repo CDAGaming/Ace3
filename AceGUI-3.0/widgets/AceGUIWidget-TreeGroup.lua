@@ -27,7 +27,7 @@ end
 
 do
 	local Type = "TreeGroup"
-	local Version = 13
+	local Version = 14
 	
 	local DEFAULT_TREE_WIDTH = 175
 	local DEFAULT_TREE_SIZABLE = true
@@ -287,7 +287,9 @@ do
 		}
 	]]
 	local function SetTree(self, tree)
-		assert(type(tree) == "table")
+		if tree then 
+			assert(type(tree) == "table") 
+		end
 		self.tree = tree
 		self:RefreshTree()
 	end
@@ -335,30 +337,29 @@ do
 	end
 	
 	local function RefreshTree(self)
-		if not self.tree then return end
-		--Build the list of visible entries from the tree and status tables
-		local status = self.status or self.localstatus
-		local groupstatus = status.groups
-		local tree = self.tree
-		local lines = self.lines
 		local buttons = self.buttons
-
-		local treeframe = self.treeframe
-
+		local lines = self.lines
 		
+		for i, v in ipairs(buttons) do
+			v:Hide()
+		end
 		while lines[1] do
 			local t = tremove(lines)
 			for k in pairs(t) do
 				t[k] = nil
 			end
 			del(t)
-		end
+		end		
 		
+		if not self.tree then return end
+		--Build the list of visible entries from the tree and status tables
+		local status = self.status or self.localstatus
+		local groupstatus = status.groups
+		local tree = self.tree
+
+		local treeframe = self.treeframe
+
 		self:BuildLevel(tree, 1)
-		
-		for i, v in ipairs(buttons) do
-			v:Hide()
-		end
 		
 		local numlines = #lines
 		
