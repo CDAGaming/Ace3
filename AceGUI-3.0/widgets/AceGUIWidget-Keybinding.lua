@@ -8,7 +8,7 @@ local WotLK = select(4, GetBuildInfo()) >= 30000
 
 do
 	local Type = "Keybinding"
-	local Version = 9
+	local Version = 10
 
 	local ControlBackdrop  = {
 		bgFile = "Interface\\Tooltips\\UI-Tooltip-Background",
@@ -76,15 +76,15 @@ do
 				end
 			end
 	
-			if not self.disabled then
-				self:Fire("OnKeyChanged",keyPressed)
-				self:SetKey(keyPressed)
-			end
-	
 			this:EnableKeyboard(false)
 			self.msgframe:Hide()
 			this:UnlockHighlight()
-			self.waitingForKey = nil
+			self.waitingForKey = nil	
+			
+			if not self.disabled then
+				self:SetKey(keyPressed)
+				self:Fire("OnKeyChanged",keyPressed)
+			end
 		end
 	end
 	
@@ -102,6 +102,8 @@ do
 	end
 	
 	local function OnAcquire(self)
+		self:SetLabel("")
+		self:SetKey("")
 	end
 	
 	local function OnRelease(self)
