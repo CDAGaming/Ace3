@@ -124,6 +124,13 @@ do
 	
 	local function SetLabel(self, label)
 		self.label:SetText(label or "")
+		if (label or "") == "" then
+			self.alignoffset = nil
+			self:SetHeight(24)
+		else
+			self.alignoffset = 30
+			self:SetHeight(44)
+		end
 	end
 
 
