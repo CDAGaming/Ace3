@@ -3,9 +3,12 @@ local AceGUI = LibStub("AceGUI-3.0")
 --------------------------
 -- Keybinding  		    --
 --------------------------
+
+local WotLK = select(4, GetBuildInfo()) >= 30000
+
 do
 	local Type = "Keybinding"
-	local Version = 8
+	local Version = 9
 
 	local ControlBackdrop  = {
 		bgFile = "Interface\\Tooltips\\UI-Tooltip-Background",
@@ -75,6 +78,7 @@ do
 	
 			if not self.disabled then
 				self:Fire("OnKeyChanged",keyPressed)
+				self:SetKey(keyPressed)
 			end
 	
 			this:EnableKeyboard(false)
@@ -119,7 +123,21 @@ do
 	end
 	
 	local function SetKey(self, key)
-		self.button:SetText(key or "")
+		if (key or "") == "" then
+			self.button:SetText(NOT_BOUND)
+			if WotLK then
+				self.button:SetNormalFontObject("GameFontNormal")
+			else
+				self.button:SetTextFontObject("GameFontNormal")
+			end
+		else
+			self.button:SetText(key)
+			if WotLK then
+				self.button:SetNormalFontObject("GameFontHighlight")
+			else
+				self.button:SetTextFontObject("GameFontHighlight")
+			end
+		end
 	end
 	
 	local function SetLabel(self, label)
@@ -132,7 +150,6 @@ do
 			self:SetHeight(44)
 		end
 	end
-
 
 	local function Constructor()
 		local num  = AceGUI:GetNextWidgetNum(Type)
