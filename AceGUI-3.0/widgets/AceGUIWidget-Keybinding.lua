@@ -17,6 +17,15 @@ local CreateFrame, UIParent = CreateFrame, UIParent
 -- List them here for Mikk's FindGlobals script
 -- GLOBALS: NOT_BOUND
 
+local wowMoP, wowClassicRebased, wowTBCRebased
+do
+	local _, build, _, interface = GetBuildInfo()
+	interface = interface or tonumber(build)
+	wowMoP = (interface >= 50000)
+	wowClassicRebased = (interface >= 11300 and interface < 20000)
+	wowTBCRebased = (interface >= 20500 and interface < 30000)
+end
+
 --[[-----------------------------------------------------------------------------
 Scripts
 -------------------------------------------------------------------------------]]
@@ -141,10 +150,22 @@ local methods = {
 	["SetKey"] = function(self, key)
 		if (key or "") == "" then
 			self.button:SetText(NOT_BOUND)
-			self.button:SetNormalFontObject("GameFontNormal")
+			if self.button.SetNormalFontObject then
+				self.button:SetNormalFontObject("GameFontNormal")
+			elseif self.button.SetTextFontObject then
+				self.button:SetTextFontObject("GameFontNormal")
+			else
+				self.button:SetFontObject("GameFontNormal")
+			end
 		else
 			self.button:SetText(key)
-			self.button:SetNormalFontObject("GameFontHighlight")
+			if self.button.SetNormalFontObject then
+				self.button:SetNormalFontObject("GameFontHighlight")
+			elseif self.button.SetTextFontObject then
+				self.button:SetTextFontObject("GameFontHighlight")
+			else
+				self.button:SetFontObject("GameFontHighlight")
+			end
 		end
 	end,
 
@@ -188,7 +209,7 @@ local function Constructor()
 	local name = "AceGUI30KeybindingButton" .. AceGUI:GetNextWidgetNum(Type)
 
 	local frame = CreateFrame("Frame", nil, UIParent)
-	local button = CreateFrame("Button", name, frame, "UIPanelButtonTemplate")
+	local button = CreateFrame("Button", name, frame, (wowMoP or wowClassicRebased or wowTBCRebased) and "UIPanelButtonTemplate" or "UIPanelButtonTemplate2")
 
 	button:EnableMouse(true)
 	button:EnableMouseWheel(false)

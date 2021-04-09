@@ -14,6 +14,16 @@ local select, tremove, unpack, tconcat = select, table.remove, unpack, table.con
 -- WoW APIs
 local CreateFrame, UIParent = CreateFrame, UIParent
 
+local wowBfa, wowWotlk, wowClassicRebased, wowTBCRebased
+do
+	local _, build, _, interface = GetBuildInfo()
+	interface = interface or tonumber(build)
+	wowBfa = (interface >= 80000)
+	wowWotlk = (interface >= 30000)
+	wowClassicRebased = (interface >= 11300 and interface < 20000)
+	wowTBCRebased = (interface >= 20500 and interface < 30000)
+end
+
 -- Global vars/functions that we don't upvalue since they might get hooked, or upgraded
 -- List them here for Mikk's FindGlobals script
 -- GLOBALS: FONT_COLOR_CODE_CLOSE
@@ -77,11 +87,23 @@ local function UpdateButton(button, treeline, selected, canExpand, isExpanded)
 	end
 	button.level = level
 	if ( level == 1 ) then
-		button:SetNormalFontObject("GameFontNormal")
+		if button.SetNormalFontObject then
+			button:SetNormalFontObject("GameFontNormal")
+		elseif button.SetTextFontObject then
+			button:SetTextFontObject("GameFontNormal")
+		else
+			button:SetFontObject("GameFontNormal")
+		end
 		button:SetHighlightFontObject("GameFontHighlight")
 		button.text:SetPoint("LEFT", (icon and 16 or 0) + 8, 2)
 	else
-		button:SetNormalFontObject("GameFontHighlightSmall")
+		if button.SetNormalFontObject then
+			button:SetNormalFontObject("GameFontHighlightSmall")
+		elseif button.SetTextFontObject then
+			button:SetTextFontObject("GameFontHighlightSmall")
+		else
+			button:SetFontObject("GameFontHighlightSmall")
+		end
 		button:SetHighlightFontObject("GameFontHighlightSmall")
 		button.text:SetPoint("LEFT", (icon and 16 or 0) + 8 * level, 2)
 	end
@@ -109,11 +131,11 @@ local function UpdateButton(button, treeline, selected, canExpand, isExpanded)
 
 	if canExpand then
 		if not isExpanded then
-			toggle:SetNormalTexture(130838) -- Interface\\Buttons\\UI-PlusButton-UP
-			toggle:SetPushedTexture(130836) -- Interface\\Buttons\\UI-PlusButton-DOWN
+			toggle:SetNormalTexture("Interface\\Buttons\\UI-PlusButton-UP")
+			toggle:SetPushedTexture("Interface\\Buttons\\UI-PlusButton-DOWN")
 		else
-			toggle:SetNormalTexture(130821) -- Interface\\Buttons\\UI-MinusButton-UP
-			toggle:SetPushedTexture(130820) -- Interface\\Buttons\\UI-MinusButton-DOWN
+			toggle:SetNormalTexture("Interface\\Buttons\\UI-MinusButton-UP")
+			toggle:SetPushedTexture("Interface\\Buttons\\UI-MinusButton-DOWN")
 		end
 		toggle:Show()
 	else
@@ -321,7 +343,7 @@ local methods = {
 
 	["CreateButton"] = function(self)
 		local num = AceGUI:GetNextWidgetNum("TreeGroupButton")
-		local button = CreateFrame("Button", ("AceGUI30TreeButton%d"):format(num), self.treeframe, "OptionsListButtonTemplate")
+		local button = CreateFrame("Button", ("AceGUI30TreeButton%d"):format(num), self.treeframe, (wowWotlk or wowClassicRebased or wowTBCRebased) and "OptionsListButtonTemplate" or "InterfaceOptionsButtonTemplate")
 		button.obj = self
 
 		local icon = button:CreateTexture(nil, "OVERLAY")
@@ -420,7 +442,8 @@ local methods = {
 		local maxlines = (floor(((self.treeframe:GetHeight()or 0) - 20 ) / 18))
 		if maxlines <= 0 then return end
 
-		if self.frame:GetParent() == UIParent and not fromOnUpdate then
+		-- workaround for lag spikes on WoW 8.0
+		if wowBfa and self.frame:GetParent() == UIParent and not fromOnUpdate then
 			self.frame:SetScript("OnUpdate", FirstFrameUpdate)
 			return
 		end
@@ -675,7 +698,11 @@ local function Constructor()
 
 	local scrollbg = scrollbar:CreateTexture(nil, "BACKGROUND")
 	scrollbg:SetAllPoints(scrollbar)
-	scrollbg:SetColorTexture(0,0,0,0.4)
+	if scrollbg.SetColorTexture then
+		scrollbg:SetColorTexture(0, 0, 0, 0.4)
+	else
+		scrollbg:SetTexture(0, 0, 0, 0.4)
+	end
 
 	local border = CreateFrame("Frame", nil, frame, BackdropTemplateMixin and "BackdropTemplate" or nil)
 	border:SetPoint("TOPLEFT", treeframe, "TOPRIGHT")

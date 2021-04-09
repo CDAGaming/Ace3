@@ -21,13 +21,32 @@ AceConfigDialog.frame.apps = AceConfigDialog.frame.apps or {}
 AceConfigDialog.frame.closing = AceConfigDialog.frame.closing or {}
 AceConfigDialog.frame.closeAllOverride = AceConfigDialog.frame.closeAllOverride or {}
 
+local wowThirdLegion
+do
+    local _, build, _, interface = GetBuildInfo()
+    interface = interface or tonumber(build)
+	wowThirdLegion = (interface >= 70300)
+end
+
 -- Lua APIs
-local tinsert, tsort, tremove, wipe = table.insert, table.sort, table.remove, table.wipe
+local tconcat, tinsert, tsort, tremove, wipe = table.concat, table.insert, table.sort, table.remove, table.wipe
 local strmatch, format = string.match, string.format
 local error = error
 local pairs, next, select, type, unpack, ipairs = pairs, next, select, type, unpack, ipairs
 local tostring, tonumber = tostring, tonumber
 local math_min, math_max, math_floor = math.min, math.max, math.floor
+
+local tsetn = function(t,n)
+	setmetatable(t,{__len=function() return n end})
+end
+
+wipe = (wipe or function(table)
+	for k, _ in pairs(table) do
+		table[k] = nil
+	end
+	tsetn(table, 0)
+	return table
+end)
 
 -- Global vars/functions that we don't upvalue since they might get hooked, or upgraded
 -- List them here for Mikk's FindGlobals script
@@ -46,10 +65,39 @@ local function errorhandler(err)
 	return geterrorhandler()(err)
 end
 
+local function CreateDispatcher(argCount)
+	local code = [[
+		local xpcall, eh = ...
+		local method, ARGS
+		local function call() return method(ARGS) end
+
+		local function dispatch(func, ...)
+			 method = func
+			 if not method then return end
+			 ARGS = ...
+			 return xpcall(call, eh)
+		end
+
+		return dispatch
+	]]
+
+	local ARGS = {}
+	for i = 1, argCount do ARGS[i] = "arg"..i end
+	code = code:gsub("ARGS", tconcat(ARGS, ", "))
+	return assert(loadstring(code, "safecall Dispatcher["..argCount.."]"))(xpcall, errorhandler)
+end
+
+local Dispatchers = setmetatable({}, {__index=function(self, argCount)
+	local dispatcher = CreateDispatcher(argCount)
+	rawset(self, argCount, dispatcher)
+	return dispatcher
+end})
+Dispatchers[0] = function(func)
+	return xpcall(func, errorhandler)
+end
+
 local function safecall(func, ...)
-	if func then
-		return xpcall(func, errorhandler, ...)
-	end
+	return Dispatchers[select("#", ...)](func, ...)
 end
 
 local width_multiplier = 170
@@ -549,7 +597,8 @@ do
 		AceConfigDialog.popup = frame
 		frame:Hide()
 		frame:SetPoint("CENTER", UIParent, "CENTER")
-		frame:SetSize(320, 72)
+		frame:SetWidth(320)
+		frame:SetHeight(72)
 		frame:EnableMouse(true) -- Do not allow click-through on the frame
 		frame:SetFrameStrata("TOOLTIP")
 		frame:SetFrameLevel(100) -- Lots of room to draw under it
@@ -583,20 +632,28 @@ do
 		end
 
 		local text = frame:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
-		text:SetSize(290, 0)
+		text:SetWidth(290)
+		text:SetHeight(0)
 		text:SetPoint("TOP", 0, -16)
 		frame.text = text
 
 		local function newButton(text)
 			local button = CreateFrame("Button", nil, frame)
-			button:SetSize(128, 21)
-			button:SetNormalFontObject(GameFontNormal)
-			button:SetHighlightFontObject(GameFontHighlight)
-			button:SetNormalTexture(130763) -- "Interface\\Buttons\\UI-DialogBox-Button-Up"
+			button:SetWidth(128)
+			button:SetHeight(21)
+			if button.SetNormalFontObject then
+				button:SetNormalFontObject("GameFontNormal")
+			elseif button.SetTextFontObject then
+				button:SetTextFontObject("GameFontNormal")
+			else
+				button:SetFontObject("GameFontNormal")
+			end
+			button:SetHighlightFontObject("GameFontHighlight")
+			button:SetNormalTexture("Interface\\Buttons\\UI-DialogBox-Button-Up")
 			button:GetNormalTexture():SetTexCoord(0.0, 1.0, 0.0, 0.71875)
-			button:SetPushedTexture(130761) -- "Interface\\Buttons\\UI-DialogBox-Button-Down"
+			button:SetPushedTexture("Interface\\Buttons\\UI-DialogBox-Button-Down")
 			button:GetPushedTexture():SetTexCoord(0.0, 1.0, 0.0, 0.71875)
-			button:SetHighlightTexture(130762) -- "Interface\\Buttons\\UI-DialogBox-Button-Highlight"
+			button:SetHighlightTexture("Interface\\Buttons\\UI-DialogBox-Button-Highlight")
 			button:GetHighlightTexture():SetTexCoord(0.0, 1.0, 0.0, 0.71875)
 			button:SetText(text)
 			return button
@@ -769,7 +826,7 @@ local function ActivateControl(widget, event, ...)
 		else
 			validationErrorPopup(validated)
 		end
-		PlaySound(882) -- SOUNDKIT.IG_PLAYER_INVITE_DECLINE || _DECLINE is actually missing from the table
+		PlaySound(wowThirdLegion and 882 or "igPlayerInviteDecline") -- SOUNDKIT.IG_PLAYER_INVITE_DECLINE || _DECLINE is actually missing from the table
 		del(info)
 		return true
 	else
