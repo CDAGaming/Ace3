@@ -92,7 +92,7 @@ Scripts
 -------------------------------------------------------------------------------]]
 local function Tab_OnClick(frame)
 	if not (frame.selected or frame.disabled) then
-		PlaySound(wowThirdLegion and 841 or "igCharacterInfoTab") -- SOUNDKIT.IG_CHARACTER_INFO_TAB
+		PlaySound((wowThirdLegion or wowClassicRebased or wowTBCRebased) and 841 or "igCharacterInfoTab") -- SOUNDKIT.IG_CHARACTER_INFO_TAB
 		frame.obj:SelectTab(frame.value)
 	end
 end

@@ -9,11 +9,13 @@ local select, assert = select, assert
 local PlaySound = PlaySound
 local CreateFrame = CreateFrame
 
-local wowThirdLegion
+local wowThirdLegion, wowClassicRebased, wowTBCRebased
 do
 	local _, build, _, interface = GetBuildInfo()
 	interface = interface or tonumber(build)
 	wowThirdLegion = (interface >= 70300)
+	wowClassicRebased = (interface >= 11300 and interface < 20000)
+	wowTBCRebased = (interface >= 20500 and interface < 30000)
 end
 
 local function fixlevels(parent,...)
@@ -350,9 +352,9 @@ do
 		if self.disabled then return end
 		self.value = not self.value
 		if self.value then
-			PlaySound(wowThirdLegion and 856 or "igMainMenuOptionCheckBoxOn") -- SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON
+			PlaySound((wowThirdLegion or wowClassicRebased or wowTBCRebased) and 856 or "igMainMenuOptionCheckBoxOn") -- SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON
 		else
-			PlaySound(wowThirdLegion and 857 or "igMainMenuOptionCheckBoxOff") -- SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_OFF
+			PlaySound((wowThirdLegion or wowClassicRebased or wowTBCRebased) and 857 or "igMainMenuOptionCheckBoxOff") -- SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_OFF
 		end
 		UpdateToggle(self)
 		self:Fire("OnValueChanged", self.value)

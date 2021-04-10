@@ -6,11 +6,13 @@ local min, max, floor = math.min, math.max, math.floor
 local select, pairs, ipairs, type, tostring = select, pairs, ipairs, type, tostring
 local tsort = table.sort
 
-local wowThirdLegion
+local wowThirdLegion, wowClassicRebased, wowTBCRebased
 do
 	local _, build, _, interface = GetBuildInfo()
 	interface = interface or tonumber(build)
 	wowThirdLegion = (interface >= 70300)
+	wowClassicRebased = (interface >= 11300 and interface < 20000)
+	wowTBCRebased = (interface >= 20500 and interface < 30000)
 end
 
 -- WoW APIs
@@ -383,7 +385,7 @@ do
 
 	local function Dropdown_TogglePullout(this)
 		local self = this.obj
-		PlaySound(wowThirdLegion and 856 or "igMainMenuOptionCheckBoxOn") -- SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON
+		PlaySound((wowThirdLegion or wowClassicRebased or wowTBCRebased) and 856 or "igMainMenuOptionCheckBoxOn") -- SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON
 		if self.open then
 			self.open = nil
 			self.pullout:Close()

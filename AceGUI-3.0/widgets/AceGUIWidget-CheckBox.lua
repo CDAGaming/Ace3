@@ -12,11 +12,13 @@ local select, pairs = select, pairs
 local PlaySound = PlaySound
 local CreateFrame, UIParent = CreateFrame, UIParent
 
-local wowThirdLegion
+local wowThirdLegion, wowClassicRebased, wowTBCRebased
 do
 	local _, build, _, interface = GetBuildInfo()
 	interface = interface or tonumber(build)
 	wowThirdLegion = (interface >= 70300)
+	wowClassicRebased = (interface >= 11300 and interface < 20000)
+	wowTBCRebased = (interface >= 20500 and interface < 30000)
 end
 
 -- Global vars/functions that we don't upvalue since they might get hooked, or upgraded
@@ -67,9 +69,9 @@ local function CheckBox_OnMouseUp(frame)
 		self:ToggleChecked()
 
 		if self.checked then
-			PlaySound(wowThirdLegion and 856 or "igMainMenuOptionCheckBoxOn") -- SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON
+			PlaySound((wowThirdLegion or wowClassicRebased or wowTBCRebased) and 856 or "igMainMenuOptionCheckBoxOn") -- SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON
 		else -- for both nil and false (tristate)
-			PlaySound(wowThirdLegion and 857 or "igMainMenuOptionCheckBoxOff") -- SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_OFF
+			PlaySound((wowThirdLegion or wowClassicRebased or wowTBCRebased) and 857 or "igMainMenuOptionCheckBoxOff") -- SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_OFF
 		end
 
 		self:Fire("OnValueChanged", self.checked)

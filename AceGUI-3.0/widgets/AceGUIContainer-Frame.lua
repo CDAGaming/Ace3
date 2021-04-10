@@ -20,11 +20,13 @@ wipe = (wipe or function(table)
 	return table
 end)
 
-local wowThirdLegion
+local wowThirdLegion, wowClassicRebased, wowTBCRebased
 do
 	local _, build, _, interface = GetBuildInfo()
 	interface = interface or tonumber(build)
 	wowThirdLegion = (interface >= 70300)
+	wowClassicRebased = (interface >= 11300 and interface < 20000)
+	wowTBCRebased = (interface >= 20500 and interface < 30000)
 end
 
 -- WoW APIs
@@ -39,7 +41,7 @@ local CreateFrame, UIParent = CreateFrame, UIParent
 Scripts
 -------------------------------------------------------------------------------]]
 local function Button_OnClick(frame)
-	PlaySound(wowThirdLegion and 799 or "gsTitleOptionExit") -- SOUNDKIT.GS_TITLE_OPTION_EXIT
+	PlaySound((wowThirdLegion or wowClassicRebased or wowTBCRebased) and 799 or "gsTitleOptionExit") -- SOUNDKIT.GS_TITLE_OPTION_EXIT
 	frame.obj:Hide()
 end
 

@@ -28,7 +28,7 @@ Scripts
 -------------------------------------------------------------------------------]]
 local function Button_OnClick(frame, ...)
 	AceGUI:ClearFocus()
-	PlaySound(wowThirdLegion and 852 or "igMainMenuOption") -- SOUNDKIT.IG_MAINMENU_OPTION
+	PlaySound((wowThirdLegion or wowClassicRebased or wowTBCRebased) and 852 or "igMainMenuOption") -- SOUNDKIT.IG_MAINMENU_OPTION
 	frame.obj:Fire("OnClick", ...)
 end
 

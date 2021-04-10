@@ -21,11 +21,13 @@ AceConfigDialog.frame.apps = AceConfigDialog.frame.apps or {}
 AceConfigDialog.frame.closing = AceConfigDialog.frame.closing or {}
 AceConfigDialog.frame.closeAllOverride = AceConfigDialog.frame.closeAllOverride or {}
 
-local wowThirdLegion
+local wowThirdLegion, wowClassicRebased, wowTBCRebased
 do
     local _, build, _, interface = GetBuildInfo()
     interface = interface or tonumber(build)
 	wowThirdLegion = (interface >= 70300)
+	wowClassicRebased = (interface >= 11300 and interface < 20000)
+	wowTBCRebased = (interface >= 20500 and interface < 30000)
 end
 
 -- Lua APIs
@@ -826,7 +828,7 @@ local function ActivateControl(widget, event, ...)
 		else
 			validationErrorPopup(validated)
 		end
-		PlaySound(wowThirdLegion and 882 or "igPlayerInviteDecline") -- SOUNDKIT.IG_PLAYER_INVITE_DECLINE || _DECLINE is actually missing from the table
+		PlaySound((wowThirdLegion or wowClassicRebased or wowTBCRebased) and 882 or "igPlayerInviteDecline") -- SOUNDKIT.IG_PLAYER_INVITE_DECLINE || _DECLINE is actually missing from the table
 		del(info)
 		return true
 	else
