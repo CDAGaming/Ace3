@@ -513,7 +513,7 @@ local function OptionOnMouseOver(widget, event)
 	local usage = GetOptionsMemberValue("usage", opt, options, path, appName)
 	local descStyle = opt.descStyle
 
-	if descStyle and descStyle ~= "tooltip" then return end
+	if descStyle and descStyle ~= "tooltip" and descStyle ~= "item" and descStyle ~= "spell" then return end
 
 	tooltip:SetText(name, 1, .82, 0, true)
 
@@ -521,7 +521,22 @@ local function OptionOnMouseOver(widget, event)
 		tooltip:AddLine(user.text, 0.5, 0.5, 0.8, true)
 	end
 	if type(desc) == "string" then
-		tooltip:AddLine(desc, 1, 1, 1, true)
+		local isValidItemLink = descStyle == "item" and strmatch(desc, ".*|H(%a+):.+|h.+|h.*")
+		local isValidSpellId = descStyle == "spell" and tonumber(desc)
+		if isValidItemLink then
+			tooltip:SetHyperlink(desc)
+		elseif isValidSpellId then
+			tooltip:SetSpellByID(tonumber(desc))
+		else
+			tooltip:AddLine(desc, 1, 1, 1, true)
+		end
+	elseif type(desc) == "number" then
+		local isValidSpellId = descStyle == "spell"
+		if isValidSpellId then
+			tooltip:SetSpellByID(tonumber(desc))
+		else
+			tooltip:AddLine(tostring(desc), 1, 1, 1, true)
+		end
 	end
 	if type(usage) == "string" then
 		tooltip:AddLine("Usage: "..usage, NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b, true)
