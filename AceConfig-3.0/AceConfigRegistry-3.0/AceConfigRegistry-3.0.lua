@@ -71,7 +71,7 @@ local optstringnumber={["nil"]=true,["string"]=true,["number"]=true, _="string o
 local basekeys={
 	type=isstring,
 	name=isstringfunc,
-	desc=optstringfunc,
+	desc=optstringnumberfunc,
 	descStyle=optstring,
 	order=optmethodnumber,
 	validate=optmethodfalse,
