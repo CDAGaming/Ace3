@@ -1432,7 +1432,7 @@ local function FeedOptions(appName, options,container,rootframe,path,group,inlin
 					elseif fontSize == "large" then
 						control:SetFontObject(GameFontHighlightLarge)
 					else -- small or invalid
-						control:SetFontObject(GameFontHighlightSmall)
+						control:SetFontObject((type(fontSize) == "table") and fontSize or GameFontHighlightSmall)
 					end
 
 					local imageCoords = GetOptionsMemberValue("imageCoords",v, options, path, appName)
