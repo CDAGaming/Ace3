@@ -212,7 +212,12 @@ local function Button_OnEnter(frame)
 		tooltip:SetPoint("LEFT",frame,"RIGHT")
 		tooltip:SetText(frame.text:GetText() or "", 1, .82, 0, true)
 
-		tooltip:Show()
+		-- Do not display tooltip if it just contains the name
+		if tooltip:NumLines() > 1 then
+			tooltip:Show()
+		else
+			tooltip:Hide()
+		end
 	end
 end
 

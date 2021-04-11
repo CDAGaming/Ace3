@@ -542,7 +542,12 @@ local function OptionOnMouseOver(widget, event)
 		tooltip:AddLine("Usage: "..usage, NORMAL_FONT_COLOR.r, NORMAL_FONT_COLOR.g, NORMAL_FONT_COLOR.b, true)
 	end
 
-	tooltip:Show()
+	-- Do not display tooltip if it just contains the name
+	if tooltip:NumLines() > 1 then
+		tooltip:Show()
+	else
+		tooltip:Hide()
+	end
 end
 
 local function OptionOnMouseLeave(widget, event)
@@ -1537,7 +1542,12 @@ local function TreeOnButtonEnter(widget, event, uniquevalue, button)
 		tooltip:AddLine(desc, 1, 1, 1, true)
 	end
 
-	tooltip:Show()
+	-- Do not display tooltip if it just contains the name
+	if tooltip:NumLines() > 1 then
+		tooltip:Show()
+	else
+		tooltip:Hide()
+	end
 end
 
 local function TreeOnButtonLeave(widget, event, value, button)
