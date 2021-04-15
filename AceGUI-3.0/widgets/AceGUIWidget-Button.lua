@@ -10,7 +10,7 @@ if not AceGUI or (AceGUI:GetWidgetVersion(Type) or 0) >= Version then return end
 local pairs = pairs
 
 -- WoW APIs
-local _G = _G
+local _G = getfenv() or _G or {}
 local PlaySound, CreateFrame, UIParent = PlaySound, CreateFrame, UIParent
 
 local wowMoP, wowThirdLegion, wowClassicRebased, wowTBCRebased

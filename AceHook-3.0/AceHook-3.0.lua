@@ -37,7 +37,7 @@ local assert, error = assert, error
 
 -- WoW APIs
 local issecurevariable, hooksecurefunc = issecurevariable, hooksecurefunc
-local _G = _G
+local _G = getfenv() or _G or {}
 
 -- functions for later definition
 local donothing, createHook, hook

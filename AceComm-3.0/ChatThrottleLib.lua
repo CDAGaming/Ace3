@@ -25,7 +25,7 @@
 
 local CTL_VERSION = 24
 
-local _G = _G
+local _G = getfenv() or _G or {}
 
 if _G.ChatThrottleLib then
 	if _G.ChatThrottleLib.version >= CTL_VERSION then

@@ -51,7 +51,7 @@ local type, pairs, next, error = type, pairs, next, error
 local setmetatable, rawset, rawget = setmetatable, rawset, rawget
 
 -- WoW APIs
-local _G = _G
+local _G = getfenv() or _G or {}
 
 -- Global vars/functions that we don't upvalue since they might get hooked, or upgraded
 -- List them here for Mikk's FindGlobals script

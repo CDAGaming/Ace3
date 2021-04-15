@@ -35,7 +35,7 @@ end
 -- WoW APIs
 local PlaySound = PlaySound
 local CreateFrame, UIParent = CreateFrame, UIParent
-local _G = _G
+local _G = getfenv() or _G or {}
 
 -- Global vars/functions that we don't upvalue since they might get hooked, or upgraded
 -- List them here for Mikk's FindGlobals script
