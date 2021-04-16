@@ -8,6 +8,7 @@ if not AceGUI or (AceGUI:GetWidgetVersion(Type) or 0) >= Version then return end
 
 -- Lua APIs
 local max, select, pairs = math.max, select, pairs
+local tgetn = table.getn
 
 -- WoW APIs
 local CreateFrame, UIParent = CreateFrame, UIParent
@@ -110,15 +111,16 @@ local methods = {
 		self.label:SetVertexColor(r, g, b)
 	end,
 
-	["SetImage"] = function(self, path, ...)
+	["SetImage"] = function(self, path, a0,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
+		local args = {a0,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10}
 		local image = self.image
 		image:SetTexture(path)
 
 		if image:GetTexture() then
 			self.imageshown = true
-			local n = select("#", ...)
+			local n = tgetn(args)
 			if n == 4 or n == 8 then
-				image:SetTexCoord(...)
+				image:SetTexCoord(a0,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
 			else
 				image:SetTexCoord(0, 1, 0, 1)
 			end

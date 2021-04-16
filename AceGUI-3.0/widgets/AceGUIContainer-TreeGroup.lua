@@ -9,7 +9,7 @@ if not AceGUI or (AceGUI:GetWidgetVersion(Type) or 0) >= Version then return end
 -- Lua APIs
 local next, pairs, ipairs, assert, type = next, pairs, ipairs, assert, type
 local math_min, math_max, floor = math.min, math.max, floor
-local select, tremove, unpack, tconcat = select, table.remove, unpack, table.concat
+local select, tremove, unpack, tconcat, tgetn = select, table.remove, unpack, table.concat, table.getn
 
 -- WoW APIs
 local CreateFrame, UIParent = CreateFrame, UIParent
@@ -173,7 +173,7 @@ local function addLine(self, v, tree, level, parent)
 	else
 		line.hasChildren = nil
 	end
-	self.lines[#self.lines+1] = line
+	self.lines[tgetn(self.lines)+1] = line
 	return line
 end
 
@@ -184,12 +184,13 @@ local function FirstFrameUpdate(frame)
 	self:RefreshTree(nil, true)
 end
 
-local function BuildUniqueValue(...)
-	local n = select('#', ...)
+local function BuildUniqueValue(a0,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
+	local args = {a0,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10}
+	local n = tgetn(args)
 	if n == 1 then
-		return ...
+		return args[1]
 	else
-		return (...).."\001"..BuildUniqueValue(select(2,...))
+		return tconcat(tmp, "\001", 1, tgetn(args))
 	end
 end
 
@@ -437,7 +438,7 @@ local methods = {
 
 		self:BuildLevel(tree, 1)
 
-		local numlines = #lines
+		local numlines = tgetn(lines)
 
 		local maxlines = (floor(((self.treeframe:GetHeight()or 0) - 20 ) / 18))
 		if maxlines <= 0 then return end
@@ -536,12 +537,12 @@ local methods = {
 		end
 	end,
 
-	["Select"] = function(self, uniquevalue, ...)
+	["Select"] = function(self, uniquevalue, a0,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
 		self.filter = false
 		local status = self.status or self.localstatus
 		local groups = status.groups
-		local path = {...}
-		for i = 1, #path do
+		local path = {a0,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10}
+		for i = 1, tgetn(path) do
 			groups[tconcat(path, "\001", 1, i)] = true
 		end
 		status.selected = uniquevalue
@@ -549,8 +550,8 @@ local methods = {
 		self:Fire("OnGroupSelected", uniquevalue)
 	end,
 
-	["SelectByPath"] = function(self, ...)
-		self:Select(BuildUniqueValue(...), ...)
+	["SelectByPath"] = function(self, a0,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
+		self:Select(BuildUniqueValue(a0,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10), a0,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
 	end,
 
 	["SelectByValue"] = function(self, uniquevalue)

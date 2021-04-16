@@ -30,7 +30,7 @@ local AceConsoleName = "AceConsole-3.0"
 -- Lua APIs
 local strsub, strsplit, strlower, strmatch, strtrim = string.sub, string.split, string.lower, string.match, string.trim
 local format, tonumber, tostring = string.format, tonumber, tostring
-local tsort, tinsert = table.sort, table.insert
+local tsort, tinsert, tconcat, tremove, tgetn, tsetn = table.sort, table.insert, table.concat, table.remove, table.getn, table.setn
 local select, pairs, next, type = select, pairs, next, type
 local error, assert = error, assert
 
@@ -63,10 +63,12 @@ local funcmsg = "expected function or member name"
 
 -- pickfirstset() - picks the first non-nil value and returns it
 
-local function pickfirstset(...)
-	for i=1,select("#",...) do
-		if select(i,...)~=nil then
-			return select(i,...)
+-- picks the first non-nil value and returns it
+local function pickfirstset(a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
+	local args = {a1,a2,a3,a4,a5,a6,a7,a8,a9,a10}
+	for i=1,tgetn(args) do
+		if select(i,args)~=nil then
+			return select(i,args)
 		end
 	end
 end
@@ -90,7 +92,7 @@ end
 
 -- callmethod() - call a given named method (e.g. "get", "set") with given arguments
 
-local function callmethod(info, inputpos, tab, methodtype, ...)
+local function callmethod(info, inputpos, tab, methodtype, a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
 	local method = info[methodtype]
 	if not method then
 		err(info, inputpos, "'"..methodtype.."': not set")
@@ -101,12 +103,12 @@ local function callmethod(info, inputpos, tab, methodtype, ...)
 	info.type = tab.type
 
 	if type(method)=="function" then
-		return method(info, ...)
+		return method(info, a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
 	elseif type(method)=="string" then
 		if type(info.handler[method])~="function" then
 			err(info, inputpos, "'"..methodtype.."': '"..method.."' is not a member function of "..tostring(info.handler))
 		end
-		return info.handler[method](info.handler, info, ...)
+		return info.handler[method](info.handler, info, a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
 	else
 		assert(false)	-- type should have already been checked on read
 	end
@@ -114,7 +116,7 @@ end
 
 -- callfunction() - call a given named function (e.g. "name", "desc") with given arguments
 
-local function callfunction(info, tab, methodtype, ...)
+local function callfunction(info, tab, methodtype, a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
 	local method = tab[methodtype]
 
 	info.arg = tab.arg
@@ -122,7 +124,7 @@ local function callfunction(info, tab, methodtype, ...)
 	info.type = tab.type
 
 	if type(method)=="function" then
-		return method(info, ...)
+		return method(info, a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
 	else
 		assert(false) -- type should have already been checked on read
 	end
@@ -130,9 +132,9 @@ end
 
 -- do_final() - do the final step (set/execute) along with validation and confirmation
 
-local function do_final(info, inputpos, tab, methodtype, ...)
+local function do_final(info, inputpos, tab, methodtype, a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
 	if info.validate then
-		local res = callmethod(info,inputpos,tab,"validate",...)
+		local res = callmethod(info,inputpos,tab,"validate",a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
 		if type(res)=="string" then
 			usererr(info, inputpos, "'"..strsub(info.input, inputpos).."' - "..res)
 			return
@@ -140,7 +142,7 @@ local function do_final(info, inputpos, tab, methodtype, ...)
 	end
 	-- console ignores .confirm
 
-	callmethod(info,inputpos,tab,methodtype, ...)
+	callmethod(info,inputpos,tab,methodtype, a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
 end
 
 
@@ -222,16 +224,16 @@ local function showhelp(info, inputpos, tab, depth, noHead)
 		local o2 = refTbl[two].order or 100
 		if type(o1) == "function" or type(o1) == "string" then
 			info.order = o1
-			info[#info+1] = one
+			info[tgetn(info)+1] = one
 			o1 = callmethod(info, inputpos, refTbl[one], "order")
-			info[#info] = nil
+			info[tgetn(info)] = nil
 			info.order = nil
 		end
 		if type(o2) == "function" or type(o1) == "string" then
 			info.order = o2
-			info[#info+1] = two
+			info[tgetn(info)+1] = two
 			o2 = callmethod(info, inputpos, refTbl[two], "order")
-			info[#info] = nil
+			info[tgetn(info)] = nil
 			info.order = nil
 		end
 		if o1<0 and o2<0 then return o1<o2 end
@@ -241,7 +243,7 @@ local function showhelp(info, inputpos, tab, depth, noHead)
 		return o1<o2
 	end)
 
-	for i = 1, #sortTbl do
+	for i = 1, tgetn(sortTbl) do
 		local k = sortTbl[i]
 		local v = refTbl[k]
 		if not checkhidden(info, inputpos, v) then
@@ -260,7 +262,7 @@ local function showhelp(info, inputpos, tab, depth, noHead)
 					showhelp(info, inputpos, v, depth, true)
 					info.handler,info.handler_at = oldhandler,oldhandler_at
 				else
-					local key = k:gsub(" ", "_")
+					local key = string.gsub(k, " ", "_")
 					print("  |cffffff78"..key.."|r - "..(desc or name or ""))
 				end
 			end
@@ -273,7 +275,7 @@ local function keybindingValidateFunc(text)
 	if text == nil or text == "NONE" then
 		return nil
 	end
-	text = text:upper()
+	text = string.upper(text)
 	local shift, ctrl, alt
 	local modifier
 	while true do
@@ -357,7 +359,7 @@ local function handle(info, inputpos, tab, depth, retfalse)
 		if tab.plugins and type(tab.plugins)~="table" then err(info,inputpos) end
 
 		-- grab next arg from input
-		local _,nextpos,arg = (info.input):find(" *([^ ]+) *", inputpos)
+		local _,nextpos,arg = strfind(info.input, " *([^ ]+) *", inputpos)
 		if not arg then
 			showhelp(info, inputpos, tab, depth)
 			return
@@ -378,7 +380,7 @@ local function handle(info, inputpos, tab, depth, retfalse)
 					return	-- done, name was found in inline group
 				end
 			-- matching name and not a inline group
-			elseif strlower(arg)==strlower(k:gsub(" ", "_")) then
+			elseif strlower(arg)==strlower(string.gsub(k, " ", "_")) then
 				info[depth+1] = k
 				return handle(info,nextpos,v,depth+1)
 			end
@@ -428,7 +430,7 @@ local function handle(info, inputpos, tab, depth, retfalse)
 	elseif tab.type=="toggle" then
 		------------ toggle --------------------------------------------
 		local b
-		local str = strtrim(strlower(str))
+		--local str = strtrim(strlower(str))
 		if str=="" then
 			b = callmethod(info, inputpos, tab, "get")
 
@@ -471,7 +473,7 @@ local function handle(info, inputpos, tab, depth, retfalse)
 			return
 		end
 		if type(info.step)=="number" then
-			val = val- (val % info.step)
+			val = val - math.mod(val, info.step)
 		end
 		if type(info.min)=="number" and val<info.min then
 			usererr(info, inputpos, val.." - "..format(L["must be equal to or higher than %s"], tostring(info.min)) )
@@ -500,7 +502,7 @@ local function handle(info, inputpos, tab, depth, retfalse)
 			local b = callmethod(info, inputpos, tab, "get")
 			local fmt = "|cffffff78- [%s]|r %s"
 			local fmt_sel = "|cffffff78- [%s]|r %s |cffff0000*|r"
-			print(L["Options for |cffffff78"..info[#info].."|r:"])
+			print(L["Options for |cffffff78"..info[tgetn(info)].."|r:"])
 			for k, v in pairs(values) do
 				if b == k then
 					print(fmt_sel:format(k, v))
@@ -540,7 +542,7 @@ local function handle(info, inputpos, tab, depth, retfalse)
 		if str == "" then
 			local fmt = "|cffffff78- [%s]|r %s"
 			local fmt_sel = "|cffffff78- [%s]|r %s |cffff0000*|r"
-			print(L["Options for |cffffff78"..info[#info].."|r (multiple possible):"])
+			print(L["Options for |cffffff78"..info[tgetn(info)].."|r (multiple possible):"])
 			for k, v in pairs(values) do
 				if callmethod(info, inputpos, tab, "get", k) then
 					print(fmt_sel:format(k, v))

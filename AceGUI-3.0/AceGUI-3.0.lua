@@ -31,7 +31,7 @@ local AceGUI, oldminor = LibStub:NewLibrary(ACEGUI_MAJOR, ACEGUI_MINOR)
 if not AceGUI then return end -- No upgrade needed
 
 -- Lua APIs
-local tconcat, tinsert, wipe = table.concat, table.insert, table.wipe
+local tconcat, tinsert, tgetn, wipe = table.concat, table.insert, table.getn, table.wipe
 local select, pairs, next, type = select, pairs, next, type
 local error, assert = error, assert
 local setmetatable, rawget = setmetatable, rawget
@@ -78,40 +78,52 @@ local xpcall = xpcall
 local function errorhandler(err)
 	return geterrorhandler()(err)
 end
+AceGUI.errorhandler = errorhandler
 
 local function CreateDispatcher(argCount)
 	local code = [[
-		local xpcall, eh = ...
-		local method, ARGS
-		local function call() return method(ARGS) end
-
-		local function dispatch(func, ...)
-			method = func
-			if not method then return end
-			ARGS = ...
-			return xpcall(call, eh)
+		local errorhandler = LibStub("AceGUI-3.0").errorhandler
+		local method, UP_ARGS
+		local function call()
+			local func, ARGS = method, UP_ARGS
+			method, UP_ARGS = nil, NILS
+			return func(ARGS)
 		end
-
-		return dispatch
+		return function(func, ARGS)
+			method, UP_ARGS = func, ARGS
+			return xpcall(call, errorhandler)
+		end
 	]]
-
-	local ARGS = {}
-	for i = 1, argCount do ARGS[i] = "arg"..i end
-	code = code:gsub("ARGS", tconcat(ARGS, ", "))
-	return assert(loadstring(code, "safecall Dispatcher["..argCount.."]"))(xpcall, errorhandler)
+	local c = 4*argCount-1
+	local s = "b01,b02,b03,b04,b05,b06,b07,b08,b09,b10,b11,b12,b13,b14,b15,b16,b17,b18,b19,b20"
+	code = string.gsub(code, "UP_ARGS", string.sub(s,1,c))
+	s = "a01,a02,a03,a04,a05,a06,a07,a08,a09,a10,a11,a12,a13,a14,a15,a16,a17,a18,a19,a20"
+	code = string.gsub(code, "ARGS", string.sub(s,1,c))
+	s = "nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil"
+	code = string.gsub(code, "NILS", string.sub(s,1,c))
+	return assert(loadstring(code, "safecall Dispatcher["..tostring(argCount).."]"))()
 end
 
 local Dispatchers = setmetatable({}, {__index=function(self, argCount)
-	local dispatcher = CreateDispatcher(argCount)
+	local dispatcher
+	if not tonumber(argCount) then dbg(debugstack()) end
+	if argCount > 0 then
+		dispatcher = CreateDispatcher(argCount)
+	else
+		dispatcher = function(func) return xpcall(func,errorhandler) end
+	end
 	rawset(self, argCount, dispatcher)
 	return dispatcher
 end})
-Dispatchers[0] = function(func)
-	return xpcall(func, errorhandler)
-end
 
-local function safecall(func, ...)
-	return Dispatchers[select("#", ...)](func, ...)
+local function safecall(func,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11,a12,a13,a14,a15,a16,a17,a18,a19,a20)
+	local args = {a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11,a12,a13,a14,a15,a16,a17,a18,a19,a20}
+	-- we check to see if the func is passed is actually a function here and don't error when it isn't
+	-- this safecall is used for optional functions like OnInitialize OnEnable etc. When they are not
+	-- present execution should continue without hinderance
+	if type(func) == "function" then
+		return Dispatchers[tgetn(args)](func,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11,a12,a13,a14,a15,a16,a17,a18,a19,a20)
+	end
 end
 
 -- Recycling functions
@@ -342,9 +354,9 @@ do
 		end
 	end
 
-	WidgetBase.Fire = function(self, name, ...)
+	WidgetBase.Fire = function(self, name, a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
 		if self.events[name] then
-			local success, ret = safecall(self.events[name], self, name, ...)
+			local success, ret = safecall(self.events[name], self, name, a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
 			if success then
 				return ret
 			end
@@ -399,8 +411,8 @@ do
 		return AceGUI:IsReleasing(self)
 	end
 
-	WidgetBase.SetPoint = function(self, ...)
-		return self.frame:SetPoint(...)
+	WidgetBase.SetPoint = function(self, a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
+		return self.frame:SetPoint(a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
 	end
 
 	WidgetBase.ClearAllPoints = function(self)
@@ -411,8 +423,8 @@ do
 		return self.frame:GetNumPoints()
 	end
 
-	WidgetBase.GetPoint = function(self, ...)
-		return self.frame:GetPoint(...)
+	WidgetBase.GetPoint = function(self, a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
+		return self.frame:GetPoint(a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
 	end
 
 	WidgetBase.GetUserDataTable = function(self)
@@ -499,9 +511,10 @@ do
 		self:DoLayout()
 	end
 
-	WidgetContainerBase.AddChildren = function(self, ...)
-		for i = 1, select("#", ...) do
-			local child = select(i, ...)
+	WidgetContainerBase.AddChildren = function(self, a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
+		local args = {a1,a2,a3,a4,a5,a6,a7,a8,a9,a10}
+		for i = 1, tgetn(args) do
+			local child = select(i, args)
 			tinsert(self.children, child)
 			child:SetParent(self)
 			child.frame:Show()
@@ -511,7 +524,7 @@ do
 
 	WidgetContainerBase.ReleaseChildren = function(self)
 		local children = self.children
-		for i = 1,#children do
+		for i = 1,tgetn(children) do
 			AceGUI:Release(children[i])
 			children[i] = nil
 		end
@@ -610,7 +623,7 @@ end
 function AceGUI:RegisterLayout(Name, LayoutFunc)
 	assert(type(LayoutFunc) == "function")
 	if type(Name) == "string" then
-		Name = Name:upper()
+		Name = string.upper(Name)
 	end
 	LayoutRegistry[Name] = LayoutFunc
 end
@@ -619,7 +632,7 @@ end
 -- @param Name The name of the layout
 function AceGUI:GetLayout(Name)
 	if type(Name) == "string" then
-		Name = Name:upper()
+		Name = string.upper(Name)
 	end
 	return LayoutRegistry[Name]
 end
@@ -666,7 +679,7 @@ AceGUI:RegisterLayout("List",
 	function(content, children)
 		local height = 0
 		local width = content.width or content:GetWidth() or 0
-		for i = 1, #children do
+		for i = 1, tgetn(children) do
 			local child = children[i]
 
 			local frame = child.frame
@@ -712,9 +725,9 @@ AceGUI:RegisterLayout("Fill",
 	end)
 
 local layoutrecursionblock = nil
-local function safelayoutcall(object, func, ...)
+local function safelayoutcall(object, func, a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
 	layoutrecursionblock = true
-	object[func](object, ...)
+	object[func](object, a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
 	layoutrecursionblock = nil
 end
 
@@ -739,7 +752,7 @@ AceGUI:RegisterLayout("Flow",
 		local frameoffset
 		local lastframeoffset
 		local oversize
-		for i = 1, #children do
+		for i = 1, tgetn(children) do
 			local child = children[i]
 			oversize = nil
 			local frame = child.frame
@@ -857,7 +870,7 @@ local GetCellAlign = function (dir, tableObj, colObj, cellObj, cell, child)
 	local child, cell, val = child or 0, cell or 0, nil
 
 	if type(fn) == "string" then
-		fn = fn:lower()
+		fn = string.lower(fn)
 		fn = dir == "V" and (fn:sub(1, 3) == "top" and "start" or fn:sub(1, 6) == "bottom" and "end" or fn:sub(1, 6) == "center" and "middle")
 		  or dir == "H" and (fn:sub(-4) == "left" and "start" or fn:sub(-5) == "right" and "end" or fn:sub(-6) == "center" and "middle")
 		  or fn
@@ -906,7 +919,7 @@ AceGUI:RegisterLayout("Table",
 		local cols = tableObj.columns
 		local spaceH = tableObj.spaceH or tableObj.space or 0
 		local spaceV = tableObj.spaceV or tableObj.space or 0
-		local totalH = (content:GetWidth() or content.width or 0) - spaceH * (#cols - 1)
+		local totalH = (content:GetWidth() or content.width or 0) - spaceH * (tgetn(cols) - 1)
 
 		-- We need to reuse these because layout events can come in very frequently
 		local layoutCache = obj:GetUserData("layoutCache")
@@ -922,8 +935,8 @@ AceGUI:RegisterLayout("Table",
 			if child:IsShown() then
 				repeat
 					n = n + 1
-					local col = (n - 1) % #cols + 1
-					local row = ceil(n / #cols)
+					local col = math.mod(n - 1, tgetn(cols) + 1)
+					local row = ceil(n / tgetn(cols))
 					local rowspan = rowspans[col]
 					local cell = rowspan and rowspan.child or child
 					local cellObj = cell:GetUserData("cell")
@@ -934,12 +947,12 @@ AceGUI:RegisterLayout("Table",
 						rowspan = {child = child, from = row, to = row + cellObj.rowspan - 1}
 						rowspans[col] = rowspan
 					end
-					if rowspan and i == #children then
+					if rowspan and i == tgetn(children) then
 						rowspan.to = row
 					end
 
 					-- Colspan
-					local colspan = max(0, min((cellObj and cellObj.colspan or 1) - 1, #cols - col))
+					local colspan = max(0, min((cellObj and cellObj.colspan or 1) - 1, tgetn(cols - col)))
 					n = n + colspan
 
 					-- Place the cell
@@ -956,7 +969,7 @@ AceGUI:RegisterLayout("Table",
 			end
 		end
 
-		local rows = ceil(n / #cols)
+		local rows = ceil(n / tgetn(cols))
 
 		-- Determine fixed size cols and collect weights
 		local extantH, totalWeight = totalH, 0
@@ -975,7 +988,7 @@ AceGUI:RegisterLayout("Table",
 				if not colObj.width or colObj.width <= 0 then
 					-- Content width
 					for row=1,rows do
-						local child = t[(row - 1) * #cols + col]
+						local child = t[(row - 1) * tgetn(cols) + col]
 						if child then
 							local f = child.frame
 							f:ClearAllPoints()
@@ -1007,8 +1020,8 @@ AceGUI:RegisterLayout("Table",
 			local rowV = 0
 
 			-- Horizontal placement and sizing
-			for col=1,#cols do
-				local child = t[(row - 1) * #cols + col]
+			for col=1,tgetn(cols) do
+				local child = t[(row - 1) * tgetn(cols) + col]
 				if child then
 					local colObj = cols[colStart[child]]
 					local cellObj = child:GetUserData("cell")
@@ -1036,8 +1049,8 @@ AceGUI:RegisterLayout("Table",
 			laneV[row] = rowV
 
 			-- Vertical placement and sizing
-			for col=1,#cols do
-				local child = t[(row - 1) * #cols + col]
+			for col=1,tgetn(cols) do
+				local child = t[(row - 1) * tgetn(cols) + col]
 				if child then
 					local colObj = cols[colStart[child]]
 					local cellObj = child:GetUserData("cell")
@@ -1057,7 +1070,7 @@ AceGUI:RegisterLayout("Table",
 		end
 
 		-- Calculate total height
-		local totalV = GetCellDimension("V", laneV, 1, #laneV, spaceV)
+		local totalV = GetCellDimension("V", laneV, 1, tgetn(laneV), spaceV)
 
 		-- Cleanup
 		for _,v in pairs(layoutCache) do wipe(v) end

@@ -26,10 +26,10 @@ end
 --[[-----------------------------------------------------------------------------
 Scripts
 -------------------------------------------------------------------------------]]
-local function Button_OnClick(frame, ...)
+local function Button_OnClick(frame, a0,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
 	AceGUI:ClearFocus()
 	PlaySound((wowThirdLegion or wowClassicRebased or wowTBCRebased) and 852 or "igMainMenuOption") -- SOUNDKIT.IG_MAINMENU_OPTION
-	frame.obj:Fire("OnClick", ...)
+	frame.obj:Fire("OnClick", a0,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
 end
 
 local function Control_OnEnter(frame)

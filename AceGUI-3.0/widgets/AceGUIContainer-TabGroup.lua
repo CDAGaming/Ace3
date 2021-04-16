@@ -7,7 +7,7 @@ local AceGUI = LibStub and LibStub("AceGUI-3.0", true)
 if not AceGUI or (AceGUI:GetWidgetVersion(Type) or 0) >= Version then return end
 
 -- Lua APIs
-local pairs, ipairs, assert, type, wipe = pairs, ipairs, assert, type, table.wipe
+local pairs, ipairs, assert, type, wipe, tgetn = pairs, ipairs, assert, type, table.wipe, table.getn
 
 local tsetn = function(t,n)
 	setmetatable(t,{__len=function() return n end})
@@ -221,16 +221,16 @@ local methods = {
 			widths[i] = tab:GetWidth() - 6 --tabs are anchored 10 pixels from the right side of the previous one to reduce spacing, but add a fixed 4px padding for the text
 		end
 
-		for i = (#tablist)+1, #tabs, 1 do
+		for i = (tgetn(tablist))+1, tabs, 1 do
 			tabs[i]:Hide()
 		end
 
 		--First pass, find the minimum number of rows needed to hold all tabs and the initial tab layout
-		local numtabs = #tablist
+		local numtabs = tgetn(tablist)
 		local numrows = 1
 		local usedwidth = 0
 
-		for i = 1, #tablist do
+		for i = 1, numtabs do
 			--If this is not the first tab of a row and there isn't room for it
 			if usedwidth ~= 0 and (width - usedwidth - widths[i]) < 0 then
 				rowwidths[numrows] = usedwidth + 10 --first tab in each row takes up an extra 10px
@@ -241,7 +241,7 @@ local methods = {
 			usedwidth = usedwidth + widths[i]
 		end
 		rowwidths[numrows] = usedwidth + 10 --first tab in each row takes up an extra 10px
-		rowends[numrows] = #tablist
+		rowends[numrows] = numtabs
 
 		--Fix for single tabs being left on the last row, move a tab from the row above if applicable
 		if numrows > 1 then

@@ -259,12 +259,12 @@ local realmKey = GetRealmName()
 local charKey = UnitName("player") .. " - " .. realmKey
 local _, classKey = UnitClass("player")
 local _, raceKey = UnitRace("player")
-local factionKey = UnitFactionGroup("player")
+local _, factionKey = UnitFactionGroup("player") or _, "Others"
 local factionrealmKey = factionKey .. " - " .. realmKey
-local localeKey = GetLocale():lower()
+local localeKey = string.lower(GetLocale())
 
 local regionTable = { "US", "KR", "EU", "TW", "CN" }
-local regionKey = _G["GetCurrentRegion"] and regionTable[GetCurrentRegion()] or string.sub(GetCVar("realmList"), 1, 2):upper()
+local regionKey = _G["GetCurrentRegion"] and regionTable[GetCurrentRegion()] or string.upper(string.sub(GetCVar("realmList"), 1, 2))
 local factionrealmregionKey = factionrealmKey .. " - " .. regionKey
 
 -- Actual database initialization function

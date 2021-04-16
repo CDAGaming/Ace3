@@ -23,7 +23,7 @@ if not AceConfigRegistry.callbacks then
 end
 
 -- Lua APIs
-local tinsert, tconcat = table.insert, table.concat
+local tinsert, tconcat, tgetn = table.insert, table.concat, table.getn
 local strfind, strmatch = string.find, string.match
 local type, tostring, select, pairs = type, tostring, select, pairs
 local error, assert = error, assert
@@ -42,10 +42,11 @@ AceConfigRegistry.validated = {
 
 
 
-local function err(msg, errlvl, ...)
+local function err(msg, errlvl, a0,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
+	local args = {a0,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10}
 	local t = {}
-	for i=select("#",...),1,-1 do
-		tinsert(t, (select(i, ...)))
+	for i=tgetn(args),1,-1 do
+		tinsert(t, (select(i, args)))
 	end
 	error(MAJOR..":ValidateOptionsTable(): "..tconcat(t,".")..msg, errlvl+2)
 end
@@ -192,75 +193,76 @@ local typedkeys={
 	},
 }
 
-local function validateKey(k,errlvl,...)
+local function validateKey(k,errlvl,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
+	local args = {a1,a2,a3,a4,a5,a6,a7,a8,a9,a10}
 	errlvl=(errlvl or 0)+1
 	if type(k)~="string" then
-		err("["..tostring(k).."] - key is not a string", errlvl,...)
+		err("["..tostring(k).."] - key is not a string", errlvl,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
 	end
 	if strfind(k, "[%c\127]") then
-		err("["..tostring(k).."] - key name contained control characters", errlvl,...)
+		err("["..tostring(k).."] - key name contained control characters", errlvl,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
 	end
 end
 
-local function validateVal(v, oktypes, errlvl,...)
+local function validateVal(v, oktypes, errlvl,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
 	errlvl=(errlvl or 0)+1
 	local isok=oktypes[type(v)] or oktypes["*"]
 
 	if not isok then
-		err(": expected a "..oktypes._..", got '"..tostring(v).."'", errlvl,...)
+		err(": expected a "..oktypes._..", got '"..tostring(v).."'", errlvl,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
 	end
 	if type(isok)=="table" then		-- isok was a table containing specific values to be tested for!
 		if not isok[v] then
-			err(": did not expect "..type(v).." value '"..tostring(v).."'", errlvl,...)
+			err(": did not expect "..type(v).." value '"..tostring(v).."'", errlvl,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
 		end
 	end
 end
 
-local function validate(options,errlvl,...)
+local function validate(options,errlvl,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
 	errlvl=(errlvl or 0)+1
 	-- basic consistency
 	if type(options)~="table" then
-		err(": expected a table, got a "..type(options), errlvl,...)
+		err(": expected a table, got a "..type(options), errlvl,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
 	end
 	if type(options.type)~="string" then
-		err(".type: expected a string, got a "..type(options.type), errlvl,...)
+		err(".type: expected a string, got a "..type(options.type), errlvl,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
 	end
 
 	-- get type and 'typedkeys' member
 	local tk = typedkeys[options.type]
 	if not tk then
-		err(".type: unknown type '"..options.type.."'", errlvl,...)
+		err(".type: unknown type '"..options.type.."'", errlvl,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
 	end
 
 	-- make sure that all options[] are known parameters
 	for k,v in pairs(options) do
 		if not (tk[k] or basekeys[k]) then
-			err(": unknown parameter", errlvl,tostring(k),...)
+			err(": unknown parameter", errlvl,tostring(k),a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
 		end
 	end
 
 	-- verify that required params are there, and that everything is the right type
 	for k,oktypes in pairs(basekeys) do
-		validateVal(options[k], oktypes, errlvl,k,...)
+		validateVal(options[k], oktypes, errlvl,k,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
 	end
 	for k,oktypes in pairs(tk) do
-		validateVal(options[k], oktypes, errlvl,k,...)
+		validateVal(options[k], oktypes, errlvl,k,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
 	end
 
 	-- extra logic for groups
 	if options.type=="group" then
 		for k,v in pairs(options.args) do
-			validateKey(k,errlvl,"args",...)
-			validate(v, errlvl,k,"args",...)
+			validateKey(k,errlvl,"args",a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
+			validate(v, errlvl,k,"args",a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
 		end
 		if options.plugins then
 			for plugname,plugin in pairs(options.plugins) do
 				if type(plugin)~="table" then
-					err(": expected a table, got '"..tostring(plugin).."'", errlvl,tostring(plugname),"plugins",...)
+					err(": expected a table, got '"..tostring(plugin).."'", errlvl,tostring(plugname),"plugins",a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
 				end
 				for k,v in pairs(plugin) do
-					validateKey(k,errlvl,tostring(plugname),"plugins",...)
-					validate(v, errlvl,k,tostring(plugname),"plugins",...)
+					validateKey(k,errlvl,tostring(plugname),"plugins",a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
+					validate(v, errlvl,k,tostring(plugname),"plugins",a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
 				end
 			end
 		end
@@ -302,7 +304,7 @@ local function validateGetterArgs(uiType, uiName, errlvl)
 	if uiType~="cmd" and uiType~="dropdown" and uiType~="dialog" then
 		error(MAJOR..": Requesting options table: 'uiType' - invalid configuration UI type, expected 'cmd', 'dropdown' or 'dialog'", errlvl)
 	end
-	if not strmatch(uiName, "[A-Za-z]%-[0-9]") then	-- Expecting e.g. "MyLib-1.2"
+	if not strfind(uiName, "[A-Za-z]+-[0-9]") then	-- Expecting e.g. "MyLib-1.2"
 		error(MAJOR..": Requesting options table: 'uiName' - badly formatted or missing version number. Expected e.g. 'MyLib-1.2'", errlvl)
 	end
 end

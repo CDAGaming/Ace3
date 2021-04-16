@@ -23,15 +23,15 @@ AceConfigDialog.frame.closeAllOverride = AceConfigDialog.frame.closeAllOverride 
 
 local wowThirdLegion, wowClassicRebased, wowTBCRebased
 do
-    local _, build, _, interface = GetBuildInfo()
-    interface = interface or tonumber(build)
+	local _, build, _, interface = GetBuildInfo()
+	interface = interface or tonumber(build)
 	wowThirdLegion = (interface >= 70300)
 	wowClassicRebased = (interface >= 11300 and interface < 20000)
 	wowTBCRebased = (interface >= 20500 and interface < 30000)
 end
 
 -- Lua APIs
-local tconcat, tinsert, tsort, tremove, wipe = table.concat, table.insert, table.sort, table.remove, table.wipe
+local tinsert, tconcat, tremove, tgetn, tsetn, tsort, wipe = table.insert, table.concat, table.remove, table.getn, table.setn, table.sort, table.wipe
 local strmatch, format = string.match, string.format
 local error = error
 local pairs, next, select, type, unpack, ipairs = pairs, next, select, type, unpack, ipairs
@@ -66,40 +66,52 @@ local xpcall = xpcall
 local function errorhandler(err)
 	return geterrorhandler()(err)
 end
+AceConfigDialog.errorhandler = errorhandler
 
 local function CreateDispatcher(argCount)
 	local code = [[
-		local xpcall, eh = ...
-		local method, ARGS
-		local function call() return method(ARGS) end
-
-		local function dispatch(func, ...)
-			 method = func
-			 if not method then return end
-			 ARGS = ...
-			 return xpcall(call, eh)
+		local errorhandler = LibStub("AceConfigDialog-3.0").errorhandler
+		local method, UP_ARGS
+		local function call()
+			local func, ARGS = method, UP_ARGS
+			method, UP_ARGS = nil, NILS
+			return func(ARGS)
 		end
-
-		return dispatch
+		return function(func, ARGS)
+			method, UP_ARGS = func, ARGS
+			return xpcall(call, errorhandler)
+		end
 	]]
-
-	local ARGS = {}
-	for i = 1, argCount do ARGS[i] = "arg"..i end
-	code = code:gsub("ARGS", tconcat(ARGS, ", "))
-	return assert(loadstring(code, "safecall Dispatcher["..argCount.."]"))(xpcall, errorhandler)
+	local c = 4*argCount-1
+	local s = "b01,b02,b03,b04,b05,b06,b07,b08,b09,b10,b11,b12,b13,b14,b15,b16,b17,b18,b19,b20"
+	code = string.gsub(code, "UP_ARGS", string.sub(s,1,c))
+	s = "a01,a02,a03,a04,a05,a06,a07,a08,a09,a10,a11,a12,a13,a14,a15,a16,a17,a18,a19,a20"
+	code = string.gsub(code, "ARGS", string.sub(s,1,c))
+	s = "nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil"
+	code = string.gsub(code, "NILS", string.sub(s,1,c))
+	return assert(loadstring(code, "safecall Dispatcher["..tostring(argCount).."]"))()
 end
 
 local Dispatchers = setmetatable({}, {__index=function(self, argCount)
-	local dispatcher = CreateDispatcher(argCount)
+	local dispatcher
+	if not tonumber(argCount) then dbg(debugstack()) end
+	if argCount > 0 then
+		dispatcher = CreateDispatcher(argCount)
+	else
+		dispatcher = function(func) return xpcall(func,errorhandler) end
+	end
 	rawset(self, argCount, dispatcher)
 	return dispatcher
 end})
-Dispatchers[0] = function(func)
-	return xpcall(func, errorhandler)
-end
 
-local function safecall(func, ...)
-	return Dispatchers[select("#", ...)](func, ...)
+local function safecall(func,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11,a12,a13,a14,a15,a16,a17,a18,a19,a20)
+	local args = {a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11,a12,a13,a14,a15,a16,a17,a18,a19,a20}
+	-- we check to see if the func is passed is actually a function here and don't error when it isn't
+	-- this safecall is used for optional functions like OnInitialize OnEnable etc. When they are not
+	-- present execution should continue without hinderance
+	if type(func) == "function" then
+		return Dispatchers[tgetn(args)](func,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11,a12,a13,a14,a15,a16,a17,a18,a19,a20)
+	end
 end
 
 local width_multiplier = 170
@@ -160,12 +172,13 @@ do
 end
 
 -- picks the first non-nil value and returns it
-local function pickfirstset(...)
-  for i=1,select("#",...) do
-    if select(i,...)~=nil then
-      return select(i,...)
-    end
-  end
+local function pickfirstset(a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
+	local args = {a1,a2,a3,a4,a5,a6,a7,a8,a9,a10}
+	for i=1,tgetn(args) do
+		if select(i,args)~=nil then
+			return select(i,args)
+		end
+	end
 end
 
 --gets an option from a given group, checking plugins
@@ -216,7 +229,7 @@ local allIsLiteral = {
 --gets the value for a member that could be a function
 --function refs are called with an info arg
 --every other type is returned
-local function GetOptionsMemberValue(membername, option, options, path, appName, ...)
+local function GetOptionsMemberValue(membername, option, options, path, appName, a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
 	--get definition for the member
 	local inherits = isInherited[membername]
 
@@ -229,7 +242,7 @@ local function GetOptionsMemberValue(membername, option, options, path, appName,
 		if group[membername] ~= nil then
 			member = group[membername]
 		end
-		for i = 1, #path do
+		for i = 1, tgetn(path) do
 			group = GetSubOption(group, path[i])
 			if group[membername] ~= nil then
 				member = group[membername]
@@ -248,7 +261,7 @@ local function GetOptionsMemberValue(membername, option, options, path, appName,
 		local group = options
 		handler = group.handler or handler
 
-		for i = 1, #path do
+		for i = 1, tgetn(path) do
 			group = GetSubOption(group, path[i])
 			info[i] = path[i]
 			handler = group.handler or handler
@@ -268,11 +281,11 @@ local function GetOptionsMemberValue(membername, option, options, path, appName,
 		--using 4 returns for the get of a color type, increase if a type needs more
 		if type(member) == "function" then
 			--Call the function
-			a,b,c,d = member(info, ...)
+			a,b,c,d = member(info, a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
 		else
 			--Call the method
 			if handler and handler[member] then
-				a,b,c,d = handler[member](handler, info, ...)
+				a,b,c,d = handler[member](handler, info, a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
 			else
 				error(format("Method %s doesn't exist in handler for type %s", member, membername))
 			end
@@ -286,7 +299,7 @@ local function GetOptionsMemberValue(membername, option, options, path, appName,
 end
 
 --[[calls an options function that could be inherited, method name or function ref
-local function CallOptionsFunction(funcname ,option, options, path, appName, ...)
+local function CallOptionsFunction(funcname ,option, options, path, appName, a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
 	local info = new()
 
 	local func
@@ -316,12 +329,12 @@ local function CallOptionsFunction(funcname ,option, options, path, appName, ...
 	local a, b, c ,d
 	if type(func) == "string" then
 		if handler and handler[func] then
-			a,b,c,d = handler[func](handler, info, ...)
+			a,b,c,d = handler[func](handler, info, a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
 		else
 			error(string.format("Method %s doesn't exist in handler for type func", func))
 		end
 	elseif type(func) == "function" then
-		a,b,c,d = func(info, ...)
+		a,b,c,d = func(info, a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
 	end
 	del(info)
 	return a,b,c,d
@@ -344,7 +357,7 @@ local function compareOptions(a,b)
 	if OrderA == OrderB then
 		local NameA = (type(tempNames[a]) == "string") and tempNames[a] or ""
 		local NameB = (type(tempNames[b]) == "string") and tempNames[b] or ""
-		return NameA:upper() < NameB:upper()
+		return string.upper(NameA) < string.upper(NameB)
 	end
 	if OrderA < 0 then
 		if OrderB >= 0 then
@@ -374,10 +387,10 @@ local function BuildSortedOptionsTable(group, keySort, opts, options, path, appN
 					tinsert(keySort, k)
 					opts[k] = v
 
-					path[#path+1] = k
+					path[tgetn(path)+1] = k
 					tempOrders[k] = GetOptionsMemberValue("order", v, options, path, appName)
 					tempNames[k] = GetOptionsMemberValue("name", v, options, path, appName)
-					path[#path] = nil
+					path[tgetn(path)] = nil
 				end
 			end
 		end
@@ -388,10 +401,10 @@ local function BuildSortedOptionsTable(group, keySort, opts, options, path, appN
 			tinsert(keySort, k)
 			opts[k] = v
 
-			path[#path+1] = k
+			path[tgetn(path)+1] = k
 			tempOrders[k] = GetOptionsMemberValue("order", v, options, path, appName)
 			tempNames[k] = GetOptionsMemberValue("name", v, options, path, appName)
-			path[#path] = nil
+			path[tgetn(path)] = nil
 		end
 	end
 
@@ -404,7 +417,7 @@ end
 local function DelTree(tree)
 	if tree.children then
 		local childs = tree.children
-		for i = 1, #childs do
+		for i = 1, tgetn(childs) do
 			DelTree(childs[i])
 			del(childs[i])
 		end
@@ -424,7 +437,7 @@ local function CleanUserData(widget, event)
 		local tree = user.tree
 		widget:SetTree(nil)
 		if tree then
-			for i = 1, #tree do
+			for i = 1, tgetn(tree) do
 				DelTree(tree[i])
 				del(tree[i])
 			end
@@ -466,7 +479,7 @@ function AceConfigDialog:GetStatusTable(appName, path)
 	status = status[appName]
 
 	if path then
-		for i = 1, #path do
+		for i = 1, tgetn(path) do
 			local v = path[i]
 			if not status.children[v] then
 				status.children[v] = {}
@@ -484,7 +497,8 @@ end
 -- The path specified has to match the keys of the groups in the table.
 -- @param appName The application name as given to `:RegisterOptionsTable()`
 -- @param ... The path to the key that should be selected
-function AceConfigDialog:SelectGroup(appName, ...)
+function AceConfigDialog:SelectGroup(appName, a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
+	local args = {a1,a2,a3,a4,a5,a6,a7,a8,a9,a10}
 	local path = new()
 
 
@@ -502,8 +516,8 @@ function AceConfigDialog:SelectGroup(appName, ...)
 	local treevalue
 	local treestatus
 
-	for n = 1, select("#",...) do
-		local key = select(n, ...)
+	for n = 1, tgetn(args) do
+		local key = args[n]
 
 		if group.childGroups == "tab" or group.childGroups == "select" then
 			--if this is a tab or select group, select the group
@@ -670,7 +684,7 @@ do
 		frame.cancel = cancel
 	end
 end
-local function confirmPopup(appName, rootframe, basepath, info, message, func, ...)
+local function confirmPopup(appName, rootframe, basepath, info, message, func, a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
 	local frame = AceConfigDialog.popup
 	frame:Show()
 	frame.text:SetText(message)
@@ -685,8 +699,8 @@ local function confirmPopup(appName, rootframe, basepath, info, message, func, .
 	frame.accept:SetPoint("BOTTOMRIGHT", frame, "BOTTOM", -6, 16)
 	frame.cancel:Show()
 
-	local t = {...}
-	local tCount = select("#", ...)
+	local t = {a1,a2,a3,a4,a5,a6,a7,a8,a9,a10}
+	local tCount = tgetn(t)
 	frame.accept:SetScript("OnClick", function(self)
 		safecall(func, unpack(t, 1, tCount)) -- Manually set count as unpack() stops on nil (bug with #table)
 		AceConfigDialog:Open(appName, rootframe, unpack(basepath or emptyTbl))
@@ -724,7 +738,7 @@ local function validationErrorPopup(message)
 	end)
 end
 
-local function ActivateControl(widget, event, ...)
+local function ActivateControl(widget, event, a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
 	--This function will call the set / execute handler for the widget
 	--widget:GetUserDataTable() contains the needed info
 	local user = widget:GetUserDataTable()
@@ -747,7 +761,7 @@ local function ActivateControl(widget, event, ...)
 	handler = group.handler or handler
 	confirm = group.confirm
 	validate = group.validate
-	for i = 1, #path do
+	for i = 1, tgetn(path) do
 		local v = path[i]
 		group = GetSubOption(group, v)
 		info[i] = v
@@ -787,7 +801,7 @@ local function ActivateControl(widget, event, ...)
 
 	if option.type == "input" then
 		if type(pattern)=="string" then
-			if not strmatch(..., pattern) then
+			if not strmatch(a1, pattern) then
 				validated = false
 			end
 		end
@@ -797,13 +811,13 @@ local function ActivateControl(widget, event, ...)
 	if validated and option.type ~= "execute" then
 		if type(validate) == "string" then
 			if handler and handler[validate] then
-				success, validated = safecall(handler[validate], handler, info, ...)
+				success, validated = safecall(handler[validate], handler, info, a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
 				if not success then validated = false end
 			else
 				error(format("Method %s doesn't exist in handler for type execute", validate))
 			end
 		elseif type(validate) == "function" then
-			success, validated = safecall(validate, info, ...)
+			success, validated = safecall(validate, info, a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
 			if not success then validated = false end
 		end
 	end
@@ -837,7 +851,7 @@ local function ActivateControl(widget, event, ...)
 		--call confirm func/method
 		if type(confirm) == "string" then
 			if handler and handler[confirm] then
-				success, confirm = safecall(handler[confirm], handler, info, ...)
+				success, confirm = safecall(handler[confirm], handler, info, a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
 				if success and type(confirm) == "string" then
 					confirmText = confirm
 					confirm = true
@@ -848,7 +862,7 @@ local function ActivateControl(widget, event, ...)
 				error(format("Method %s doesn't exist in handler for type confirm", confirm))
 			end
 		elseif type(confirm) == "function" then
-			success, confirm = safecall(confirm, info, ...)
+			success, confirm = safecall(confirm, info, a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
 			if success and type(confirm) == "string" then
 				confirmText = confirm
 				confirm = true
@@ -883,12 +897,12 @@ local function ActivateControl(widget, event, ...)
 				local basepath = user.rootframe:GetUserData("basepath")
 				if type(func) == "string" then
 					if handler and handler[func] then
-						confirmPopup(user.appName, rootframe, basepath, info, confirmText, handler[func], handler, info, ...)
+						confirmPopup(user.appName, rootframe, basepath, info, confirmText, handler[func], handler, info, a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
 					else
 						error(format("Method %s doesn't exist in handler for type func", func))
 					end
 				elseif type(func) == "function" then
-					confirmPopup(user.appName, rootframe, basepath, info, confirmText, func, info, ...)
+					confirmPopup(user.appName, rootframe, basepath, info, confirmText, func, info, a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
 				end
 				--func will be called and info deleted when the confirm dialog is responded to
 				return
@@ -898,12 +912,12 @@ local function ActivateControl(widget, event, ...)
 		--call the function
 		if type(func) == "string" then
 			if handler and handler[func] then
-				safecall(handler[func],handler, info, ...)
+				safecall(handler[func],handler, info, a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
 			else
 				error(format("Method %s doesn't exist in handler for type func", func))
 			end
 		elseif type(func) == "function" then
-			safecall(func,info, ...)
+			safecall(func,info, a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
 		end
 
 
@@ -960,8 +974,8 @@ end
 
 --called from a checkbox that is part of an internally created multiselect group
 --this type is safe to refresh on activation of one control
-local function ActivateMultiControl(widget, event, ...)
-	ActivateControl(widget, event, widget:GetUserData("value"), ...)
+local function ActivateMultiControl(widget, event, a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
+	ActivateControl(widget, event, widget:GetUserData("value"), a1)
 	local user = widget:GetUserDataTable()
 	local iscustom = user.rootframe:GetUserData("iscustom")
 	local basepath = user.rootframe:GetUserData("basepath") or emptyTbl
@@ -972,7 +986,7 @@ local function ActivateMultiControl(widget, event, ...)
 	end
 end
 
-local function MultiControlOnClosed(widget, event, ...)
+local function MultiControlOnClosed(widget, event, a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
 	local user = widget:GetUserDataTable()
 	if user.valuechanged and not widget:IsReleasing() then
 		local iscustom = user.rootframe:GetUserData("iscustom")
@@ -1019,18 +1033,18 @@ local function BuildTabs(group, options, path, appName)
 
 	BuildSortedOptionsTable(group, keySort, opts, options, path, appName)
 
-	for i = 1, #keySort do
+	for i = 1, tgetn(keySort) do
 		local k = keySort[i]
 		local v = opts[k]
 		if v.type == "group" then
-			path[#path+1] = k
+			path[tgetn(path)+1] = k
 			local inline = pickfirstset(v.dialogInline,v.guiInline,v.inline, false)
 			local hidden = CheckOptionHidden(v, options, path, appName)
 			if not inline and not hidden then
 				tinsert(tabs, k)
 				text[k] = GetOptionsMemberValue("name", v, options, path, appName)
 			end
-			path[#path] = nil
+			path[tgetn(path)] = nil
 		end
 	end
 
@@ -1048,18 +1062,18 @@ local function BuildSelect(group, options, path, appName)
 
 	BuildSortedOptionsTable(group, keySort, opts, options, path, appName)
 
-	for i = 1, #keySort do
+	for i = 1, tgetn(keySort) do
 		local k = keySort[i]
 		local v = opts[k]
 		if v.type == "group" then
-			path[#path+1] = k
+			path[tgetn(path)+1] = k
 			local inline = pickfirstset(v.dialogInline,v.guiInline,v.inline, false)
 			local hidden = CheckOptionHidden(v, options, path, appName)
 			if not inline and not hidden then
 				groups[k] = GetOptionsMemberValue("name", v, options, path, appName)
 				tinsert(order, k)
 			end
-			path[#path] = nil
+			path[tgetn(path)] = nil
 		end
 	end
 
@@ -1075,11 +1089,11 @@ local function BuildSubGroups(group, tree, options, path, appName)
 
 	BuildSortedOptionsTable(group, keySort, opts, options, path, appName)
 
-	for i = 1, #keySort do
+	for i = 1, tgetn(keySort) do
 		local k = keySort[i]
 		local v = opts[k]
 		if v.type == "group" then
-			path[#path+1] = k
+			path[tgetn(path)+1] = k
 			local inline = pickfirstset(v.dialogInline,v.guiInline,v.inline, false)
 			local hidden = CheckOptionHidden(v, options, path, appName)
 			if not inline and not hidden then
@@ -1095,7 +1109,7 @@ local function BuildSubGroups(group, tree, options, path, appName)
 					BuildSubGroups(v,entry, options, path, appName)
 				end
 			end
-			path[#path] = nil
+			path[tgetn(path)] = nil
 		end
 	end
 
@@ -1110,11 +1124,11 @@ local function BuildGroups(group, options, path, appName, recurse)
 
 	BuildSortedOptionsTable(group, keySort, opts, options, path, appName)
 
-	for i = 1, #keySort do
+	for i = 1, tgetn(keySort) do
 		local k = keySort[i]
 		local v = opts[k]
 		if v.type == "group" then
-			path[#path+1] = k
+			path[tgetn(path)+1] = k
 			local inline = pickfirstset(v.dialogInline,v.guiInline,v.inline, false)
 			local hidden = CheckOptionHidden(v, options, path, appName)
 			if not inline and not hidden then
@@ -1129,7 +1143,7 @@ local function BuildGroups(group, options, path, appName, recurse)
 					BuildSubGroups(v,entry, options, path, appName)
 				end
 			end
-			path[#path] = nil
+			path[tgetn(path)] = nil
 		end
 	end
 	del(keySort)
@@ -1139,7 +1153,7 @@ end
 
 local function InjectInfo(control, options, option, path, rootframe, appName)
 	local user = control:GetUserDataTable()
-	for i = 1, #path do
+	for i = 1, tgetn(path) do
 		user[i] = path[i]
 	end
 	user.rootframe = rootframe
@@ -1183,7 +1197,7 @@ local function FeedOptions(appName, options,container,rootframe,path,group,inlin
 
 	BuildSortedOptionsTable(group, keySort, opts, options, path, appName)
 
-	for i = 1, #keySort do
+	for i = 1, tgetn(keySort) do
 		local k = keySort[i]
 		local v = opts[k]
 		tinsert(path, k)
@@ -1310,7 +1324,7 @@ local function FeedOptions(appName, options,container,rootframe,path,group,inlin
 						if not sorting then
 							sorting = {}
 							for value, text in pairs(values) do
-								sorting[#sorting+1]=value
+								sorting[tgetn(sorting)+1]=value
 							end
 							tsort(sorting, sortTblAsStrings)
 						end
@@ -1396,7 +1410,7 @@ local function FeedOptions(appName, options,container,rootframe,path,group,inlin
 							control:SetWidth(width_multiplier)
 						end
 						--check:SetTriState(v.tristate)
-						for i = 1, #valuesort do
+						for i = 1, tgetn(valuesort) do
 							local key = valuesort[i]
 							local value = GetOptionsMemberValue("get",v, options, path, appName, key)
 							control:SetItemValue(key,value)
@@ -1409,7 +1423,7 @@ local function FeedOptions(appName, options,container,rootframe,path,group,inlin
 
 						control:PauseLayout()
 						local width = GetOptionsMemberValue("width",v,options,path,appName)
-						for i = 1, #valuesort do
+						for i = 1, tgetn(valuesort) do
 							local value = valuesort[i]
 							local text = values[value]
 							local check = gui:Create("CheckBox")
@@ -1536,9 +1550,10 @@ local function FeedOptions(appName, options,container,rootframe,path,group,inlin
 	del(opts)
 end
 
-local function BuildPath(path, ...)
-	for i = 1, select("#",...)  do
-		tinsert(path, (select(i,...)))
+local function BuildPath(path, a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
+	local args = {a1,a2,a3,a4,a5,a6,a7,a8,a9,a10}
+	for i = 1, tgetn(args)  do
+		tinsert(path, args[i])
 	end
 end
 
@@ -1553,13 +1568,13 @@ local function TreeOnButtonEnter(widget, event, uniquevalue, button)
 	local tooltip = AceConfigDialog.tooltip
 
 	local feedpath = new()
-	for i = 1, #path do
+	for i = 1, tgetn(path) do
 		feedpath[i] = path[i]
 	end
 
 	BuildPath(feedpath, ("\001"):split(uniquevalue))
 	local group = options
-	for i = 1, #feedpath do
+	for i = 1, tgetn(feedpath) do
 		if not group then return end
 		group = GetSubOption(group, feedpath[i])
 	end
@@ -1594,14 +1609,14 @@ local function GroupExists(appName, options, path, uniquevalue)
 
 	local feedpath = new()
 	local temppath = new()
-	for i = 1, #path do
+	for i = 1, tgetn(path) do
 		feedpath[i] = path[i]
 	end
 
 	BuildPath(feedpath, ("\001"):split(uniquevalue))
 
 	local group = options
-	for i = 1, #feedpath do
+	for i = 1, tgetn(feedpath) do
 		local v = feedpath[i]
 		temppath[i] = v
 		group = GetSubOption(group, v)
@@ -1627,7 +1642,7 @@ local function GroupSelected(widget, event, uniquevalue)
 	local rootframe = user.rootframe
 
 	local feedpath = new()
-	for i = 1, #path do
+	for i = 1, tgetn(path) do
 		feedpath[i] = path[i]
 	end
 
@@ -1663,7 +1678,7 @@ function AceConfigDialog:FeedGroup(appName,options,container,rootframe,path, isR
 	local grouptype, parenttype = options.childGroups, "none"
 
 
-	for i = 1, #path do
+	for i = 1, tgetn(path) do
 		local v = path[i]
 		group = GetSubOption(group, v)
 		inline = inline or pickfirstset(v.dialogInline,v.guiInline,v.inline, false)
@@ -1741,7 +1756,7 @@ function AceConfigDialog:FeedGroup(appName,options,container,rootframe,path, isR
 			tab:SetTabs(tabs)
 			tab:SetUserData("tablist", tabs)
 
-			for i = 1, #tabs do
+			for i = 1, tgetn(tabs) do
 				local entry = tabs[i]
 				if not entry.disabled then
 					tab:SelectTab((GroupExists(appName, options, path,status.groups.selected) and status.groups.selected) or entry.value)
@@ -1801,7 +1816,7 @@ function AceConfigDialog:FeedGroup(appName,options,container,rootframe,path, isR
 			tree:SetTree(treedefinition)
 			tree:SetUserData("tree",treedefinition)
 
-			for i = 1, #treedefinition do
+			for i = 1, tgetn(treedefinition) do
 				local entry = treedefinition[i]
 				if not entry.disabled then
 					tree:SelectByValue((GroupExists(appName, options, path,status.groups.selected) and status.groups.selected) or entry.value)
@@ -1911,7 +1926,8 @@ end
 -- @param appName The application name as given to `:RegisterOptionsTable()`
 -- @param container An optional container frame to feed the options into
 -- @param ... The path to open after creating the options window (see `:SelectGroup` for details)
-function AceConfigDialog:Open(appName, container, ...)
+function AceConfigDialog:Open(appName, container, a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
+	local args = {a1,a2,a3,a4,a5,a6,a7,a8,a9,a10}
 	if not old_CloseSpecialWindows then
 		old_CloseSpecialWindows = CloseSpecialWindows
 		CloseSpecialWindows = function()
@@ -1936,13 +1952,13 @@ function AceConfigDialog:Open(appName, container, ...)
 		tinsert(path, container)
 		container = nil
 	end
-	for n = 1, select("#",...) do
-		tinsert(path, (select(n, ...)))
+	for n = 1, tgetn(args) do
+		tinsert(path, (args[n]))
 	end
 
 	local option = options
-	if type(container) == "table" and container.type == "BlizOptionsGroup" and #path > 0 then
-		for i = 1, #path do
+	if type(container) == "table" and container.type == "BlizOptionsGroup" and tgetn(path) > 0 then
+		for i = 1, tgetn(path) do
 			option = options.args[path[i]]
 		end
 		name = format("%s - %s", name, GetOptionsMemberValue("name", option, options, path, appName))
@@ -1954,7 +1970,7 @@ function AceConfigDialog:Open(appName, container, ...)
 		f:ReleaseChildren()
 		f:SetUserData("appName", appName)
 		f:SetUserData("iscustom", true)
-		if #path > 0 then
+		if tgetn(path) > 0 then
 			f:SetUserData("basepath", copy(path))
 		end
 		local status = AceConfigDialog:GetStatusTable(appName)
@@ -1980,7 +1996,7 @@ function AceConfigDialog:Open(appName, container, ...)
 		f:ReleaseChildren()
 		f:SetCallback("OnClose", FrameOnClose)
 		f:SetUserData("appName", appName)
-		if #path > 0 then
+		if tgetn(path) > 0 then
 			f:SetUserData("basepath", copy(path))
 		end
 		f:SetTitle(name or "")
@@ -2042,12 +2058,13 @@ end
 -- @param parent The parent to use in the interface options tree.
 -- @param ... The path in the options table to feed into the interface options panel.
 -- @return The reference to the frame registered into the Interface Options.
-function AceConfigDialog:AddToBlizOptions(appName, name, parent, ...)
+function AceConfigDialog:AddToBlizOptions(appName, name, parent, a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
+	local args = {a1,a2,a3,a4,a5,a6,a7,a8,a9,a10}
 	local BlizOptions = AceConfigDialog.BlizOptions
 
 	local key = appName
-	for n = 1, select("#", ...) do
-		key = key.."\001"..select(n, ...)
+	for n = 1, tgetn(args) do
+		key = key.."\001"..args[n]
 	end
 
 	if not BlizOptions[appName] then
@@ -2061,10 +2078,10 @@ function AceConfigDialog:AddToBlizOptions(appName, name, parent, ...)
 
 		group:SetTitle(name or appName)
 		group:SetUserData("appName", appName)
-		if select("#", ...) > 0 then
+		if tgetn(args) > 0 then
 			local path = {}
-			for n = 1, select("#",...) do
-				tinsert(path, (select(n, ...)))
+			for n = 1, tgetn(args) do
+				tinsert(path, (args[n]))
 			end
 			group:SetUserData("path", path)
 		end

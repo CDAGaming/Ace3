@@ -7,7 +7,7 @@ if not CallbackHandler then return end -- No upgrade needed
 local meta = {__index = function(tbl, key) tbl[key] = {} return tbl[key] end}
 
 -- Lua APIs
-local tconcat = table.concat
+local tconcat, tinsert, tgetn, tsetn = table.concat, table.insert, table.getn, table.setn
 local assert, error, loadstring = assert, error, loadstring
 local setmetatable, rawset, rawget = setmetatable, rawset, rawget
 local next, select, pairs, type, tostring = next, select, pairs, type, tostring
@@ -21,34 +21,36 @@ local xpcall = xpcall
 local function errorhandler(err)
 	return geterrorhandler()(err)
 end
+CallbackHandler.errorhandler = errorhandler
 
 local function CreateDispatcher(argCount)
 	local code = [[
-	local next, xpcall, eh = ...
-
-	local method, ARGS
-	local function call() method(ARGS) end
-
-	local function dispatch(handlers, ...)
-		local index
-		index, method = next(handlers)
-		if not method then return end
-		local OLD_ARGS = ARGS
-		ARGS = ...
-		repeat
-			xpcall(call, eh)
-			index, method = next(handlers, index)
-		until not method
-		ARGS = OLD_ARGS
-	end
-
-	return dispatch
+		local xpcall, errorhandler = xpcall, LibStub("CallbackHandler-1.0").errorhandler
+		local method, UP_ARGS
+		local function call()
+			local func, ARGS = method, UP_ARGS
+			method, UP_ARGS = nil, NILS
+			return func(ARGS)
+		end
+		return function(handlers, ARGS)
+			local index
+			index, method = next(handlers)
+			if not method then return end
+			repeat
+				UP_ARGS = ARGS
+				xpcall(call, errorhandler)
+				index, method = next(handlers, index)
+			until not method
+		end
 	]]
-
-	local ARGS, OLD_ARGS = {}, {}
-	for i = 1, argCount do ARGS[i], OLD_ARGS[i] = "arg"..i, "old_arg"..i end
-	code = code:gsub("OLD_ARGS", tconcat(OLD_ARGS, ", ")):gsub("ARGS", tconcat(ARGS, ", "))
-	return assert(loadstring(code, "safecall Dispatcher["..argCount.."]"))(next, xpcall, errorhandler)
+	local c = 4*argCount-1
+	local s = "b01,b02,b03,b04,b05,b06,b07,b08,b09,b10"
+	code = string.gsub(code, "UP_ARGS", string.sub(s,1,c))
+	s = "a01,a02,a03,a04,a05,a06,a07,a08,a09,a10"
+	code = string.gsub(code, "ARGS", string.sub(s,1,c))
+	s = "nil,nil,nil,nil,nil,nil,nil,nil,nil,nil"
+	code = string.gsub(code, "NILS", string.sub(s,1,c))
+	return assert(loadstring(code, "safecall Dispatcher["..tostring(argCount).."]"))()
 end
 
 local Dispatchers = setmetatable({}, {__index=function(self, argCount)
@@ -82,12 +84,13 @@ function CallbackHandler:New(target, RegisterName, UnregisterName, UnregisterAll
 	local registry = { recurse=0, events=events }
 
 	-- registry:Fire() - fires the given event/message into the registry
-	function registry:Fire(eventname, ...)
+	function registry:Fire(eventname, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10)
+		local args = { a1, a2, a3, a4, a5, a6, a7, a8, a9, a10 }
 		if not rawget(events, eventname) or not next(events[eventname]) then return end
 		local oldrecurse = registry.recurse
 		registry.recurse = oldrecurse + 1
 
-		Dispatchers[select('#', ...) + 1](events[eventname], eventname, ...)
+		Dispatchers[tgetn(args) + 1](events[eventname], eventname, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10)
 
 		registry.recurse = oldrecurse
 
@@ -113,7 +116,8 @@ function CallbackHandler:New(target, RegisterName, UnregisterName, UnregisterAll
 	--   self with function ref, leads to functionref(...)
 	--   "addonId" (instead of self) with function ref, leads to functionref(...)
 	-- all with an optional arg, which, if present, gets passed as first argument (after self if present)
-	target[RegisterName] = function(self, eventname, method, ... --[[actually just a single arg]])
+	target[RegisterName] = function(self, eventname, method, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9)
+		local args = {arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9}
 		if type(eventname) ~= "string" then
 			error("Usage: "..RegisterName.."(eventname, method[, arg]): 'eventname' - string expected.", 2)
 		end
@@ -138,11 +142,10 @@ function CallbackHandler:New(target, RegisterName, UnregisterName, UnregisterAll
 				error("Usage: "..RegisterName.."(\"eventname\", \"methodname\"): 'methodname' - method '"..tostring(method).."' not found on self.", 2)
 			end
 
-			if select("#",...)>=1 then	-- this is not the same as testing for arg==nil!
-				local arg=select(1,...)
-				regfunc = function(...) self[method](self,arg,...) end
+			if tgetn(args) >= 1 then	-- this is not the same as testing for arg==nil!
+				regfunc = function(...) self[method](self,arg1,unpack(args)) end
 			else
-				regfunc = function(...) self[method](self,...) end
+				regfunc = function(...) self[method](self,unpack(args)) end
 			end
 		else
 			-- function ref with self=object or self="addonId" or self=thread
@@ -150,9 +153,8 @@ function CallbackHandler:New(target, RegisterName, UnregisterName, UnregisterAll
 				error("Usage: "..RegisterName.."(self or \"addonId\", eventname, method): 'self or addonId': table or string or thread expected.", 2)
 			end
 
-			if select("#",...)>=1 then	-- this is not the same as testing for arg==nil!
-				local arg=select(1,...)
-				regfunc = function(...) method(arg,...) end
+			if tgetn(args) >= 1 then	-- this is not the same as testing for arg==nil!
+				regfunc = function(...) method(arg1,unpack(args)) end
 			else
 				regfunc = method
 			end
@@ -197,17 +199,18 @@ function CallbackHandler:New(target, RegisterName, UnregisterName, UnregisterAll
 
 	-- OPTIONAL: Unregister all callbacks for given selfs/addonIds
 	if UnregisterAllName then
-		target[UnregisterAllName] = function(...)
-			if select("#",...)<1 then
+		target[UnregisterAllName] = function(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9)
+			local args = {arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9}
+			if tgetn(args)<1 then
 				error("Usage: "..UnregisterAllName.."([whatFor]): missing 'self' or \"addonId\" to unregister events for.", 2)
 			end
-			if select("#",...)==1 and ...==target then
+			if tgetn(args)==1 and args[1]==target then
 				error("Usage: "..UnregisterAllName.."([whatFor]): supply a meaningful 'self' or \"addonId\"", 2)
 			end
 
 
-			for i=1,select("#",...) do
-				local self = select(i,...)
+			for i=1,tgetn(args) do
+				local self = select(i,args)
 				if registry.insertQueue then
 					for eventname, callbacks in pairs(registry.insertQueue) do
 						if callbacks[self] then

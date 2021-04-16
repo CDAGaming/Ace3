@@ -20,6 +20,13 @@ if not AceEvent then return end
 -- Lua APIs
 local pairs = pairs
 
+local wowLegacy
+do
+	local _, build, _, interface = GetBuildInfo()
+	interface = interface or tonumber(build)
+	wowLegacy = (interface <= 5875)
+end
+
 AceEvent.frame = AceEvent.frame or CreateFrame("Frame", "AceEvent30Frame") -- our event frame
 AceEvent.embeds = AceEvent.embeds or {} -- what objects embed this lib
 
@@ -116,9 +123,15 @@ end
 
 -- Script to fire blizzard events into the event listeners
 local events = AceEvent.events
-AceEvent.frame:SetScript("OnEvent", function(this, event, ...)
-	events:Fire(event, ...)
-end)
+if wowLegacy then
+	AceEvent.frame:SetScript("OnEvent", function()
+		events:Fire(event, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9)
+	end)
+else
+	AceEvent.frame:SetScript("OnEvent", function(this, event, a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
+		events:Fire(event, a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
+	end)
+end
 
 --- Finally: upgrade our old embeds
 for target, v in pairs(AceEvent.embeds) do

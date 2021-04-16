@@ -14,22 +14,38 @@ local _G = getfenv() or _G or {}
 -- List them here for Mikk's FindGlobals script
 -- GLOBALS: ACCEPT, ChatFontNormal
 
-local wowMoP, wowClassicRebased, wowTBCRebased
+local wowMoP, wowClassicRebased, wowTBCRebased, wowLegacy
 do
 	local _, build, _, interface = GetBuildInfo()
 	interface = interface or tonumber(build)
 	wowMoP = (interface >= 50000)
 	wowClassicRebased = (interface >= 11300 and interface < 20000)
 	wowTBCRebased = (interface >= 20500 and interface < 30000)
+	wowLegacy = (interface <= 5875)
+end
+
+local hooksecurefunc = hooksecurefunc or function (arg1, arg2, arg3)
+	if type(arg1) == "string" then
+		arg1, arg2, arg3 = _G, arg1, arg2
+	end
+	local orig = arg1[arg2]
+	if type(orig) ~= "function" then
+		error("The function "..arg2.." does not exist", 2)
+	end
+	arg1[arg2] = function(...)
+		local tmp = {orig(unpack(arg))}
+		arg3(unpack(arg))
+		return unpack(tmp)
+	end
 end
 
 --[[-----------------------------------------------------------------------------
 Support functions
 -------------------------------------------------------------------------------]]
 
-if not AceGUIMultiLineEditBoxInsertLink then
+if not AceGUIMultiLineEditBoxInsertLink and not wowLegacy then
 	-- upgradeable hook
-	hooksecurefunc("ChatEdit_InsertLink", function(...) return _G.AceGUIMultiLineEditBoxInsertLink(...) end)
+	hooksecurefunc("ChatEdit_InsertLink", function(a1,a2,a3,a4,a5,a6,a7,a8,a9,a10) return _G.AceGUIMultiLineEditBoxInsertLink(a1,a2,a3,a4,a5,a6,a7,a8,a9,a10) end)
 end
 
 function _G.AceGUIMultiLineEditBoxInsertLink(text)
@@ -263,8 +279,8 @@ local methods = {
 		return self.editBox:GetCursorPosition()
 	end,
 
-	["SetCursorPosition"] = function(self, ...)
-		return self.editBox:SetCursorPosition(...)
+	["SetCursorPosition"] = function(self, a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
+		return self.editBox:SetCursorPosition(a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
 	end,
 
 

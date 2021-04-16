@@ -18,25 +18,27 @@ do
 	wowTBCRebased = (interface >= 20500 and interface < 30000)
 end
 
-local function fixlevels(parent,...)
+local function fixlevels(parent,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
+	local args = {a1,a2,a3,a4,a5,a6,a7,a8,a9,a10}
 	local i = 1
-	local child = select(i, ...)
+	local child = select(i, args)
 	while child do
 		child:SetFrameLevel(parent:GetFrameLevel()+1)
 		fixlevels(child, child:GetChildren())
 		i = i + 1
-		child = select(i, ...)
+		child = select(i, args)
 	end
 end
 
-local function fixstrata(strata, parent, ...)
+local function fixstrata(strata, parent, a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
+	local args = {a1,a2,a3,a4,a5,a6,a7,a8,a9,a10}
 	local i = 1
-	local child = select(i, ...)
+	local child = select(i, args)
 	parent:SetFrameStrata(strata)
 	while child do
 		fixstrata(strata, child, child:GetChildren())
 		i = i + 1
-		child = select(i, ...)
+		child = select(i, args)
 	end
 end
 
@@ -116,8 +118,8 @@ function ItemBase.GetText(self)
 end
 
 -- exported
-function ItemBase.SetPoint(self, ...)
-	self.frame:SetPoint(...)
+function ItemBase.SetPoint(self, a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
+	self.frame:SetPoint(a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
 end
 
 -- exported

@@ -7,6 +7,7 @@ if not AceGUI or (AceGUI:GetWidgetVersion(Type) or 0) >= Version then return end
 
 -- Lua APIs
 local select, pairs = select, pairs
+local tgetn = table.getn
 
 --[[-----------------------------------------------------------------------------
 Scripts
@@ -37,14 +38,15 @@ local methods = {
 
 	-- ["OnRelease"] = nil,
 
-	["SetHighlight"] = function(self, ...)
-		self.highlight:SetTexture(...)
+	["SetHighlight"] = function(self, a0,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
+		self.highlight:SetTexture(a0,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
 	end,
 
-	["SetHighlightTexCoord"] = function(self, ...)
-		local c = select("#", ...)
+	["SetHighlightTexCoord"] = function(self, a0,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
+		local args = {a0,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10}
+		local c = tgetn(args)
 		if c == 4 or c == 8 then
-			self.highlight:SetTexCoord(...)
+			self.highlight:SetTexCoord(a0,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
 		else
 			self.highlight:SetTexCoord(0, 1, 0, 1)
 		end

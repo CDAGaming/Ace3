@@ -8,11 +8,12 @@ if not AceGUI or (AceGUI:GetWidgetVersion(Type) or 0) >= Version then return end
 -- Lua APIs
 local tostring, pairs = tostring, pairs
 
-local wowThirdLegion
+local wowThirdLegion, wowLegacy
 do
 	local _, build, _, interface = GetBuildInfo()
 	interface = interface or tonumber(build)
 	wowThirdLegion = (interface >= 70300)
+	wowLegacy = (interface <= 5875)
 end
 
 -- WoW APIs
@@ -21,6 +22,21 @@ local GetCursorInfo, ClearCursor, GetSpellInfo = GetCursorInfo, ClearCursor, Get
 local CreateFrame, UIParent = CreateFrame, UIParent
 local _G = getfenv() or _G or {}
 
+local hooksecurefunc = hooksecurefunc or function (arg1, arg2, arg3)
+	if type(arg1) == "string" then
+		arg1, arg2, arg3 = _G, arg1, arg2
+	end
+	local orig = arg1[arg2]
+	if type(orig) ~= "function" then
+		error("The function "..arg2.." does not exist", 2)
+	end
+	arg1[arg2] = function(...)
+		local tmp = {orig(unpack(arg))}
+		arg3(unpack(arg))
+		return unpack(tmp)
+	end
+end
+
 -- Global vars/functions that we don't upvalue since they might get hooked, or upgraded
 -- List them here for Mikk's FindGlobals script
 -- GLOBALS: AceGUIEditBoxInsertLink, ChatFontNormal, OKAY
@@ -28,9 +44,9 @@ local _G = getfenv() or _G or {}
 --[[-----------------------------------------------------------------------------
 Support functions
 -------------------------------------------------------------------------------]]
-if not AceGUIEditBoxInsertLink then
+if not AceGUIEditBoxInsertLink and not wowLegacy then
 	-- upgradeable hook
-	hooksecurefunc("ChatEdit_InsertLink", function(...) return _G.AceGUIEditBoxInsertLink(...) end)
+	hooksecurefunc("ChatEdit_InsertLink", function(a1,a2,a3,a4,a5,a6,a7,a8,a9,a10) return _G.AceGUIEditBoxInsertLink(a1,a2,a3,a4,a5,a6,a7,a8,a9,a10) end)
 end
 
 function _G.AceGUIEditBoxInsertLink(text)

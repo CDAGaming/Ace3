@@ -78,6 +78,21 @@ local strlower = string.lower
 local unpack,type,pairs,wipe = unpack,type,pairs,table.wipe
 local UnitInRaid,UnitInParty = UnitInRaid,UnitInParty
 
+local hooksecurefunc = hooksecurefunc or function (arg1, arg2, arg3)
+	if type(arg1) == "string" then
+		arg1, arg2, arg3 = _G, arg1, arg2
+	end
+	local orig = arg1[arg2]
+	if type(orig) ~= "function" then
+		error("The function "..arg2.." does not exist", 2)
+	end
+	arg1[arg2] = function(...)
+		local tmp = {orig(unpack(arg))}
+		arg3(unpack(arg))
+		return unpack(tmp)
+	end
+end
+
 
 -----------------------------------------------------------------------
 -- Double-linked ring implementation

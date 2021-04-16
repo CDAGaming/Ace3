@@ -4,7 +4,7 @@ local AceGUI = LibStub("AceGUI-3.0")
 -- Lua APIs
 local min, max, floor = math.min, math.max, math.floor
 local select, pairs, ipairs, type, tostring = select, pairs, ipairs, type, tostring
-local tsort = table.sort
+local tsort, tgetn = table.sort, table.getn
 
 local wowThirdLegion, wowClassicRebased, wowTBCRebased
 do
@@ -24,25 +24,27 @@ local _G = getfenv() or _G or {}
 -- List them here for Mikk's FindGlobals script
 -- GLOBALS: CLOSE
 
-local function fixlevels(parent,...)
+local function fixlevels(parent,a0,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
+	local args = {a0,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10}
 	local i = 1
-	local child = select(i, ...)
+	local child = select(i, args)
 	while child do
 		child:SetFrameLevel(parent:GetFrameLevel()+1)
 		fixlevels(child, child:GetChildren())
 		i = i + 1
-		child = select(i, ...)
+		child = select(i, args)
 	end
 end
 
-local function fixstrata(strata, parent, ...)
+local function fixstrata(strata, parent, a0,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
+	local args = {a0,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10}
 	local i = 1
-	local child = select(i, ...)
+	local child = select(i, args)
 	parent:SetFrameStrata(strata)
 	while child do
 		fixstrata(strata, child, child:GetChildren())
 		i = i + 1
-		child = select(i, ...)
+		child = select(i, args)
 	end
 end
 
@@ -178,9 +180,9 @@ do
 
 	-- exported
 	local function AddItem(self, item)
-		self.items[#self.items + 1] = item
+		self.items[tgetn(self.items) + 1] = item
 
-		local h = #self.items * 16
+		local h = tgetn(self.items) * 16
 		self.itemFrame:SetHeight(h)
 		self.frame:SetHeight(min(h + 34, self.maxHeight)) -- +34: 20 for scrollFrame placement (10 offset) and +14 for item placement
 
@@ -611,7 +613,7 @@ do
 
 		if type(order) ~= "table" then
 			for v in pairs(list) do
-				sortlist[#sortlist + 1] = v
+				sortlist[tgetn(sortlist) + 1] = v
 			end
 			tsort(sortlist, sortTbl)
 

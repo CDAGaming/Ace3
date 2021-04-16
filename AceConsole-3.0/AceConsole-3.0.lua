@@ -21,7 +21,7 @@ AceConsole.commands = AceConsole.commands or {} -- table containing commands reg
 AceConsole.weakcommands = AceConsole.weakcommands or {} -- table containing self, command => func references for weak commands that don't persist through enable/disable
 
 -- Lua APIs
-local tconcat, tostring, select = table.concat, tostring, select
+local tconcat, tgetn, tostring, select = table.concat, table.getn, tostring, select
 local type, pairs, error = type, pairs, error
 local format, strfind, strsub = string.format, string.find, string.sub
 local max = math.max
@@ -32,47 +32,54 @@ local _G = getfenv() or _G or {}
 -- Global vars/functions that we don't upvalue since they might get hooked, or upgraded
 -- List them here for Mikk's FindGlobals script
 -- GLOBALS: DEFAULT_CHAT_FRAME, SlashCmdList, hash_SlashCmdList
-
-local tmp={}
-local function Print(self,frame,...)
-	local n=0
+local Print
+do
+local tmp = {}
+function Print(self, frame, arg)
 	if self ~= AceConsole then
-		n=n+1
-		tmp[n] = "|cff33ff99"..tostring( self ).."|r:"
-	end
-	for i=1, select("#", ...) do
-		n=n+1
-		tmp[n] = tostring(select(i, ...))
-	end
-	frame:AddMessage( tconcat(tmp," ",1,n) )
-end
-
---- Print to DEFAULT_CHAT_FRAME or given ChatFrame (anything with an .AddMessage function)
--- @paramsig [chatframe ,] ...
--- @param chatframe Custom ChatFrame to print to (or any frame with an .AddMessage function)
--- @param ... List of any values to be printed
-function AceConsole:Print(...)
-	local frame = ...
-	if type(frame) == "table" and frame.AddMessage then	-- Is first argument something with an .AddMessage member?
-		return Print(self, frame, select(2,...))
+		tmp[1] = "|cff33ff99"..tostring(self).."|r:"
 	else
-		return Print(self, DEFAULT_CHAT_FRAME, ...)
+		tmp[1] = ''
+	end
+	if type(arg) == "string" then
+		frame:AddMessage(tmp[1]..arg)
+	else	-- arg is table and may contain frame as first element if argument frame is nil
+		local b, e = frame and 1 or 2, tgetn(arg)
+		if e >= b then
+			frame = frame or arg[1]
+			for i=0,e-b do
+				tmp[2+i] = tostring(arg[b+i])
+			end
+			frame:AddMessage(tconcat(tmp," ",1,e-b+2)) -- explicitly, because the length is not affected by assignment
+		end
 	end
 end
+end	-- Print
 
+function AceConsole:Print(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9)
+	local args = {arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9}
+	local frame = arg1
+	if type(frame) == "table" and frame.AddMessage then	-- Is first argument something with an .AddMessage member?
+		return Print(self, nil, args)
+	else
+		return Print(self, DEFAULT_CHAT_FRAME, args)
+	end
+end
 
 --- Formatted (using format()) print to DEFAULT_CHAT_FRAME or given ChatFrame (anything with an .AddMessage function)
 -- @paramsig [chatframe ,] "format"[, ...]
 -- @param chatframe Custom ChatFrame to print to (or any frame with an .AddMessage function)
 -- @param format Format string - same syntax as standard Lua format()
 -- @param ... Arguments to the format string
-function AceConsole:Printf(...)
-	local frame = ...
-	if type(frame) == "table" and frame.AddMessage then	-- Is first argument something with an .AddMessage member?
-		return Print(self, frame, format(select(2,...)))
+function AceConsole:Printf(a1, ...)
+	local frame, succ, s
+	if type(a1) == "table" and a1.AddMessage then	-- Is first argument something with an .AddMessage member?
+		frame, succ, s = a1, pcall(format, unpack(arg))
 	else
-		return Print(self, DEFAULT_CHAT_FRAME, format(...))
+		frame, succ, s = DEFAULT_CHAT_FRAME, pcall(format, a1, unpack(arg))
 	end
+	if not succ then error(s,2) end
+	return Print(self, frame, s)
 end
 
 
@@ -87,7 +94,7 @@ function AceConsole:RegisterChatCommand( command, func, persist )
 
 	if persist==nil then persist=true end	-- I'd rather have my addon's "/addon enable" around if the author screws up. Having some extra slash regged when it shouldnt be isn't as destructive. True is a better default. /Mikk
 
-	local name = "ACECONSOLE_"..command:upper()
+	local name = "ACECONSOLE_"..string.upper(command)
 
 	if type( func ) == "string" then
 		SlashCmdList[name] = function(input, editBox)
@@ -96,7 +103,7 @@ function AceConsole:RegisterChatCommand( command, func, persist )
 	else
 		SlashCmdList[name] = func
 	end
-	_G["SLASH_"..name.."1"] = "/"..command:lower()
+	_G["SLASH_"..name.."1"] = "/"..string.lower(command)
 	AceConsole.commands[command] = name
 	-- non-persisting commands are registered for enabling disabling
 	if not persist then
@@ -113,7 +120,7 @@ function AceConsole:UnregisterChatCommand( command )
 	if name then
 		SlashCmdList[name] = nil
 		_G["SLASH_" .. name .. "1"] = nil
-		hash_SlashCmdList["/" .. command:upper()] = nil
+		hash_SlashCmdList["/" .. string.upper(command)] = nil
 		AceConsole.commands[command] = nil
 	end
 end
@@ -123,13 +130,14 @@ end
 function AceConsole:IterateChatCommands() return pairs(AceConsole.commands) end
 
 
-local function nils(n, ...)
+local function nils(n,a0,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
+	local args = {a0,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10}
 	if n>1 then
-		return nil, nils(n-1, ...)
+		return nil, nils(n-1, args)
 	elseif n==1 then
-		return nil, ...
+		return nil,a0,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10
 	else
-		return ...
+		return a0,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10
 	end
 end
 
