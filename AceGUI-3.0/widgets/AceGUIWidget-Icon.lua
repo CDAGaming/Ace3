@@ -6,7 +6,7 @@ local AceGUI = LibStub and LibStub("AceGUI-3.0", true)
 if not AceGUI or (AceGUI:GetWidgetVersion(Type) or 0) >= Version then return end
 
 -- Lua APIs
-local select, pairs, print = select, pairs, print
+local pairs, print = pairs, print
 local tgetn = table.getn
 
 local wowCata

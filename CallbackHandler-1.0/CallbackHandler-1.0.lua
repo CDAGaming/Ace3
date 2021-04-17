@@ -7,8 +7,9 @@ if not CallbackHandler then return end -- No upgrade needed
 local meta = {__index = function(tbl, key) tbl[key] = {} return tbl[key] end}
 
 -- Lua APIs
-local tconcat, tinsert, tgetn, tsetn = table.concat, table.insert, table.getn, table.setn
-local assert, error, loadstring = assert, error, loadstring
+local tgetn = table.getn
+local strgsub, strsub = string.gsub, string.sub
+local assert, error, loadstring, unpack = assert, error, loadstring, unpack
 local setmetatable, rawset, rawget = setmetatable, rawset, rawget
 local next, select, pairs, type, tostring = next, select, pairs, type, tostring
 
@@ -45,11 +46,11 @@ local function CreateDispatcher(argCount)
 	]]
 	local c = 4*argCount-1
 	local s = "b01,b02,b03,b04,b05,b06,b07,b08,b09,b10"
-	code = string.gsub(code, "UP_ARGS", string.sub(s,1,c))
+	code = strgsub(code, "UP_ARGS", strsub(s,1,c))
 	s = "a01,a02,a03,a04,a05,a06,a07,a08,a09,a10"
-	code = string.gsub(code, "ARGS", string.sub(s,1,c))
+	code = strgsub(code, "ARGS", strsub(s,1,c))
 	s = "nil,nil,nil,nil,nil,nil,nil,nil,nil,nil"
-	code = string.gsub(code, "NILS", string.sub(s,1,c))
+	code = strgsub(code, "NILS", strsub(s,1,c))
 	return assert(loadstring(code, "safecall Dispatcher["..tostring(argCount).."]"))()
 end
 

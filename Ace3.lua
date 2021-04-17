@@ -21,7 +21,6 @@ local Ace3 = Ace3
 local selectedgroup
 local frame
 local select
-local status = {}
 local configs = {}
 
 local function frameOnClose()

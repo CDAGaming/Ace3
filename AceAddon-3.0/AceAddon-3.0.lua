@@ -44,10 +44,10 @@ AceAddon.embeds = AceAddon.embeds or setmetatable({}, {__index = function(tbl, k
 
 -- Lua APIs
 local tinsert, tconcat, tremove, tgetn, tsetn = table.insert, table.concat, table.remove, table.getn, table.setn
-local strfmt, tostring = string.format, tostring
+local strfmt, strgsub, strsub, tostring = string.format, string.gsub, string.sub, tostring
 local select, pairs, next, type, unpack = select, pairs, next, type, unpack
 local loadstring, assert, error = loadstring, assert, error
-local setmetatable, getmetatable, rawset, rawget = setmetatable, getmetatable, rawset, rawget
+local setmetatable, getmetatable, rawset = setmetatable, getmetatable, rawset
 
 local wowLegacy
 do
@@ -86,11 +86,11 @@ local function CreateDispatcher(argCount)
 	]]
 	local c = 4*argCount-1
 	local s = "b01,b02,b03,b04,b05,b06,b07,b08,b09,b10,b11,b12,b13,b14,b15,b16,b17,b18,b19,b20"
-	code = string.gsub(code, "UP_ARGS", string.sub(s,1,c))
+	code = strgsub(code, "UP_ARGS", strsub(s,1,c))
 	s = "a01,a02,a03,a04,a05,a06,a07,a08,a09,a10,a11,a12,a13,a14,a15,a16,a17,a18,a19,a20"
-	code = string.gsub(code, "ARGS", string.sub(s,1,c))
+	code = strgsub(code, "ARGS", strsub(s,1,c))
 	s = "nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil"
-	code = string.gsub(code, "NILS", string.sub(s,1,c))
+	code = strgsub(code, "NILS", strsub(s,1,c))
 	return assert(loadstring(code, "safecall Dispatcher["..tostring(argCount).."]"))()
 end
 

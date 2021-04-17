@@ -31,9 +31,9 @@ do
 end
 
 -- Lua APIs
-local tinsert, tconcat, tremove, tgetn, tsetn, tsort, wipe = table.insert, table.concat, table.remove, table.getn, table.setn, table.sort, table.wipe
-local strmatch, format = string.match, string.format
-local error = error
+local tinsert, tremove, tgetn, tsort, wipe = table.insert, table.remove, table.getn, table.sort, table.wipe
+local strmatch, format, strgsub, strsub, strupper = string.match, string.format, string.gsub, string.sub, string.upper
+local loadstring, assert, error = loadstring, assert, error
 local pairs, next, select, type, unpack, ipairs = pairs, next, select, type, unpack, ipairs
 local tostring, tonumber = tostring, tonumber
 local math_min, math_max, math_floor = math.min, math.max, math.floor
@@ -84,11 +84,11 @@ local function CreateDispatcher(argCount)
 	]]
 	local c = 4*argCount-1
 	local s = "b01,b02,b03,b04,b05,b06,b07,b08,b09,b10,b11,b12,b13,b14,b15,b16,b17,b18,b19,b20"
-	code = string.gsub(code, "UP_ARGS", string.sub(s,1,c))
+	code = strgsub(code, "UP_ARGS", strsub(s,1,c))
 	s = "a01,a02,a03,a04,a05,a06,a07,a08,a09,a10,a11,a12,a13,a14,a15,a16,a17,a18,a19,a20"
-	code = string.gsub(code, "ARGS", string.sub(s,1,c))
+	code = strgsub(code, "ARGS", strsub(s,1,c))
 	s = "nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil"
-	code = string.gsub(code, "NILS", string.sub(s,1,c))
+	code = strgsub(code, "NILS", strsub(s,1,c))
 	return assert(loadstring(code, "safecall Dispatcher["..tostring(argCount).."]"))()
 end
 
@@ -331,7 +331,7 @@ local function CallOptionsFunction(funcname ,option, options, path, appName, a1,
 		if handler and handler[func] then
 			a,b,c,d = handler[func](handler, info, a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
 		else
-			error(string.format("Method %s doesn't exist in handler for type func", func))
+			error(format("Method %s doesn't exist in handler for type func", func))
 		end
 	elseif type(func) == "function" then
 		a,b,c,d = func(info, a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
@@ -357,7 +357,7 @@ local function compareOptions(a,b)
 	if OrderA == OrderB then
 		local NameA = (type(tempNames[a]) == "string") and tempNames[a] or ""
 		local NameB = (type(tempNames[b]) == "string") and tempNames[b] or ""
-		return string.upper(NameA) < string.upper(NameB)
+		return strupper(NameA) < strupper(NameB)
 	end
 	if OrderA < 0 then
 		if OrderB >= 0 then

@@ -3,6 +3,9 @@
 local LIBSTUB_MAJOR, LIBSTUB_MINOR = "LibStub", 2  -- NEVER MAKE THIS AN SVN REVISION! IT NEEDS TO BE USABLE IN ALL REPOS!
 local _G = getfenv() or _G or {}
 local strfind, strfmt = string.find, string.format
+local assert, type, error = assert, type, error
+local tonumber, tostring = tonumber, tostring
+local pairs, setmetatable = pairs, setmetatable
 local LibStub = _G[LIBSTUB_MAJOR]
 
 if not LibStub or LibStub.minor < LIBSTUB_MINOR then

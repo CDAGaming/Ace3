@@ -12,7 +12,7 @@
 -- @release $Id$
 local MAJOR,MINOR = "AceConsole-3.0", 7
 
-local AceConsole, oldminor = LibStub:NewLibrary(MAJOR, MINOR)
+local AceConsole = LibStub:NewLibrary(MAJOR, MINOR)
 
 if not AceConsole then return end -- No upgrade needed
 
@@ -21,9 +21,10 @@ AceConsole.commands = AceConsole.commands or {} -- table containing commands reg
 AceConsole.weakcommands = AceConsole.weakcommands or {} -- table containing self, command => func references for weak commands that don't persist through enable/disable
 
 -- Lua APIs
-local tconcat, tgetn, tostring, select = table.concat, table.getn, tostring, select
+local tconcat, tgetn, tostring = table.concat, table.getn, tostring
 local type, pairs, error = type, pairs, error
 local format, strfind, strsub = string.format, string.find, string.sub
+local strlower, strupper = string.lower, string.upper
 local max = math.max
 
 -- WoW APIs
@@ -71,12 +72,13 @@ end
 -- @param chatframe Custom ChatFrame to print to (or any frame with an .AddMessage function)
 -- @param format Format string - same syntax as standard Lua format()
 -- @param ... Arguments to the format string
-function AceConsole:Printf(a1, ...)
+function AceConsole:Printf(a1, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9)
+	local args = {arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9}
 	local frame, succ, s
 	if type(a1) == "table" and a1.AddMessage then	-- Is first argument something with an .AddMessage member?
-		frame, succ, s = a1, pcall(format, unpack(arg))
+		frame, succ, s = a1, pcall(format, unpack(args))
 	else
-		frame, succ, s = DEFAULT_CHAT_FRAME, pcall(format, a1, unpack(arg))
+		frame, succ, s = DEFAULT_CHAT_FRAME, pcall(format, a1, unpack(args))
 	end
 	if not succ then error(s,2) end
 	return Print(self, frame, s)
@@ -94,7 +96,7 @@ function AceConsole:RegisterChatCommand( command, func, persist )
 
 	if persist==nil then persist=true end	-- I'd rather have my addon's "/addon enable" around if the author screws up. Having some extra slash regged when it shouldnt be isn't as destructive. True is a better default. /Mikk
 
-	local name = "ACECONSOLE_"..string.upper(command)
+	local name = "ACECONSOLE_"..strupper(command)
 
 	if type( func ) == "string" then
 		SlashCmdList[name] = function(input, editBox)
@@ -103,7 +105,7 @@ function AceConsole:RegisterChatCommand( command, func, persist )
 	else
 		SlashCmdList[name] = func
 	end
-	_G["SLASH_"..name.."1"] = "/"..string.lower(command)
+	_G["SLASH_"..name.."1"] = "/"..strlower(command)
 	AceConsole.commands[command] = name
 	-- non-persisting commands are registered for enabling disabling
 	if not persist then
@@ -120,7 +122,7 @@ function AceConsole:UnregisterChatCommand( command )
 	if name then
 		SlashCmdList[name] = nil
 		_G["SLASH_" .. name .. "1"] = nil
-		hash_SlashCmdList["/" .. string.upper(command)] = nil
+		hash_SlashCmdList["/" .. strupper(command)] = nil
 		AceConsole.commands[command] = nil
 	end
 end

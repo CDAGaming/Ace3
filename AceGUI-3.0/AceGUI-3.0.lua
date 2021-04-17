@@ -31,9 +31,10 @@ local AceGUI, oldminor = LibStub:NewLibrary(ACEGUI_MAJOR, ACEGUI_MINOR)
 if not AceGUI then return end -- No upgrade needed
 
 -- Lua APIs
-local tconcat, tinsert, tgetn, wipe = table.concat, table.insert, table.getn, table.wipe
+local tinsert, tgetn, wipe = table.insert, table.getn, table.wipe
 local select, pairs, next, type = select, pairs, next, type
-local error, assert = error, assert
+local strgsub, strsub, tostring = string.gsub, string.sub, tostring
+local loadstring, assert, error = loadstring, assert, error
 local setmetatable, rawget = setmetatable, rawget
 local math_max = math.max
 
@@ -96,11 +97,11 @@ local function CreateDispatcher(argCount)
 	]]
 	local c = 4*argCount-1
 	local s = "b01,b02,b03,b04,b05,b06,b07,b08,b09,b10,b11,b12,b13,b14,b15,b16,b17,b18,b19,b20"
-	code = string.gsub(code, "UP_ARGS", string.sub(s,1,c))
+	code = strgsub(code, "UP_ARGS", strsub(s,1,c))
 	s = "a01,a02,a03,a04,a05,a06,a07,a08,a09,a10,a11,a12,a13,a14,a15,a16,a17,a18,a19,a20"
-	code = string.gsub(code, "ARGS", string.sub(s,1,c))
+	code = strgsub(code, "ARGS", strsub(s,1,c))
 	s = "nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil"
-	code = string.gsub(code, "NILS", string.sub(s,1,c))
+	code = strgsub(code, "NILS", strsub(s,1,c))
 	return assert(loadstring(code, "safecall Dispatcher["..tostring(argCount).."]"))()
 end
 

@@ -9,7 +9,7 @@ if not AceGUI or (AceGUI:GetWidgetVersion(Type) or 0) >= Version then return end
 -- Lua APIs
 local next, pairs, ipairs, assert, type = next, pairs, ipairs, assert, type
 local math_min, math_max, floor = math.min, math.max, floor
-local select, tremove, unpack, tconcat, tgetn = select, table.remove, unpack, table.concat, table.getn
+local tremove, unpack, tconcat, tgetn = table.remove, unpack, table.concat, table.getn
 
 -- WoW APIs
 local CreateFrame, UIParent = CreateFrame, UIParent

@@ -24,7 +24,7 @@ end
 
 -- Lua APIs
 local tinsert, tconcat, tgetn = table.insert, table.concat, table.getn
-local strfind, strmatch = string.find, string.match
+local strfind = string.find
 local type, tostring, select, pairs = type, tostring, select, pairs
 local error, assert = error, assert
 

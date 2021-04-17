@@ -28,7 +28,8 @@ local AceConsole -- LoD
 local AceConsoleName = "AceConsole-3.0"
 
 -- Lua APIs
-local strsub, strsplit, strlower, strmatch, strtrim = string.sub, string.split, string.lower, string.match, string.trim
+local strgsub, strsub, strsplit, strmatch, strtrim = string.gsub, string.sub, string.split, string.match, string.trim
+local strlower, strupper = string.lower, string.upper
 local format, tonumber, tostring = string.format, tonumber, tostring
 local tsort, tinsert, tconcat, tremove, tgetn, tsetn = table.sort, table.insert, table.concat, table.remove, table.getn, table.setn
 local select, pairs, next, type = select, pairs, next, type
@@ -262,7 +263,7 @@ local function showhelp(info, inputpos, tab, depth, noHead)
 					showhelp(info, inputpos, v, depth, true)
 					info.handler,info.handler_at = oldhandler,oldhandler_at
 				else
-					local key = string.gsub(k, " ", "_")
+					local key = strgsub(k, " ", "_")
 					print("  |cffffff78"..key.."|r - "..(desc or name or ""))
 				end
 			end
@@ -275,7 +276,7 @@ local function keybindingValidateFunc(text)
 	if text == nil or text == "NONE" then
 		return nil
 	end
-	text = string.upper(text)
+	text = strupper(text)
 	local shift, ctrl, alt
 	local modifier
 	while true do
@@ -380,7 +381,7 @@ local function handle(info, inputpos, tab, depth, retfalse)
 					return	-- done, name was found in inline group
 				end
 			-- matching name and not a inline group
-			elseif strlower(arg)==strlower(string.gsub(k, " ", "_")) then
+			elseif strlower(arg)==strlower(strgsub(k, " ", "_")) then
 				info[depth+1] = k
 				return handle(info,nextpos,v,depth+1)
 			end

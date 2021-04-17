@@ -8,7 +8,7 @@ if not AceGUI or (AceGUI:GetWidgetVersion(Type) or 0) >= Version then return end
 
 -- Lua APIs
 local min, max, floor = math.min, math.max, math.floor
-local tonumber, pairs = tonumber, pairs
+local tonumber, pairs, strgsub = tonumber, pairs, string.gsub
 
 local wowThirdLegion
 do
@@ -107,7 +107,7 @@ local function EditBox_OnEnterPressed(frame)
 	local self = frame.obj
 	local value = frame:GetText()
 	if self.ispercent then
-		value = string.gsub(value, '%%', '')
+		value = strgsub(value, '%%', '')
 		value = tonumber(value) / 100
 	else
 		value = tonumber(value)
