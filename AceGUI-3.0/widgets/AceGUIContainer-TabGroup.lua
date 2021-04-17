@@ -221,7 +221,7 @@ local methods = {
 			widths[i] = tab:GetWidth() - 6 --tabs are anchored 10 pixels from the right side of the previous one to reduce spacing, but add a fixed 4px padding for the text
 		end
 
-		for i = (tgetn(tablist))+1, tabs, 1 do
+		for i = (tgetn(tablist))+1, tgetn(tabs), 1 do
 			tabs[i]:Hide()
 		end
 
