@@ -211,7 +211,7 @@ function CallbackHandler:New(target, RegisterName, UnregisterName, UnregisterAll
 
 
 			for i=1,tgetn(args) do
-				local self = select(i,args)
+				local self = args[i]
 				if registry.insertQueue then
 					for eventname, callbacks in pairs(registry.insertQueue) do
 						if callbacks[self] then

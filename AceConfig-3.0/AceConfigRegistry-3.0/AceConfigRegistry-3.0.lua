@@ -25,7 +25,7 @@ end
 -- Lua APIs
 local tinsert, tconcat, tgetn = table.insert, table.concat, table.getn
 local strfind = string.find
-local type, tostring, select, pairs = type, tostring, select, pairs
+local type, tostring, pairs = type, tostring, pairs
 local error, assert = error, assert
 
 -----------------------------------------------------------------------
@@ -46,7 +46,7 @@ local function err(msg, errlvl, a0,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
 	local args = {a0,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10}
 	local t = {}
 	for i=tgetn(args),1,-1 do
-		tinsert(t, (select(i, args)))
+		tinsert(t, args[i])
 	end
 	error(MAJOR..":ValidateOptionsTable(): "..tconcat(t,".")..msg, errlvl+2)
 end

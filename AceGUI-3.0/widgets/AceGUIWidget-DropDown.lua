@@ -3,7 +3,7 @@ local AceGUI = LibStub("AceGUI-3.0")
 
 -- Lua APIs
 local min, max, floor = math.min, math.max, math.floor
-local select, pairs, ipairs, type, tostring = select, pairs, ipairs, type, tostring
+local pairs, ipairs, type, tostring = pairs, ipairs, type, tostring
 local tsort, tgetn = table.sort, table.getn
 
 local wowThirdLegion, wowClassicRebased, wowTBCRebased
@@ -27,24 +27,24 @@ local _G = getfenv() or _G or {}
 local function fixlevels(parent,a0,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
 	local args = {a0,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10}
 	local i = 1
-	local child = select(i, args)
+	local child = args[i]
 	while child do
 		child:SetFrameLevel(parent:GetFrameLevel()+1)
 		fixlevels(child, child:GetChildren())
 		i = i + 1
-		child = select(i, args)
+		child = args[i]
 	end
 end
 
 local function fixstrata(strata, parent, a0,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
 	local args = {a0,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10}
 	local i = 1
-	local child = select(i, args)
+	local child = args[i]
 	parent:SetFrameStrata(strata)
 	while child do
 		fixstrata(strata, child, child:GetChildren())
 		i = i + 1
-		child = select(i, args)
+		child = args[i]
 	end
 end
 

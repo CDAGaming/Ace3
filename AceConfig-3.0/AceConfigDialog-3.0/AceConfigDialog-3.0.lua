@@ -34,7 +34,7 @@ end
 local tinsert, tremove, tgetn, tsort, wipe = table.insert, table.remove, table.getn, table.sort, table.wipe
 local strmatch, format, strgsub, strsub, strupper = string.match, string.format, string.gsub, string.sub, string.upper
 local loadstring, assert, error = loadstring, assert, error
-local pairs, next, select, type, unpack, ipairs = pairs, next, select, type, unpack, ipairs
+local pairs, next, type, unpack, ipairs = pairs, next, type, unpack, ipairs
 local tostring, tonumber = tostring, tonumber
 local math_min, math_max, math_floor = math.min, math.max, math.floor
 
@@ -175,8 +175,8 @@ end
 local function pickfirstset(a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
 	local args = {a1,a2,a3,a4,a5,a6,a7,a8,a9,a10}
 	for i=1,tgetn(args) do
-		if select(i,args)~=nil then
-			return select(i,args)
+		if args[i] then
+			return args[i]
 		end
 	end
 end

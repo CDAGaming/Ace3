@@ -32,7 +32,7 @@ local strgsub, strsub, strsplit, strmatch, strtrim = string.gsub, string.sub, st
 local strlower, strupper = string.lower, string.upper
 local format, tonumber, tostring = string.format, tonumber, tostring
 local tsort, tinsert, tconcat, tremove, tgetn, tsetn = table.sort, table.insert, table.concat, table.remove, table.getn, table.setn
-local select, pairs, next, type = select, pairs, next, type
+local pairs, next, type = pairs, next, type
 local error, assert = error, assert
 
 -- WoW APIs
@@ -68,8 +68,8 @@ local funcmsg = "expected function or member name"
 local function pickfirstset(a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
 	local args = {a1,a2,a3,a4,a5,a6,a7,a8,a9,a10}
 	for i=1,tgetn(args) do
-		if select(i,args)~=nil then
-			return select(i,args)
+		if args[i] then
+			return args[i]
 		end
 	end
 end

@@ -3,7 +3,7 @@
 local AceGUI = LibStub("AceGUI-3.0")
 
 -- Lua APIs
-local select, assert = select, assert
+local assert = assert
 
 -- WoW APIs
 local PlaySound = PlaySound
@@ -21,24 +21,24 @@ end
 local function fixlevels(parent,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
 	local args = {a1,a2,a3,a4,a5,a6,a7,a8,a9,a10}
 	local i = 1
-	local child = select(i, args)
+	local child = args[i]
 	while child do
 		child:SetFrameLevel(parent:GetFrameLevel()+1)
 		fixlevels(child, child:GetChildren())
 		i = i + 1
-		child = select(i, args)
+		child = args[i]
 	end
 end
 
 local function fixstrata(strata, parent, a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
 	local args = {a1,a2,a3,a4,a5,a6,a7,a8,a9,a10}
 	local i = 1
-	local child = select(i, args)
+	local child = args[i]
 	parent:SetFrameStrata(strata)
 	while child do
 		fixstrata(strata, child, child:GetChildren())
 		i = i + 1
-		child = select(i, args)
+		child = args[i]
 	end
 end
 

@@ -32,7 +32,7 @@ if not AceGUI then return end -- No upgrade needed
 
 -- Lua APIs
 local tinsert, tgetn, wipe = table.insert, table.getn, table.wipe
-local select, pairs, next, type = select, pairs, next, type
+local pairs, next, type = pairs, next, type
 local strgsub, strsub, tostring = string.gsub, string.sub, tostring
 local loadstring, assert, error = loadstring, assert, error
 local setmetatable, rawget = setmetatable, rawget
@@ -515,7 +515,7 @@ do
 	WidgetContainerBase.AddChildren = function(self, a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
 		local args = {a1,a2,a3,a4,a5,a6,a7,a8,a9,a10}
 		for i = 1, tgetn(args) do
-			local child = select(i, args)
+			local child = args[i]
 			tinsert(self.children, child)
 			child:SetParent(self)
 			child.frame:Show()
