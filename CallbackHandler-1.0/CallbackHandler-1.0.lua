@@ -144,9 +144,13 @@ function CallbackHandler:New(target, RegisterName, UnregisterName, UnregisterAll
 			end
 
 			if tgetn(args) >= 1 then	-- this is not the same as testing for arg==nil!
-				regfunc = function(...) self[method](self,arg1,unpack(args)) end
+				regfunc = function(arg01, arg02, arg03, arg04, arg05, arg06, arg07, arg08, arg09)
+					self[method](self, arg1, arg01, arg02, arg03, arg04, arg05, arg06, arg07, arg08, arg09)
+				end
 			else
-				regfunc = function(...) self[method](self,unpack(args)) end
+				regfunc = function(arg01, arg02, arg03, arg04, arg05, arg06, arg07, arg08, arg09)
+					self[method](self, arg01, arg02, arg03, arg04, arg05, arg06, arg07, arg08, arg09)
+				end
 			end
 		else
 			-- function ref with self=object or self="addonId" or self=thread
@@ -155,7 +159,9 @@ function CallbackHandler:New(target, RegisterName, UnregisterName, UnregisterAll
 			end
 
 			if tgetn(args) >= 1 then	-- this is not the same as testing for arg==nil!
-				regfunc = function(...) method(arg1,unpack(args)) end
+				regfunc = function(arg01, arg02, arg03, arg04, arg05, arg06, arg07, arg08, arg09)
+					method(arg1, arg01, arg02, arg03, arg04, arg05, arg06, arg07, arg08, arg09)
+				end
 			else
 				regfunc = method
 			end
