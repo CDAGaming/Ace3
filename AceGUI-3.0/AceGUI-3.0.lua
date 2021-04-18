@@ -36,7 +36,7 @@ local pairs, next, type = pairs, next, type
 local strgsub, strsub, tostring = string.gsub, string.sub, tostring
 local loadstring, assert, error = loadstring, assert, error
 local setmetatable, rawget = setmetatable, rawget
-local math_max = math.max
+local math_max, math_mod = math.max, (math.mod or math.fmod)
 
 local tsetn = function(t,n)
 	setmetatable(t,{__len=function() return n end})
@@ -936,7 +936,7 @@ AceGUI:RegisterLayout("Table",
 			if child:IsShown() then
 				repeat
 					n = n + 1
-					local col = math.mod(n - 1, tgetn(cols) + 1)
+					local col = math_mod(n - 1, tgetn(cols) + 1)
 					local row = ceil(n / tgetn(cols))
 					local rowspan = rowspans[col]
 					local cell = rowspan and rowspan.child or child

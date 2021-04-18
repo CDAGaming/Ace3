@@ -34,6 +34,7 @@ local format, tonumber, tostring = string.format, tonumber, tostring
 local tsort, tinsert, tconcat, tremove, tgetn, tsetn = table.sort, table.insert, table.concat, table.remove, table.getn, table.setn
 local pairs, next, type = pairs, next, type
 local error, assert = error, assert
+local mod = math.mod or math.fmod
 
 -- WoW APIs
 local _G = getfenv() or _G or {}
@@ -474,7 +475,7 @@ local function handle(info, inputpos, tab, depth, retfalse)
 			return
 		end
 		if type(info.step)=="number" then
-			val = val - math.mod(val, info.step)
+			val = val - mod(val, info.step)
 		end
 		if type(info.min)=="number" and val<info.min then
 			usererr(info, inputpos, val.." - "..format(L["must be equal to or higher than %s"], tostring(info.min)) )
