@@ -150,10 +150,12 @@ local function OnSizeChanged(self, width, height)                               
 	self.obj.editBox:SetWidth(width)
 end
 
-local function OnTextChanged(self, userInput)                                    -- EditBox
-	if userInput then
-		self = self.obj
-		self:Fire("OnTextChanged", self.editBox:GetText())
+local function OnTextChanged(self)                                               -- EditBox
+	self = self.obj
+	local value = self.editBox:GetText()
+	if tostring(value) ~= tostring(self.lasttext) then
+		self:Fire("OnTextChanged", value)
+		self.lasttext = value
 		self.button:Enable()
 	end
 end
@@ -238,7 +240,8 @@ local methods = {
 	end,
 
 	["SetText"] = function(self, text)
-		self.editBox:SetText(text)
+		self.lasttext = text or ""
+		self.editBox:SetText(text or "")
 	end,
 
 	["GetText"] = function(self)
@@ -353,7 +356,9 @@ local function Constructor()
 	editBox:SetMultiLine(true)
 	editBox:EnableMouse(true)
 	editBox:SetAutoFocus(false)
-	editBox:SetCountInvisibleLetters(false)
+	if editBox.SetCountInvisibleLetters then
+		editBox:SetCountInvisibleLetters(false)
+	end
 	editBox:SetScript("OnCursorChanged", OnCursorChanged)
 	editBox:SetScript("OnEditFocusLost", OnEditFocusLost)
 	editBox:SetScript("OnEnter", OnEnter)
