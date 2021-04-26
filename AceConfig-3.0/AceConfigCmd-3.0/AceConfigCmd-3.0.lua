@@ -445,17 +445,17 @@ local function handle(info, inputpos, tab, depth, retfalse)
 				b = not b
 			end
 
-		elseif str==L["on"] then
+		elseif str==L["on"] or str==L["true"] then
 			b = true
-		elseif str==L["off"] then
+		elseif str==L["off"] or str==L["false"] then
 			b = false
 		elseif tab.tristate and str==L["default"] then
 			b = nil
 		else
 			if tab.tristate then
-				usererr(info, inputpos, format(L["'%s' - expected 'on', 'off' or 'default', or no argument to toggle."], str))
+				usererr(info, inputpos, format(L["'%s' - expected 'on', 'off', a boolean state, 'default', or no argument to toggle."], str))
 			else
-				usererr(info, inputpos, format(L["'%s' - expected 'on' or 'off', or no argument to toggle."], str))
+				usererr(info, inputpos, format(L["'%s' - expected 'on', 'off', a boolean state, or no argument to toggle."], str))
 			end
 			return
 		end
