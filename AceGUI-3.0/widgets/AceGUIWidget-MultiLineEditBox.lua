@@ -21,7 +21,7 @@ do
 	wowMoP = (interface >= 50000)
 	wowClassicRebased = (interface >= 11300 and interface < 20000)
 	wowTBCRebased = (interface >= 20500 and interface < 30000)
-	wowLegacy = (interface <= 5875)
+	wowLegacy = (interface <= 11201)
 end
 
 local hooksecurefunc = hooksecurefunc or function (arg1, arg2, arg3)

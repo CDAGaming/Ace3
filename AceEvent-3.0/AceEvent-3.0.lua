@@ -24,7 +24,7 @@ local wowLegacy
 do
 	local _, build, _, interface = GetBuildInfo()
 	interface = interface or tonumber(build)
-	wowLegacy = (interface <= 5875)
+	wowLegacy = (interface <= 11201)
 end
 
 AceEvent.frame = AceEvent.frame or CreateFrame("Frame", "AceEvent30Frame") -- our event frame

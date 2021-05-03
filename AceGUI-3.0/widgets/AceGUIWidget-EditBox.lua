@@ -13,7 +13,7 @@ do
 	local _, build, _, interface = GetBuildInfo()
 	interface = interface or tonumber(build)
 	wowThirdLegion = (interface >= 70300)
-	wowLegacy = (interface <= 5875)
+	wowLegacy = (interface <= 11201)
 end
 
 -- WoW APIs
