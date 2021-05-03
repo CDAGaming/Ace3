@@ -190,7 +190,7 @@ local function BuildUniqueValue(a0,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
 	if n == 1 then
 		return args[1]
 	else
-		return tconcat(tmp, "\001", 1, tgetn(args))
+		return tconcat(args, "\001", 1, tgetn(args))
 	end
 end
 
