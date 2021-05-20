@@ -550,9 +550,9 @@ local methods = {
 		self:Fire("OnGroupSelected", uniquevalue)
 	end,
 
-	["SelectByPath"] = function(self, a0,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
-		self:Select(BuildUniqueValue(a0,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10), a0,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
-	end,
+	["SelectByPath"] = AceGUI:vararg(1, function(self, arg)
+		self:Select(BuildUniqueValue(unpack(arg)), unpack(arg))
+	end),
 
 	["SelectByValue"] = function(self, uniquevalue)
 		self:Select(uniquevalue, ("\001"):split(uniquevalue))

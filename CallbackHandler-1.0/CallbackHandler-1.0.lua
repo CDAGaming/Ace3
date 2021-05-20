@@ -19,46 +19,39 @@ local next, select, pairs, type, tostring = next, select, pairs, type, tostring
 
 local xpcall = xpcall
 
+local supports_ellipsis = loadstring("return ...") ~= nil
+local template_args = supports_ellipsis and "{...}" or "arg"
+
+function CallbackHandler:vararg(n, f)
+	local t = {}
+	local params = ""
+	if n > 0 then
+		for i = 1, n do t[ i ] = "_"..i end
+		params = table.concat(t, ", ", 1, n)
+		params = params .. ", "
+	end
+	local code = [[
+        return function( f )
+        return function( ]]..params..[[... )
+            return f( ]]..params..template_args..[[ )
+        end
+        end
+    ]]
+	return assert(loadstring(code, "=(vararg)"))()(f)
+end
+
 local function errorhandler(err)
 	return geterrorhandler()(err)
 end
-CallbackHandler.errorhandler = errorhandler
 
-local function CreateDispatcher(argCount)
-	local code = [[
-		local xpcall, errorhandler = xpcall, LibStub("CallbackHandler-1.0").errorhandler
-		local method, UP_ARGS
-		local function call()
-			local func, ARGS = method, UP_ARGS
-			method, UP_ARGS = nil, NILS
-			return func(ARGS)
-		end
-		return function(handlers, ARGS)
-			local index
-			index, method = next(handlers)
-			if not method then return end
-			repeat
-				UP_ARGS = ARGS
-				xpcall(call, errorhandler)
-				index, method = next(handlers, index)
-			until not method
-		end
-	]]
-	local c = 4*argCount-1
-	local s = "b01,b02,b03,b04,b05,b06,b07,b08,b09,b10"
-	code = strgsub(code, "UP_ARGS", strsub(s,1,c))
-	s = "a01,a02,a03,a04,a05,a06,a07,a08,a09,a10"
-	code = strgsub(code, "ARGS", strsub(s,1,c))
-	s = "nil,nil,nil,nil,nil,nil,nil,nil,nil,nil"
-	code = strgsub(code, "NILS", strsub(s,1,c))
-	return assert(loadstring(code, "safecall Dispatcher["..tostring(argCount).."]"))()
-end
-
-local Dispatchers = setmetatable({}, {__index=function(self, argCount)
-	local dispatcher = CreateDispatcher(argCount)
-	rawset(self, argCount, dispatcher)
-	return dispatcher
-end})
+local Dispatch = CallbackHandler:vararg(1, function(handlers, arg)
+	local index, method = next(handlers)
+	if not method then return end
+	repeat
+		xpcall(method, errorhandler, unpack(arg))
+		index, method = next(handlers, index)
+	until not method
+end)
 
 --------------------------------------------------------------------------
 -- CallbackHandler:New
@@ -84,14 +77,12 @@ function CallbackHandler:New(target, RegisterName, UnregisterName, UnregisterAll
 	local events = setmetatable({}, meta)
 	local registry = { recurse=0, events=events }
 
-	-- registry:Fire() - fires the given event/message into the registry
-	function registry:Fire(eventname, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10)
-		local args = { a1, a2, a3, a4, a5, a6, a7, a8, a9, a10 }
+	registry.Fire = self:vararg(2, function(self, eventname, arg)
 		if not rawget(events, eventname) or not next(events[eventname]) then return end
 		local oldrecurse = registry.recurse
 		registry.recurse = oldrecurse + 1
 
-		Dispatchers[tgetn(args) + 1](events[eventname], eventname, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10)
+		Dispatch(events[eventname], eventname, unpack(arg))
 
 		registry.recurse = oldrecurse
 
@@ -110,15 +101,14 @@ function CallbackHandler:New(target, RegisterName, UnregisterName, UnregisterAll
 			end
 			registry.insertQueue = nil
 		end
-	end
+	end)
 
 	-- Registration of a callback, handles:
 	--   self["method"], leads to self["method"](self, ...)
 	--   self with function ref, leads to functionref(...)
 	--   "addonId" (instead of self) with function ref, leads to functionref(...)
 	-- all with an optional arg, which, if present, gets passed as first argument (after self if present)
-	target[RegisterName] = function(self, eventname, method, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9)
-		local args = {arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9}
+	target[RegisterName] = self:vararg(3, function(self, eventname, method, arg)
 		if type(eventname) ~= "string" then
 			error("Usage: "..RegisterName.."(eventname, method[, arg]): 'eventname' - string expected.", 2)
 		end
@@ -143,14 +133,14 @@ function CallbackHandler:New(target, RegisterName, UnregisterName, UnregisterAll
 				error("Usage: "..RegisterName.."(\"eventname\", \"methodname\"): 'methodname' - method '"..tostring(method).."' not found on self.", 2)
 			end
 
-			if tgetn(args) >= 1 then	-- this is not the same as testing for arg==nil!
-				regfunc = function(arg01, arg02, arg03, arg04, arg05, arg06, arg07, arg08, arg09)
-					self[method](self, arg1, arg01, arg02, arg03, arg04, arg05, arg06, arg07, arg08, arg09)
-				end
+			if tgetn(arg) >= 1 then	-- this is not the same as testing for arg==nil!
+				regfunc = CallbackHandler:vararg(0, function(sub_args)
+					self[method](self, arg[1], unpack(sub_args))
+				end)
 			else
-				regfunc = function(arg01, arg02, arg03, arg04, arg05, arg06, arg07, arg08, arg09)
-					self[method](self, arg01, arg02, arg03, arg04, arg05, arg06, arg07, arg08, arg09)
-				end
+				regfunc = CallbackHandler:vararg(0, function(sub_args)
+					self[method](self, unpack(sub_args))
+				end)
 			end
 		else
 			-- function ref with self=object or self="addonId" or self=thread
@@ -158,10 +148,10 @@ function CallbackHandler:New(target, RegisterName, UnregisterName, UnregisterAll
 				error("Usage: "..RegisterName.."(self or \"addonId\", eventname, method): 'self or addonId': table or string or thread expected.", 2)
 			end
 
-			if tgetn(args) >= 1 then	-- this is not the same as testing for arg==nil!
-				regfunc = function(arg01, arg02, arg03, arg04, arg05, arg06, arg07, arg08, arg09)
-					method(arg1, arg01, arg02, arg03, arg04, arg05, arg06, arg07, arg08, arg09)
-				end
+			if tgetn(arg) >= 1 then	-- this is not the same as testing for arg==nil!
+				regfunc = CallbackHandler:vararg(0, function(sub_args)
+					method(arg[1], unpack(sub_args))
+				end)
 			else
 				regfunc = method
 			end
@@ -169,7 +159,7 @@ function CallbackHandler:New(target, RegisterName, UnregisterName, UnregisterAll
 
 
 		if events[eventname][self] or registry.recurse<1 then
-		-- if registry.recurse<1 then
+			-- if registry.recurse<1 then
 			-- we're overwriting an existing entry, or not currently recursing. just set it.
 			events[eventname][self] = regfunc
 			-- fire OnUsed callback?
@@ -182,7 +172,7 @@ function CallbackHandler:New(target, RegisterName, UnregisterName, UnregisterAll
 			registry.insertQueue = registry.insertQueue or setmetatable({},meta)
 			registry.insertQueue[eventname][self] = regfunc
 		end
-	end
+	end)
 
 	-- Unregister a callback
 	target[UnregisterName] = function(self, eventname)
@@ -206,18 +196,17 @@ function CallbackHandler:New(target, RegisterName, UnregisterName, UnregisterAll
 
 	-- OPTIONAL: Unregister all callbacks for given selfs/addonIds
 	if UnregisterAllName then
-		target[UnregisterAllName] = function(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9)
-			local args = {arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9}
-			if tgetn(args)<1 then
+		target[UnregisterAllName] = self:vararg(0, function(arg)
+			if tgetn(arg)<1 then
 				error("Usage: "..UnregisterAllName.."([whatFor]): missing 'self' or \"addonId\" to unregister events for.", 2)
 			end
-			if tgetn(args)==1 and args[1]==target then
+			if tgetn(arg)==1 and arg[1]==target then
 				error("Usage: "..UnregisterAllName.."([whatFor]): supply a meaningful 'self' or \"addonId\"", 2)
 			end
 
 
-			for i=1,tgetn(args) do
-				local self = args[i]
+			for i=1,tgetn(arg) do
+				local self = arg[i]
 				if registry.insertQueue then
 					for eventname, callbacks in pairs(registry.insertQueue) do
 						if callbacks[self] then
@@ -235,7 +224,7 @@ function CallbackHandler:New(target, RegisterName, UnregisterName, UnregisterAll
 					end
 				end
 			end
-		end
+		end)
 	end
 
 	return registry

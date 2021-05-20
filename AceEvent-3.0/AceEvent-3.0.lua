@@ -18,7 +18,7 @@ local AceEvent = LibStub:NewLibrary(MAJOR, MINOR)
 if not AceEvent then return end
 
 -- Lua APIs
-local pairs = pairs
+local pairs, unpack = pairs, unpack
 
 local wowLegacy
 do
@@ -128,9 +128,9 @@ if wowLegacy then
 		events:Fire(event, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9)
 	end)
 else
-	AceEvent.frame:SetScript("OnEvent", function(this, event, a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
-		events:Fire(event, a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
-	end)
+	AceEvent.frame:SetScript("OnEvent", CallbackHandler:vararg(2, function(this, event, arg)
+		events:Fire(event, unpack(arg))
+	end))
 end
 
 --- Finally: upgrade our old embeds

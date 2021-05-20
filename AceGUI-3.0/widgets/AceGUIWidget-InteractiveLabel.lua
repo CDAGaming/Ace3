@@ -38,19 +38,18 @@ local methods = {
 
 	-- ["OnRelease"] = nil,
 
-	["SetHighlight"] = function(self, a0,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
-		self.highlight:SetTexture(a0,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
-	end,
+	["SetHighlight"] = AceGUI:vararg(1, function(self, arg)
+		self.highlight:SetTexture(unpack(arg))
+	end),
 
-	["SetHighlightTexCoord"] = function(self, a0,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
-		local args = {a0,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10}
-		local c = tgetn(args)
+	["SetHighlightTexCoord"] = AceGUI:vararg(1, function(self, arg)
+		local c = tgetn(arg)
 		if c == 4 or c == 8 then
-			self.highlight:SetTexCoord(a0,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
+			self.highlight:SetTexCoord(unpack(arg))
 		else
 			self.highlight:SetTexCoord(0, 1, 0, 1)
 		end
-	end,
+	end),
 
 	["SetDisabled"] = function(self,disabled)
 		self.disabled = disabled

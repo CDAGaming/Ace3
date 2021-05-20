@@ -42,14 +42,13 @@ AceConfigRegistry.validated = {
 
 
 
-local function err(msg, errlvl, a0,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
-	local args = {a0,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10}
+local err = CallbackHandler:vararg(2, function(msg, errlvl, arg)
 	local t = {}
-	for i=tgetn(args),1,-1 do
-		tinsert(t, args[i])
+	for i=tgetn(arg),1,-1 do
+		tinsert(t, arg[i])
 	end
 	error(MAJOR..":ValidateOptionsTable(): "..tconcat(t,".")..msg, errlvl+2)
-end
+end)
 
 
 local isstring={["string"]=true, _="string"}
@@ -193,30 +192,29 @@ local typedkeys={
 	},
 }
 
-local function validateKey(k,errlvl,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
-	local args = {a1,a2,a3,a4,a5,a6,a7,a8,a9,a10}
+local validateKey = CallbackHandler:vararg(2, function(k,errlvl,arg)
 	errlvl=(errlvl or 0)+1
 	if type(k)~="string" then
-		err("["..tostring(k).."] - key is not a string", errlvl,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
+		err("["..tostring(k).."] - key is not a string", errlvl,unpack(arg))
 	end
 	if strfind(k, "[%c\127]") then
-		err("["..tostring(k).."] - key name contained control characters", errlvl,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
+		err("["..tostring(k).."] - key name contained control characters", errlvl,unpack(arg))
 	end
-end
+end)
 
-local function validateVal(v, oktypes, errlvl,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
+local validateVal = CallbackHandler:vararg(3, function(v, oktypes, errlvl,arg)
 	errlvl=(errlvl or 0)+1
 	local isok=oktypes[type(v)] or oktypes["*"]
 
 	if not isok then
-		err(": expected a "..oktypes._..", got '"..tostring(v).."'", errlvl,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
+		err(": expected a "..oktypes._..", got '"..tostring(v).."'", errlvl,unpack(arg))
 	end
 	if type(isok)=="table" then		-- isok was a table containing specific values to be tested for!
 		if not isok[v] then
-			err(": did not expect "..type(v).." value '"..tostring(v).."'", errlvl,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
+			err(": did not expect "..type(v).." value '"..tostring(v).."'", errlvl,unpack(arg))
 		end
 	end
-end
+end)
 
 local function validate(options,errlvl,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
 	errlvl=(errlvl or 0)+1

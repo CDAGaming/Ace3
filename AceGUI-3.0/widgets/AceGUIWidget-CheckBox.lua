@@ -232,21 +232,20 @@ local methods = {
 		end
 	end,
 
-	["SetImage"] = function(self, path, a0,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
-		local args = {a0,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10}
+	["SetImage"] = AceGUI:vararg(2, function(self, path, arg)
 		local image = self.image
 		image:SetTexture(path)
 
 		if image:GetTexture() then
-			local n = tgetn(args)
+			local n = tgetn(arg)
 			if n == 4 or n == 8 then
-				image:SetTexCoord(a0,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
+				image:SetTexCoord(unpack(arg))
 			else
 				image:SetTexCoord(0, 1, 0, 1)
 			end
 		end
 		AlignImage(self)
-	end
+	end)
 }
 
 --[[-----------------------------------------------------------------------------

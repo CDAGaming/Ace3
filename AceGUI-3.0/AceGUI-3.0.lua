@@ -76,56 +76,36 @@ local WidgetVersions = AceGUI.WidgetVersions
 ]]
 local xpcall = xpcall
 
+local supports_ellipsis = loadstring("return ...") ~= nil
+local template_args = supports_ellipsis and "{...}" or "arg"
+
+function AceGUI:vararg(n, f)
+	local t = {}
+	local params = ""
+	if n > 0 then
+		for i = 1, n do t[ i ] = "_"..i end
+		params = table.concat(t, ", ", 1, n)
+		params = params .. ", "
+	end
+	local code = [[
+        return function( f )
+        return function( ]]..params..[[... )
+            return f( ]]..params..template_args..[[ )
+        end
+        end
+    ]]
+	return assert(loadstring(code, "=(vararg)"))()(f)
+end
+
 local function errorhandler(err)
 	return geterrorhandler()(err)
 end
-AceGUI.errorhandler = errorhandler
 
-local function CreateDispatcher(argCount)
-	local code = [[
-		local errorhandler = LibStub("AceGUI-3.0").errorhandler
-		local method, UP_ARGS
-		local function call()
-			local func, ARGS = method, UP_ARGS
-			method, UP_ARGS = nil, NILS
-			return func(ARGS)
-		end
-		return function(func, ARGS)
-			method, UP_ARGS = func, ARGS
-			return xpcall(call, errorhandler)
-		end
-	]]
-	local c = 4*argCount-1
-	local s = "b01,b02,b03,b04,b05,b06,b07,b08,b09,b10,b11,b12,b13,b14,b15,b16,b17,b18,b19,b20"
-	code = strgsub(code, "UP_ARGS", strsub(s,1,c))
-	s = "a01,a02,a03,a04,a05,a06,a07,a08,a09,a10,a11,a12,a13,a14,a15,a16,a17,a18,a19,a20"
-	code = strgsub(code, "ARGS", strsub(s,1,c))
-	s = "nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil"
-	code = strgsub(code, "NILS", strsub(s,1,c))
-	return assert(loadstring(code, "safecall Dispatcher["..tostring(argCount).."]"))()
-end
-
-local Dispatchers = setmetatable({}, {__index=function(self, argCount)
-	local dispatcher
-	if not tonumber(argCount) then dbg(debugstack()) end
-	if argCount > 0 then
-		dispatcher = CreateDispatcher(argCount)
-	else
-		dispatcher = function(func) return xpcall(func,errorhandler) end
+local safecall = AceGUI:vararg(1, function(func, arg)
+	if func then
+		return xpcall(func, errorhandler, unpack(arg))
 	end
-	rawset(self, argCount, dispatcher)
-	return dispatcher
-end})
-
-local function safecall(func,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11,a12,a13,a14,a15,a16,a17,a18,a19,a20)
-	local args = {a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11,a12,a13,a14,a15,a16,a17,a18,a19,a20}
-	-- we check to see if the func is passed is actually a function here and don't error when it isn't
-	-- this safecall is used for optional functions like OnInitialize OnEnable etc. When they are not
-	-- present execution should continue without hinderance
-	if type(func) == "function" then
-		return Dispatchers[tgetn(args)](func,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11,a12,a13,a14,a15,a16,a17,a18,a19,a20)
-	end
-end
+end)
 
 -- Recycling functions
 local newWidget, delWidget
@@ -512,16 +492,15 @@ do
 		self:DoLayout()
 	end
 
-	WidgetContainerBase.AddChildren = function(self, a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
-		local args = {a1,a2,a3,a4,a5,a6,a7,a8,a9,a10}
-		for i = 1, tgetn(args) do
-			local child = args[i]
+	WidgetContainerBase.AddChildren = AceGUI:vararg(1, function(self, arg)
+		for i = 1, tgetn(arg) do
+			local child = arg[i]
 			tinsert(self.children, child)
 			child:SetParent(self)
 			child.frame:Show()
 		end
 		self:DoLayout()
-	end
+	end)
 
 	WidgetContainerBase.ReleaseChildren = function(self)
 		local children = self.children

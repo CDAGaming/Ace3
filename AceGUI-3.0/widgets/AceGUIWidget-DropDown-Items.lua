@@ -118,9 +118,9 @@ function ItemBase.GetText(self)
 end
 
 -- exported
-function ItemBase.SetPoint(self, a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
-	self.frame:SetPoint(a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
-end
+ItemBase.SetPoint = AceGUI:vararg(1, function(self, arg)
+	self.frame:SetPoint(unpack(arg))
+end)
 
 -- exported
 function ItemBase.Show(self)

@@ -65,56 +65,43 @@ end
 ]]
 local xpcall = xpcall
 
+local supports_ellipsis = loadstring("return ...") ~= nil
+local template_args = supports_ellipsis and "{...}" or "arg"
+
+function AceAddon:vararg(n, f)
+	local t = {}
+	local params = ""
+	if n > 0 then
+		for i = 1, n do t[ i ] = "_"..i end
+		params = table.concat(t, ", ", 1, n)
+		params = params .. ", "
+	end
+	local code = [[
+        return function( f )
+        return function( ]]..params..[[... )
+            return f( ]]..params..template_args..[[ )
+        end
+        end
+    ]]
+	return assert(loadstring(code, "=(vararg)"))()(f)
+end
+
 local function errorhandler(err)
 	return geterrorhandler()(err)
 end
-AceAddon.errorhandler = errorhandler
 
-local function CreateDispatcher(argCount)
-	local code = [[
-		local errorhandler = LibStub("AceAddon-3.0").errorhandler
-		local method, UP_ARGS
-		local function call()
-			local func, ARGS = method, UP_ARGS
-			method, UP_ARGS = nil, NILS
-			return func(ARGS)
-		end
-		return function(func, ARGS)
-			method, UP_ARGS = func, ARGS
-			return xpcall(call, errorhandler)
-		end
-	]]
-	local c = 4*argCount-1
-	local s = "b01,b02,b03,b04,b05,b06,b07,b08,b09,b10,b11,b12,b13,b14,b15,b16,b17,b18,b19,b20"
-	code = strgsub(code, "UP_ARGS", strsub(s,1,c))
-	s = "a01,a02,a03,a04,a05,a06,a07,a08,a09,a10,a11,a12,a13,a14,a15,a16,a17,a18,a19,a20"
-	code = strgsub(code, "ARGS", strsub(s,1,c))
-	s = "nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil"
-	code = strgsub(code, "NILS", strsub(s,1,c))
-	return assert(loadstring(code, "safecall Dispatcher["..tostring(argCount).."]"))()
-end
-
-local Dispatchers = setmetatable({}, {__index=function(self, argCount)
-	local dispatcher
-	if not tonumber(argCount) then dbg(debugstack()) end
-	if argCount > 0 then
-		dispatcher = CreateDispatcher(argCount)
-	else
-		dispatcher = function(func) return xpcall(func,errorhandler) end
-	end
-	rawset(self, argCount, dispatcher)
-	return dispatcher
-end})
-
-local function safecall(func,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11,a12,a13,a14,a15,a16,a17,a18,a19,a20)
-	local args = {a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11,a12,a13,a14,a15,a16,a17,a18,a19,a20}
+local safecall = AceAddon:vararg(1, function(func, arg)
 	-- we check to see if the func is passed is actually a function here and don't error when it isn't
 	-- this safecall is used for optional functions like OnInitialize OnEnable etc. When they are not
 	-- present execution should continue without hinderance
 	if type(func) == "function" then
-		return Dispatchers[tgetn(args)](func,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11,a12,a13,a14,a15,a16,a17,a18,a19,a20)
+		local success, err = pcall(func, unpack(arg))
+		if success then return err end
+
+		if not err:find("%.lua:%d+:") then err = (debugstack():match("\n(.-: )in.-\n") or "") .. err end
+		errorhandler()(err)
 	end
-end
+end)
 
 -- local functions that will be implemented further down
 local Enable, Disable, EnableModule, DisableModule, Embed, NewModule, GetModule, GetName, SetDefaultModuleState, SetDefaultModuleLibraries, SetEnabledState, SetDefaultModulePrototype
@@ -147,8 +134,7 @@ end
 -- -- Create a Addon object based on the table of a frame
 -- local MyFrame = CreateFrame("Frame")
 -- MyAddon = LibStub("AceAddon-3.0"):NewAddon(MyFrame, "MyAddon", "AceEvent-3.0")
-function AceAddon:NewAddon(objectorname,a0,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
-	local args = {a1,a2,a3,a4,a5,a6,a7,a8,a9,a10}
+AceAddon.NewAddon = AceAddon:vararg(3, function(self,objectorname,a0,arg)
 	local object,name
 	if type(objectorname)=="table" then
 		object=objectorname
@@ -180,15 +166,15 @@ function AceAddon:NewAddon(objectorname,a0,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
 	object.defaultModuleLibraries = {}
 	Embed( object ) -- embed NewModule, GetModule methods
 	if type(objectorname)=="table" then
-		self:EmbedLibraries(object,nil,args)
+		self:EmbedLibraries(object,nil,unpack(arg))
 	elseif a0 then
-		self:EmbedLibraries(object,a0,args)
+		self:EmbedLibraries(object,a0,unpack(arg))
 	end
 
 	-- add to queue of addons to be initialized upon ADDON_LOADED
 	tinsert(self.initializequeue, object)
 	return object
-end
+end)
 
 --- Get the addon object by its name from the internal AceAddon registry.
 -- Throws an error if the addon object cannot be found (except if silent is set).
@@ -212,14 +198,13 @@ end
 -- @paramsig addon, [lib, ...]
 -- @param addon addon object to embed the libs in
 -- @param lib List of libraries to embed into the addon
-function AceAddon:EmbedLibraries(addon,a1,arg)
+AceAddon.EmbedLibraries = AceAddon:vararg(3, function(self, addon, a1, arg)
 	if a1 then self:EmbedLibrary(addon, a1, false, 4) end
-	-- 10 is the max number of variable arguments in the function NewAddon and NewModule
-	for i=1,10 do
-		if not arg[i] then return end
-		self:EmbedLibrary(addon, arg[i], false, 4)
+	for i=1,tgetn(arg) do
+		local libname = arg[i]
+		self:EmbedLibrary(addon, libname, false, 4)
 	end
-end
+end)
 
 -- - Embed a library into the addon object.
 -- This function will check if the specified library is registered with LibStub
@@ -281,8 +266,7 @@ local function IsModuleTrue(self) return true end
 -- -- Create a module with a prototype
 -- local prototype = { OnEnable = function(self) print("OnEnable called!") end }
 -- MyModule = MyAddon:NewModule("MyModule", prototype, "AceEvent-3.0", "AceHook-3.0")
-function NewModule(self, name, prototype, a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
-	local args = {a1,a2,a3,a4,a5,a6,a7,a8,a9,a10}
+NewModule = AceAddon:vararg(3, function(self, name, prototype, arg)
 	if type(name) ~= "string" then error(strfmt("Usage: NewModule(name, [prototype, [lib, lib, lib, ...]): 'name' - string expected got '%s'.", type(name)), 2) end
 	if type(prototype) ~= "string" and type(prototype) ~= "table" and type(prototype) ~= "nil" then error(strfmt("Usage: NewModule(name, [prototype, [lib, lib, lib, ...]): 'prototype' - table (prototype), string (lib) or nil expected got '%s'.", type(prototype)), 2) end
 
@@ -297,11 +281,11 @@ function NewModule(self, name, prototype, a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
 	module.moduleName = name
 
 	if type(prototype) == "string" then
-		AceAddon:EmbedLibraries(module, prototype, args)
+		AceAddon:EmbedLibraries(module, prototype, unpack(arg))
 	else
-		AceAddon:EmbedLibraries(module, nil, args)
+		AceAddon:EmbedLibraries(module, unpack(arg))
 	end
-	AceAddon:EmbedLibraries(module, nil, self.defaultModuleLibraries)
+	AceAddon:EmbedLibraries(module, unpack(self.defaultModuleLibraries))
 
 	if not prototype or type(prototype) == "string" then
 		prototype = self.defaultModulePrototype or nil
@@ -318,7 +302,7 @@ function NewModule(self, name, prototype, a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
 	tinsert(self.orderedModules, module)
 
 	return module
-end
+end)
 
 --- Returns the real name of the addon or module, without any prefix.
 -- @name //addon//:GetName
@@ -414,12 +398,12 @@ end
 -- MyAddon:SetDefaultModuleLibraries("AceEvent-3.0")
 -- -- Create a module
 -- MyModule = MyAddon:NewModule("MyModule")
-function SetDefaultModuleLibraries(self, a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
+SetDefaultModuleLibraries = AceAddon:vararg(1, function(self, arg)
 	if next(self.modules) then
 		error("Usage: SetDefaultModuleLibraries(...): cannot change the module defaults after a module has been registered.", 2)
 	end
-	self.defaultModuleLibraries = {a1,a2,a3,a4,a5,a6,a7,a8,a9,a10}
-end
+	self.defaultModuleLibraries = arg
+end)
 
 --- Set the default state in which new modules are being created.
 -- Note that you can only change the default state before any module is created.

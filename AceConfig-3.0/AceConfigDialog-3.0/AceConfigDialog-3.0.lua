@@ -63,56 +63,36 @@ local emptyTbl = {}
 ]]
 local xpcall = xpcall
 
+local supports_ellipsis = loadstring("return ...") ~= nil
+local template_args = supports_ellipsis and "{...}" or "arg"
+
+function AceConfigDialog:vararg(n, f)
+	local t = {}
+	local params = ""
+	if n > 0 then
+		for i = 1, n do t[ i ] = "_"..i end
+		params = table.concat(t, ", ", 1, n)
+		params = params .. ", "
+	end
+	local code = [[
+        return function( f )
+        return function( ]]..params..[[... )
+            return f( ]]..params..template_args..[[ )
+        end
+        end
+    ]]
+	return assert(loadstring(code, "=(vararg)"))()(f)
+end
+
 local function errorhandler(err)
 	return geterrorhandler()(err)
 end
-AceConfigDialog.errorhandler = errorhandler
 
-local function CreateDispatcher(argCount)
-	local code = [[
-		local errorhandler = LibStub("AceConfigDialog-3.0").errorhandler
-		local method, UP_ARGS
-		local function call()
-			local func, ARGS = method, UP_ARGS
-			method, UP_ARGS = nil, NILS
-			return func(ARGS)
-		end
-		return function(func, ARGS)
-			method, UP_ARGS = func, ARGS
-			return xpcall(call, errorhandler)
-		end
-	]]
-	local c = 4*argCount-1
-	local s = "b01,b02,b03,b04,b05,b06,b07,b08,b09,b10,b11,b12,b13,b14,b15,b16,b17,b18,b19,b20"
-	code = strgsub(code, "UP_ARGS", strsub(s,1,c))
-	s = "a01,a02,a03,a04,a05,a06,a07,a08,a09,a10,a11,a12,a13,a14,a15,a16,a17,a18,a19,a20"
-	code = strgsub(code, "ARGS", strsub(s,1,c))
-	s = "nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil,nil"
-	code = strgsub(code, "NILS", strsub(s,1,c))
-	return assert(loadstring(code, "safecall Dispatcher["..tostring(argCount).."]"))()
-end
-
-local Dispatchers = setmetatable({}, {__index=function(self, argCount)
-	local dispatcher
-	if not tonumber(argCount) then dbg(debugstack()) end
-	if argCount > 0 then
-		dispatcher = CreateDispatcher(argCount)
-	else
-		dispatcher = function(func) return xpcall(func,errorhandler) end
+local safecall = AceConfigDialog:vararg(1, function(func, arg)
+	if func then
+		return xpcall(func, errorhandler, unpack(arg))
 	end
-	rawset(self, argCount, dispatcher)
-	return dispatcher
-end})
-
-local function safecall(func,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11,a12,a13,a14,a15,a16,a17,a18,a19,a20)
-	local args = {a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11,a12,a13,a14,a15,a16,a17,a18,a19,a20}
-	-- we check to see if the func is passed is actually a function here and don't error when it isn't
-	-- this safecall is used for optional functions like OnInitialize OnEnable etc. When they are not
-	-- present execution should continue without hinderance
-	if type(func) == "function" then
-		return Dispatchers[tgetn(args)](func,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11,a12,a13,a14,a15,a16,a17,a18,a19,a20)
-	end
-end
+end)
 
 local width_multiplier = 170
 
@@ -497,10 +477,8 @@ end
 -- The path specified has to match the keys of the groups in the table.
 -- @param appName The application name as given to `:RegisterOptionsTable()`
 -- @param ... The path to the key that should be selected
-function AceConfigDialog:SelectGroup(appName, a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
-	local args = {a1,a2,a3,a4,a5,a6,a7,a8,a9,a10}
+AceConfigDialog.SelectGroup = AceConfigDialog:vararg(2, function(self, appName, arg)
 	local path = new()
-
 
 	local app = reg:GetOptionsTable(appName)
 	if not app then
@@ -516,8 +494,8 @@ function AceConfigDialog:SelectGroup(appName, a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
 	local treevalue
 	local treestatus
 
-	for n = 1, tgetn(args) do
-		local key = args[n]
+	for n = 1, tgetn(arg) do
+		local key = arg[n]
 
 		if group.childGroups == "tab" or group.childGroups == "select" then
 			--if this is a tab or select group, select the group
@@ -560,7 +538,7 @@ function AceConfigDialog:SelectGroup(appName, a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
 
 	del(path)
 	reg:NotifyChange(appName)
-end
+end)
 
 local function OptionOnMouseOver(widget, event)
 	--show a tooltip/set the status bar to the desc text
@@ -1926,8 +1904,7 @@ end
 -- @param appName The application name as given to `:RegisterOptionsTable()`
 -- @param container An optional container frame to feed the options into
 -- @param ... The path to open after creating the options window (see `:SelectGroup` for details)
-function AceConfigDialog:Open(appName, container, a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
-	local args = {a1,a2,a3,a4,a5,a6,a7,a8,a9,a10}
+AceConfigDialog.Open = AceConfigDialog:vararg(3, function(self, appName, container, arg)
 	if not old_CloseSpecialWindows then
 		old_CloseSpecialWindows = CloseSpecialWindows
 		CloseSpecialWindows = function()
@@ -1952,8 +1929,8 @@ function AceConfigDialog:Open(appName, container, a1,a2,a3,a4,a5,a6,a7,a8,a9,a10
 		tinsert(path, container)
 		container = nil
 	end
-	for n = 1, tgetn(args) do
-		tinsert(path, (args[n]))
+	for n = 1, tgetn(arg) do
+		tinsert(path, (arg[n]))
 	end
 
 	local option = options
@@ -2014,7 +1991,7 @@ function AceConfigDialog:Open(appName, container, a1,a2,a3,a4,a5,a6,a7,a8,a9,a10
 		-- close all is set, but thats not good, since we're just opening here, so force it
 		AceConfigDialog.frame.closeAllOverride[appName] = true
 	end
-end
+end)
 
 -- convert pre-39 BlizOptions structure to the new format
 if oldminor and oldminor < 39 and AceConfigDialog.BlizOptions then
@@ -2058,13 +2035,12 @@ end
 -- @param parent The parent to use in the interface options tree.
 -- @param ... The path in the options table to feed into the interface options panel.
 -- @return The reference to the frame registered into the Interface Options.
-function AceConfigDialog:AddToBlizOptions(appName, name, parent, a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
-	local args = {a1,a2,a3,a4,a5,a6,a7,a8,a9,a10}
+AceConfigDialog.AddToBlizOptions = AceConfigDialog:vararg(4, function(self, appName, name, parent, arg)
 	local BlizOptions = AceConfigDialog.BlizOptions
 
 	local key = appName
-	for n = 1, tgetn(args) do
-		key = key.."\001"..args[n]
+	for n = 1, tgetn(arg) do
+		key = key.."\001"..arg[n]
 	end
 
 	if not BlizOptions[appName] then
@@ -2078,10 +2054,10 @@ function AceConfigDialog:AddToBlizOptions(appName, name, parent, a1,a2,a3,a4,a5,
 
 		group:SetTitle(name or appName)
 		group:SetUserData("appName", appName)
-		if tgetn(args) > 0 then
+		if tgetn(arg) > 0 then
 			local path = {}
-			for n = 1, tgetn(args) do
-				tinsert(path, (args[n]))
+			for n = 1, tgetn(arg) do
+				tinsert(path, (arg[n]))
 			end
 			group:SetUserData("path", path)
 		end
@@ -2092,4 +2068,4 @@ function AceConfigDialog:AddToBlizOptions(appName, name, parent, a1,a2,a3,a4,a5,
 	else
 		error(("%s has already been added to the Blizzard Options Window with the given path"):format(appName), 2)
 	end
-end
+end)

@@ -61,20 +61,19 @@ local methods = {
 		end
 	end,
 
-	["SetImage"] = function(self, path, a0,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
-		local args = {a0,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10}
+	["SetImage"] = AceGUI:vararg(2, function(self, path, arg)
 		local image = self.image
 		image:SetTexture(path)
 
 		if image:GetTexture() then
-			local n = tgetn(args)
+			local n = tgetn(arg)
 			if n == 4 or n == 8 then
-				image:SetTexCoord(args)
+				image:SetTexCoord(unpack(arg))
 			else
 				image:SetTexCoord(0, 1, 0, 1)
 			end
 		end
-	end,
+	end),
 
 	["SetImageSize"] = function(self, width, height)
 		self.image:SetWidth(width)
@@ -144,10 +143,10 @@ local function Constructor()
 	if not wowCata then
 		widget.SetText = widget.SetLabel
 	else
-		widget.SetText = function(self, a0,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
+		widget.SetText = AceGUI:vararg(1, function(self, arg)
 			print("AceGUI-3.0-Icon: SetText is deprecated! Use SetLabel instead!")
-			self:SetLabel(a0,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
-		end
+			self:SetLabel(unpack(arg))
+		end)
 	end
 
 	return AceGUI:RegisterAsWidget(widget)
