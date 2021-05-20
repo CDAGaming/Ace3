@@ -12,6 +12,27 @@ local pairs = pairs
 -- WoW APIs
 local PlaySound, CreateFrame, UIParent = PlaySound, CreateFrame, UIParent
 
+local supports_ellipsis = loadstring("return ...") ~= nil
+local template_args = supports_ellipsis and "{...}" or "arg"
+
+local function vararg(n, f)
+	local t = {}
+	local params = ""
+	if n > 0 then
+		for i = 1, n do t[ i ] = "_"..i end
+		params = table.concat(t, ", ", 1, n)
+		params = params .. ", "
+	end
+	local code = [[
+        return function( f )
+        return function( ]]..params..[[... )
+            return f( ]]..params..template_args..[[ )
+        end
+        end
+    ]]
+	return assert(loadstring(code, "=(vararg)"))()(f)
+end
+
 local wowMoP, wowThirdLegion, wowClassicRebased, wowTBCRebased
 do
 	local _, build, _, interface = GetBuildInfo()
@@ -25,7 +46,7 @@ end
 --[[-----------------------------------------------------------------------------
 Scripts
 -------------------------------------------------------------------------------]]
-local Button_OnClick = AceGUI:vararg(1, function(frame, arg)
+local Button_OnClick = vararg(1, function(frame, arg)
 	AceGUI:ClearFocus()
 	PlaySound((wowThirdLegion or wowClassicRebased or wowTBCRebased) and 852 or "igMainMenuOption") -- SOUNDKIT.IG_MAINMENU_OPTION
 	frame.obj:Fire("OnClick", unpack(arg))

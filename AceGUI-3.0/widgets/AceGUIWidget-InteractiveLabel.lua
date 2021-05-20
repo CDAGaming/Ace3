@@ -9,6 +9,27 @@ if not AceGUI or (AceGUI:GetWidgetVersion(Type) or 0) >= Version then return end
 local pairs = pairs
 local tgetn = table.getn
 
+local supports_ellipsis = loadstring("return ...") ~= nil
+local template_args = supports_ellipsis and "{...}" or "arg"
+
+local function vararg(n, f)
+	local t = {}
+	local params = ""
+	if n > 0 then
+		for i = 1, n do t[ i ] = "_"..i end
+		params = table.concat(t, ", ", 1, n)
+		params = params .. ", "
+	end
+	local code = [[
+        return function( f )
+        return function( ]]..params..[[... )
+            return f( ]]..params..template_args..[[ )
+        end
+        end
+    ]]
+	return assert(loadstring(code, "=(vararg)"))()(f)
+end
+
 --[[-----------------------------------------------------------------------------
 Scripts
 -------------------------------------------------------------------------------]]
@@ -38,11 +59,11 @@ local methods = {
 
 	-- ["OnRelease"] = nil,
 
-	["SetHighlight"] = AceGUI:vararg(1, function(self, arg)
+	["SetHighlight"] = vararg(1, function(self, arg)
 		self.highlight:SetTexture(unpack(arg))
 	end),
 
-	["SetHighlightTexCoord"] = AceGUI:vararg(1, function(self, arg)
+	["SetHighlightTexCoord"] = vararg(1, function(self, arg)
 		local c = tgetn(arg)
 		if c == 4 or c == 8 then
 			self.highlight:SetTexCoord(unpack(arg))

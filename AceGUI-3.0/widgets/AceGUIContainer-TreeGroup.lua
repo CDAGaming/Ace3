@@ -14,6 +14,27 @@ local tremove, unpack, tconcat, tgetn = table.remove, unpack, table.concat, tabl
 -- WoW APIs
 local CreateFrame, UIParent = CreateFrame, UIParent
 
+local supports_ellipsis = loadstring("return ...") ~= nil
+local template_args = supports_ellipsis and "{...}" or "arg"
+
+local function vararg(n, f)
+	local t = {}
+	local params = ""
+	if n > 0 then
+		for i = 1, n do t[ i ] = "_"..i end
+		params = table.concat(t, ", ", 1, n)
+		params = params .. ", "
+	end
+	local code = [[
+        return function( f )
+        return function( ]]..params..[[... )
+            return f( ]]..params..template_args..[[ )
+        end
+        end
+    ]]
+	return assert(loadstring(code, "=(vararg)"))()(f)
+end
+
 local wowBfa, wowWotlk, wowClassicRebased, wowTBCRebased
 do
 	local _, build, _, interface = GetBuildInfo()
@@ -550,7 +571,7 @@ local methods = {
 		self:Fire("OnGroupSelected", uniquevalue)
 	end,
 
-	["SelectByPath"] = AceGUI:vararg(1, function(self, arg)
+	["SelectByPath"] = vararg(1, function(self, arg)
 		self:Select(BuildUniqueValue(unpack(arg)), unpack(arg))
 	end),
 

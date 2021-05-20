@@ -13,6 +13,27 @@ local tgetn = table.getn
 local PlaySound = PlaySound
 local CreateFrame, UIParent = CreateFrame, UIParent
 
+local supports_ellipsis = loadstring("return ...") ~= nil
+local template_args = supports_ellipsis and "{...}" or "arg"
+
+local function vararg(n, f)
+	local t = {}
+	local params = ""
+	if n > 0 then
+		for i = 1, n do t[ i ] = "_"..i end
+		params = table.concat(t, ", ", 1, n)
+		params = params .. ", "
+	end
+	local code = [[
+        return function( f )
+        return function( ]]..params..[[... )
+            return f( ]]..params..template_args..[[ )
+        end
+        end
+    ]]
+	return assert(loadstring(code, "=(vararg)"))()(f)
+end
+
 local wowThirdLegion, wowClassicRebased, wowTBCRebased
 do
 	local _, build, _, interface = GetBuildInfo()
@@ -232,7 +253,7 @@ local methods = {
 		end
 	end,
 
-	["SetImage"] = AceGUI:vararg(2, function(self, path, arg)
+	["SetImage"] = vararg(2, function(self, path, arg)
 		local image = self.image
 		image:SetTexture(path)
 

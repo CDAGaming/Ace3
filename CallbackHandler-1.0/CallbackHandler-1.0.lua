@@ -196,7 +196,7 @@ function CallbackHandler:New(target, RegisterName, UnregisterName, UnregisterAll
 
 	-- OPTIONAL: Unregister all callbacks for given selfs/addonIds
 	if UnregisterAllName then
-		target[UnregisterAllName] = self:vararg(0, function(arg)
+		target[UnregisterAllName] = CallbackHandler:vararg(0, function(arg)
 			if tgetn(arg)<1 then
 				error("Usage: "..UnregisterAllName.."([whatFor]): missing 'self' or \"addonId\" to unregister events for.", 2)
 			end

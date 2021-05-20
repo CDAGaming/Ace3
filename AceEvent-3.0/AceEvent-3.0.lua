@@ -20,6 +20,27 @@ if not AceEvent then return end
 -- Lua APIs
 local pairs, unpack = pairs, unpack
 
+local supports_ellipsis = loadstring("return ...") ~= nil
+local template_args = supports_ellipsis and "{...}" or "arg"
+
+local function vararg(n, f)
+	local t = {}
+	local params = ""
+	if n > 0 then
+		for i = 1, n do t[ i ] = "_"..i end
+		params = table.concat(t, ", ", 1, n)
+		params = params .. ", "
+	end
+	local code = [[
+        return function( f )
+        return function( ]]..params..[[... )
+            return f( ]]..params..template_args..[[ )
+        end
+        end
+    ]]
+	return assert(loadstring(code, "=(vararg)"))()(f)
+end
+
 local wowLegacy
 do
 	local _, build, _, interface = GetBuildInfo()
@@ -128,7 +149,7 @@ if wowLegacy then
 		events:Fire(event, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9)
 	end)
 else
-	AceEvent.frame:SetScript("OnEvent", CallbackHandler:vararg(2, function(this, event, arg)
+	AceEvent.frame:SetScript("OnEvent", vararg(2, function(this, event, arg)
 		events:Fire(event, unpack(arg))
 	end))
 end

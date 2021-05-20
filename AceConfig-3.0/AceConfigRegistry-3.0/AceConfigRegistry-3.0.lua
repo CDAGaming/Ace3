@@ -28,6 +28,27 @@ local strfind = string.find
 local type, tostring, pairs = type, tostring, pairs
 local error, assert = error, assert
 
+local supports_ellipsis = loadstring("return ...") ~= nil
+local template_args = supports_ellipsis and "{...}" or "arg"
+
+local function vararg(n, f)
+	local t = {}
+	local params = ""
+	if n > 0 then
+		for i = 1, n do t[ i ] = "_"..i end
+		params = table.concat(t, ", ", 1, n)
+		params = params .. ", "
+	end
+	local code = [[
+        return function( f )
+        return function( ]]..params..[[... )
+            return f( ]]..params..template_args..[[ )
+        end
+        end
+    ]]
+	return assert(loadstring(code, "=(vararg)"))()(f)
+end
+
 -----------------------------------------------------------------------
 -- Validating options table consistency:
 
@@ -42,7 +63,7 @@ AceConfigRegistry.validated = {
 
 
 
-local err = CallbackHandler:vararg(2, function(msg, errlvl, arg)
+local err = vararg(2, function(msg, errlvl, arg)
 	local t = {}
 	for i=tgetn(arg),1,-1 do
 		tinsert(t, arg[i])
@@ -192,7 +213,7 @@ local typedkeys={
 	},
 }
 
-local validateKey = CallbackHandler:vararg(2, function(k,errlvl,arg)
+local validateKey = vararg(2, function(k,errlvl,arg)
 	errlvl=(errlvl or 0)+1
 	if type(k)~="string" then
 		err("["..tostring(k).."] - key is not a string", errlvl,unpack(arg))
@@ -202,7 +223,7 @@ local validateKey = CallbackHandler:vararg(2, function(k,errlvl,arg)
 	end
 end)
 
-local validateVal = CallbackHandler:vararg(3, function(v, oktypes, errlvl,arg)
+local validateVal = vararg(3, function(v, oktypes, errlvl,arg)
 	errlvl=(errlvl or 0)+1
 	local isok=oktypes[type(v)] or oktypes["*"]
 
