@@ -55,4 +55,4 @@ jobs:
       - name: Package and release for TBC Classic
         uses: BigWigsMods/packager@master
         with:
-          args: -g bc -w 0
+          args: -g bcc -w 0
