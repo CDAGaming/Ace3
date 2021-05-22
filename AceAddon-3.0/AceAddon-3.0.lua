@@ -45,6 +45,7 @@ AceAddon.embeds = AceAddon.embeds or setmetatable({}, {__index = function(tbl, k
 -- Lua APIs
 local tinsert, tconcat, tremove, tgetn, tsetn = table.insert, table.concat, table.remove, table.getn, table.setn
 local strfmt, strgsub, strsub, tostring = string.format, string.gsub, string.sub, tostring
+local strfind, strmatch = string.find, string.match
 local select, pairs, next, type, unpack = select, pairs, next, type, unpack
 local loadstring, assert, error = loadstring, assert, error
 local setmetatable, getmetatable, rawset = setmetatable, getmetatable, rawset
@@ -98,7 +99,7 @@ local safecall = AceAddon:vararg(1, function(func, arg)
 		local success, err = pcall(func, unpack(arg))
 		if success then return err end
 
-		if not err:find("%.lua:%d+:") then err = (debugstack():match("\n(.-: )in.-\n") or "") .. err end
+		if not strfind(err, "%.lua:%d+:") then err = (strmatch(debugstack(), "\n(.-: )in.-\n") or "") .. err end
 		errorhandler()(err)
 	end
 end)
