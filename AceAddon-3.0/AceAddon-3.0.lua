@@ -96,11 +96,15 @@ local safecall = AceAddon:vararg(1, function(func, arg)
 	-- this safecall is used for optional functions like OnInitialize OnEnable etc. When they are not
 	-- present execution should continue without hinderance
 	if type(func) == "function" then
-		local success, err = pcall(func, unpack(arg))
-		if success then return err end
+		if wowLegacy then
+			local success, err = pcall(func, unpack(arg))
+			if success then return err end
 
-		if not strfind(err, "%.lua:%d+:") then err = (strmatch(debugstack(), "\n(.-: )in.-\n") or "") .. err end
-		errorhandler()(err)
+			if not strfind(err, "%.lua:%d+:") then err = (strmatch(debugstack(), "\n(.-: )in.-\n") or "") .. err end
+			errorhandler()(err)
+		else
+			return xpcall(func, errorhandler, unpack(arg))
+		end
 	end
 end)
 
