@@ -33,8 +33,29 @@ local strlower, strupper = string.lower, string.upper
 local format, tonumber, tostring = string.format, tonumber, tostring
 local tsort, tinsert, tconcat, tremove, tgetn, tsetn = table.sort, table.insert, table.concat, table.remove, table.getn, table.setn
 local pairs, next, type = pairs, next, type
-local error, assert = error, assert
+local error, assert, loadstring = error, assert, loadstring
 local mod = math.mod or math.fmod
+
+local supports_ellipsis = loadstring("return ...") ~= nil
+local template_args = supports_ellipsis and "{...}" or "arg"
+
+function AceConfigCmd:vararg(n, f)
+	local t = {}
+	local params = ""
+	if n > 0 then
+		for i = 1, n do t[ i ] = "_"..i end
+		params = tconcat(t, ", ", 1, n)
+		params = params .. ", "
+	end
+	local code = [[
+        return function( f )
+        return function( ]]..params..[[... )
+            return f( ]]..params..template_args..[[ )
+        end
+        end
+    ]]
+	return assert(loadstring(code, "=(vararg)"))()(f)
+end
 
 -- WoW APIs
 local _G = getfenv() or _G or {}
@@ -66,14 +87,13 @@ local funcmsg = "expected function or member name"
 -- pickfirstset() - picks the first non-nil value and returns it
 
 -- picks the first non-nil value and returns it
-local function pickfirstset(a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
-	local args = {a1,a2,a3,a4,a5,a6,a7,a8,a9,a10}
-	for i=1,tgetn(args) do
-		if args[i] then
-			return args[i]
+local pickfirstset = AceConfigCmd:vararg(0, function(arg)
+	for i=1,tgetn(arg) do
+		if arg[i] then
+			return arg[i]
 		end
 	end
-end
+end)
 
 
 -- err() - produce real error() regarding malformed options tables etc
@@ -94,7 +114,7 @@ end
 
 -- callmethod() - call a given named method (e.g. "get", "set") with given arguments
 
-local function callmethod(info, inputpos, tab, methodtype, a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
+local callmethod = AceConfigCmd:vararg(4, function(info, inputpos, tab, methodtype, arg)
 	local method = info[methodtype]
 	if not method then
 		err(info, inputpos, "'"..methodtype.."': not set")
@@ -105,20 +125,20 @@ local function callmethod(info, inputpos, tab, methodtype, a1,a2,a3,a4,a5,a6,a7,
 	info.type = tab.type
 
 	if type(method)=="function" then
-		return method(info, a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
+		return method(info, unpack(arg))
 	elseif type(method)=="string" then
 		if type(info.handler[method])~="function" then
 			err(info, inputpos, "'"..methodtype.."': '"..method.."' is not a member function of "..tostring(info.handler))
 		end
-		return info.handler[method](info.handler, info, a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
+		return info.handler[method](info.handler, info, unpack(arg))
 	else
 		assert(false)	-- type should have already been checked on read
 	end
-end
+end)
 
 -- callfunction() - call a given named function (e.g. "name", "desc") with given arguments
 
-local function callfunction(info, tab, methodtype, a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
+local callfunction = AceConfigCmd:vararg(3, function(info, tab, methodtype, arg)
 	local method = tab[methodtype]
 
 	info.arg = tab.arg
@@ -126,17 +146,17 @@ local function callfunction(info, tab, methodtype, a1,a2,a3,a4,a5,a6,a7,a8,a9,a1
 	info.type = tab.type
 
 	if type(method)=="function" then
-		return method(info, a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
+		return method(info, unpack(arg))
 	else
 		assert(false) -- type should have already been checked on read
 	end
-end
+end)
 
 -- do_final() - do the final step (set/execute) along with validation and confirmation
 
-local function do_final(info, inputpos, tab, methodtype, a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
+local do_final = AceConfigCmd:vararg(4, function(info, inputpos, tab, methodtype, arg)
 	if info.validate then
-		local res = callmethod(info,inputpos,tab,"validate",a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
+		local res = callmethod(info,inputpos,tab,"validate",unpack(arg))
 		if type(res)=="string" then
 			usererr(info, inputpos, "'"..strsub(info.input, inputpos).."' - "..res)
 			return
@@ -144,8 +164,8 @@ local function do_final(info, inputpos, tab, methodtype, a1,a2,a3,a4,a5,a6,a7,a8
 	end
 	-- console ignores .confirm
 
-	callmethod(info,inputpos,tab,methodtype, a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
-end
+	callmethod(info,inputpos,tab,methodtype, unpack(arg))
+end)
 
 
 -- getparam() - used by handle() to retreive and store "handler", "get", "set", etc

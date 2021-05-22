@@ -335,14 +335,14 @@ do
 		end
 	end
 
-	WidgetBase.Fire = function(self, name, a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
+	WidgetBase.Fire = AceGUI:vararg(2, function(self, name, arg)
 		if self.events[name] then
-			local success, ret = safecall(self.events[name], self, name, a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
+			local success, ret = safecall(self.events[name], self, name, unpack(arg))
 			if success then
 				return ret
 			end
 		end
-	end
+	end)
 
 	WidgetBase.SetWidth = function(self, width)
 		self.frame:SetWidth(width)
@@ -392,9 +392,9 @@ do
 		return AceGUI:IsReleasing(self)
 	end
 
-	WidgetBase.SetPoint = function(self, a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
-		return self.frame:SetPoint(a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
-	end
+	WidgetBase.SetPoint = AceGUI:vararg(1, function(self, arg)
+		return self.frame:SetPoint(unpack(arg))
+	end)
 
 	WidgetBase.ClearAllPoints = function(self)
 		return self.frame:ClearAllPoints()
@@ -404,9 +404,9 @@ do
 		return self.frame:GetNumPoints()
 	end
 
-	WidgetBase.GetPoint = function(self, a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
-		return self.frame:GetPoint(a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
-	end
+	WidgetBase.GetPoint = AceGUI:vararg(1, function(self, arg)
+		return self.frame:GetPoint(unpack(arg))
+	end)
 
 	WidgetBase.GetUserDataTable = function(self)
 		return self.userdata
@@ -705,11 +705,11 @@ AceGUI:RegisterLayout("Fill",
 	end)
 
 local layoutrecursionblock = nil
-local function safelayoutcall(object, func, a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
+local safelayoutcall = AceGUI:vararg(2, function(object, func, arg)
 	layoutrecursionblock = true
-	object[func](object, a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
+	object[func](object, unpack(arg))
 	layoutrecursionblock = nil
-end
+end)
 
 AceGUI:RegisterLayout("Flow",
 	function(content, children)
