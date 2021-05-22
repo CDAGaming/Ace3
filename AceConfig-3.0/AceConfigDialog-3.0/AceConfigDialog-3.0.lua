@@ -152,14 +152,13 @@ do
 end
 
 -- picks the first non-nil value and returns it
-local function pickfirstset(a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
-	local args = {a1,a2,a3,a4,a5,a6,a7,a8,a9,a10}
-	for i=1,tgetn(args) do
-		if args[i] then
-			return args[i]
+local pickfirstset = AceConfigDialog:vararg(0, function(arg)
+	for i=1,tgetn(arg) do
+		if arg[i] then
+			return arg[i]
 		end
 	end
-end
+end)
 
 --gets an option from a given group, checking plugins
 local function GetSubOption(group, key)
@@ -209,7 +208,7 @@ local allIsLiteral = {
 --gets the value for a member that could be a function
 --function refs are called with an info arg
 --every other type is returned
-local function GetOptionsMemberValue(membername, option, options, path, appName, a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
+local GetOptionsMemberValue = AceConfigDialog:vararg(5, function(membername, option, options, path, appName, arg)
 	--get definition for the member
 	local inherits = isInherited[membername]
 
@@ -261,11 +260,11 @@ local function GetOptionsMemberValue(membername, option, options, path, appName,
 		--using 4 returns for the get of a color type, increase if a type needs more
 		if type(member) == "function" then
 			--Call the function
-			a,b,c,d = member(info, a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
+			a,b,c,d = member(info, unpack(arg))
 		else
 			--Call the method
 			if handler and handler[member] then
-				a,b,c,d = handler[member](handler, info, a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
+				a,b,c,d = handler[member](handler, info, unpack(arg))
 			else
 				error(format("Method %s doesn't exist in handler for type %s", member, membername))
 			end
@@ -276,10 +275,10 @@ local function GetOptionsMemberValue(membername, option, options, path, appName,
 		--The value isnt a function to call, return it
 		return member
 	end
-end
+end)
 
 --[[calls an options function that could be inherited, method name or function ref
-local function CallOptionsFunction(funcname ,option, options, path, appName, a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
+local CallOptionsFunction = AceConfigDialog:vararg(5, function(funcname ,option, options, path, appName, arg)
 	local info = new()
 
 	local func
@@ -309,12 +308,12 @@ local function CallOptionsFunction(funcname ,option, options, path, appName, a1,
 	local a, b, c ,d
 	if type(func) == "string" then
 		if handler and handler[func] then
-			a,b,c,d = handler[func](handler, info, a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
+			a,b,c,d = handler[func](handler, info, unpack(arg))
 		else
 			error(format("Method %s doesn't exist in handler for type func", func))
 		end
 	elseif type(func) == "function" then
-		a,b,c,d = func(info, a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
+		a,b,c,d = func(info, unpack(arg))
 	end
 	del(info)
 	return a,b,c,d
@@ -662,7 +661,7 @@ do
 		frame.cancel = cancel
 	end
 end
-local function confirmPopup(appName, rootframe, basepath, info, message, func, a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
+local confirmPopup = AceConfigDialog:vararg(6, function(appName, rootframe, basepath, info, message, func, arg)
 	local frame = AceConfigDialog.popup
 	frame:Show()
 	frame.text:SetText(message)
@@ -677,7 +676,7 @@ local function confirmPopup(appName, rootframe, basepath, info, message, func, a
 	frame.accept:SetPoint("BOTTOMRIGHT", frame, "BOTTOM", -6, 16)
 	frame.cancel:Show()
 
-	local t = {a1,a2,a3,a4,a5,a6,a7,a8,a9,a10}
+	local t = arg
 	local tCount = tgetn(t)
 	frame.accept:SetScript("OnClick", function(self)
 		safecall(func, unpack(t, 1, tCount)) -- Manually set count as unpack() stops on nil (bug with #table)
@@ -694,7 +693,7 @@ local function confirmPopup(appName, rootframe, basepath, info, message, func, a
 		frame.accept:SetScript("OnClick", nil)
 		del(info)
 	end)
-end
+end)
 
 local function validationErrorPopup(message)
 	local frame = AceConfigDialog.popup
@@ -716,7 +715,7 @@ local function validationErrorPopup(message)
 	end)
 end
 
-local function ActivateControl(widget, event, a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
+local ActivateControl = AceConfigDialog:vararg(2, function(widget, event, arg)
 	--This function will call the set / execute handler for the widget
 	--widget:GetUserDataTable() contains the needed info
 	local user = widget:GetUserDataTable()
@@ -779,7 +778,7 @@ local function ActivateControl(widget, event, a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
 
 	if option.type == "input" then
 		if type(pattern)=="string" then
-			if not strmatch(a1, pattern) then
+			if not strmatch(arg[1], pattern) then
 				validated = false
 			end
 		end
@@ -789,13 +788,13 @@ local function ActivateControl(widget, event, a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
 	if validated and option.type ~= "execute" then
 		if type(validate) == "string" then
 			if handler and handler[validate] then
-				success, validated = safecall(handler[validate], handler, info, a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
+				success, validated = safecall(handler[validate], handler, info, unpack(arg))
 				if not success then validated = false end
 			else
 				error(format("Method %s doesn't exist in handler for type execute", validate))
 			end
 		elseif type(validate) == "function" then
-			success, validated = safecall(validate, info, a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
+			success, validated = safecall(validate, info, unpack(arg))
 			if not success then validated = false end
 		end
 	end
@@ -829,7 +828,7 @@ local function ActivateControl(widget, event, a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
 		--call confirm func/method
 		if type(confirm) == "string" then
 			if handler and handler[confirm] then
-				success, confirm = safecall(handler[confirm], handler, info, a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
+				success, confirm = safecall(handler[confirm], handler, info, unpack(arg))
 				if success and type(confirm) == "string" then
 					confirmText = confirm
 					confirm = true
@@ -840,7 +839,7 @@ local function ActivateControl(widget, event, a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
 				error(format("Method %s doesn't exist in handler for type confirm", confirm))
 			end
 		elseif type(confirm) == "function" then
-			success, confirm = safecall(confirm, info, a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
+			success, confirm = safecall(confirm, info, unpack(arg))
 			if success and type(confirm) == "string" then
 				confirmText = confirm
 				confirm = true
@@ -875,12 +874,12 @@ local function ActivateControl(widget, event, a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
 				local basepath = user.rootframe:GetUserData("basepath")
 				if type(func) == "string" then
 					if handler and handler[func] then
-						confirmPopup(user.appName, rootframe, basepath, info, confirmText, handler[func], handler, info, a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
+						confirmPopup(user.appName, rootframe, basepath, info, confirmText, handler[func], handler, info, unpack(arg))
 					else
 						error(format("Method %s doesn't exist in handler for type func", func))
 					end
 				elseif type(func) == "function" then
-					confirmPopup(user.appName, rootframe, basepath, info, confirmText, func, info, a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
+					confirmPopup(user.appName, rootframe, basepath, info, confirmText, func, info, unpack(arg))
 				end
 				--func will be called and info deleted when the confirm dialog is responded to
 				return
@@ -890,12 +889,12 @@ local function ActivateControl(widget, event, a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
 		--call the function
 		if type(func) == "string" then
 			if handler and handler[func] then
-				safecall(handler[func],handler, info, a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
+				safecall(handler[func],handler, info, unpack(arg))
 			else
 				error(format("Method %s doesn't exist in handler for type func", func))
 			end
 		elseif type(func) == "function" then
-			safecall(func,info, a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
+			safecall(func,info, unpack(arg))
 		end
 
 
@@ -933,7 +932,7 @@ local function ActivateControl(widget, event, a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
 
 	end
 	del(info)
-end
+end)
 
 local function ActivateSlider(widget, event, value)
 	local option = widget:GetUserData("option")
@@ -952,8 +951,8 @@ end
 
 --called from a checkbox that is part of an internally created multiselect group
 --this type is safe to refresh on activation of one control
-local function ActivateMultiControl(widget, event, a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
-	ActivateControl(widget, event, widget:GetUserData("value"), a1)
+local ActivateMultiControl = AceConfigDialog:vararg(2, function(widget, event, arg)
+	ActivateControl(widget, event, widget:GetUserData("value"), arg[1])
 	local user = widget:GetUserDataTable()
 	local iscustom = user.rootframe:GetUserData("iscustom")
 	local basepath = user.rootframe:GetUserData("basepath") or emptyTbl
@@ -962,9 +961,9 @@ local function ActivateMultiControl(widget, event, a1,a2,a3,a4,a5,a6,a7,a8,a9,a1
 	else
 		AceConfigDialog:Open(user.appName, unpack(basepath))
 	end
-end
+end)
 
-local function MultiControlOnClosed(widget, event, a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
+local MultiControlOnClosed = AceConfigDialog:vararg(2, function(widget, event, arg)
 	local user = widget:GetUserDataTable()
 	if user.valuechanged and not widget:IsReleasing() then
 		local iscustom = user.rootframe:GetUserData("iscustom")
@@ -975,7 +974,7 @@ local function MultiControlOnClosed(widget, event, a1,a2,a3,a4,a5,a6,a7,a8,a9,a1
 			AceConfigDialog:Open(user.appName, unpack(basepath))
 		end
 	end
-end
+end)
 
 local function FrameOnClose(widget, event)
 	local appName = widget:GetUserData("appName")
@@ -1149,7 +1148,7 @@ local function CreateControl(userControlType, fallbackControlType)
 	if userControlType then
 		control = gui:Create(userControlType)
 		if not control then
-			geterrorhandler()(("Invalid Custom Control Type - %s"):format(tostring(userControlType)))
+			errorhandler(format("Invalid Custom Control Type - %s", tostring(userControlType)))
 		end
 	end
 	if not control then
@@ -1336,7 +1335,7 @@ local function FeedOptions(appName, options,container,rootframe,path,group,inlin
 						control = CreateControl(v.dialogControl or v.control, "Dropdown")
 						local itemType = v.itemControl
 						if itemType and not gui:GetWidgetVersion(itemType) then
-							geterrorhandler()(("Invalid Custom Item Type - %s"):format(tostring(itemType)))
+							errorhandler(format("Invalid Custom Item Type - %s", tostring(itemType)))
 							itemType = nil
 						end
 						control:SetLabel(name)
@@ -1365,7 +1364,7 @@ local function FeedOptions(appName, options,container,rootframe,path,group,inlin
 					if controlType then
 						control = gui:Create(controlType)
 						if not control then
-							geterrorhandler()(("Invalid Custom Control Type - %s"):format(tostring(controlType)))
+							errorhandler(format("Invalid Custom Control Type - %s", tostring(controlType)))
 						end
 					end
 					if control then
@@ -1528,12 +1527,11 @@ local function FeedOptions(appName, options,container,rootframe,path,group,inlin
 	del(opts)
 end
 
-local function BuildPath(path, a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
-	local args = {a1,a2,a3,a4,a5,a6,a7,a8,a9,a10}
-	for i = 1, tgetn(args)  do
-		tinsert(path, args[i])
+local BuildPath = AceConfigDialog:vararg(1, function(path, arg)
+	for i = 1, tgetn(arg)  do
+		tinsert(path, arg[i])
 	end
-end
+end)
 
 
 local function TreeOnButtonEnter(widget, event, uniquevalue, button)
