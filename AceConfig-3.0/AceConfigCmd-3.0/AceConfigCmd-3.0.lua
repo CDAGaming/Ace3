@@ -28,13 +28,22 @@ local AceConsole -- LoD
 local AceConsoleName = "AceConsole-3.0"
 
 -- Lua APIs
-local strgsub, strsub, strsplit, strmatch, strtrim = string.gsub, string.sub, string.split, string.match, string.trim
+local strgsub, strsub, strsplit, strmatch = string.gsub, string.sub, string.split, string.match
 local strlower, strupper = string.lower, string.upper
 local format, tonumber, tostring = string.format, tonumber, tostring
 local tsort, tinsert, tconcat, tremove, tgetn, tsetn = table.sort, table.insert, table.concat, table.remove, table.getn, table.setn
 local pairs, next, type = pairs, next, type
 local error, assert, loadstring = error, assert, loadstring
 local mod = math.mod or math.fmod
+
+local strtrim = string.trim or function(str)
+	if str == nil or str == "" then
+		return str
+	end
+	str = strgsub(str, "^%s+", "")
+	str = strgsub(str, "%s+$", "")
+	return str
+end
 
 local supports_ellipsis = loadstring("return ...") ~= nil
 local template_args = supports_ellipsis and "{...}" or "arg"
