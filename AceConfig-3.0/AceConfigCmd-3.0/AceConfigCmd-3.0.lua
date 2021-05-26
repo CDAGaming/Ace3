@@ -452,7 +452,7 @@ local function handle(info, inputpos, tab, depth, retfalse)
 	elseif tab.type=="toggle" then
 		------------ toggle --------------------------------------------
 		local b
-		--local str = strtrim(strlower(str))
+		local str = strtrim(strlower(str))
 		if str=="" then
 			b = callmethod(info, inputpos, tab, "get")
 
