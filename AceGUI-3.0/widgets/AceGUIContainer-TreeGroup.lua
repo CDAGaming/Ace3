@@ -9,7 +9,7 @@ if not AceGUI or (AceGUI:GetWidgetVersion(Type) or 0) >= Version then return end
 -- Lua APIs
 local next, pairs, ipairs, assert, type = next, pairs, ipairs, assert, type
 local math_min, math_max, floor, loadstring, format = math.min, math.max, floor, loadstring, string.format
-local tremove, unpack, tconcat, tgetn = table.remove, unpack, table.concat, table.getn
+local tremove, tinsert, unpack, tconcat, tgetn = table.remove, table.insert, unpack, table.concat, table.getn
 
 -- WoW APIs
 local CreateFrame, UIParent = CreateFrame, UIParent
@@ -194,7 +194,7 @@ local function addLine(self, v, tree, level, parent)
 	else
 		line.hasChildren = nil
 	end
-	self.lines[tgetn(self.lines)+1] = line
+	tinsert(self.lines, line)
 	return line
 end
 

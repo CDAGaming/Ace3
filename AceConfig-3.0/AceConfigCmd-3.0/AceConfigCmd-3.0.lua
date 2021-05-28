@@ -255,16 +255,16 @@ local function showhelp(info, inputpos, tab, depth, noHead)
 		local o2 = refTbl[two].order or 100
 		if type(o1) == "function" or type(o1) == "string" then
 			info.order = o1
-			info[tgetn(info)+1] = one
+			tinsert(info, one)
 			o1 = callmethod(info, inputpos, refTbl[one], "order")
-			info[tgetn(info)] = nil
+			tremove(info)
 			info.order = nil
 		end
 		if type(o2) == "function" or type(o1) == "string" then
 			info.order = o2
-			info[tgetn(info)+1] = two
+			tinsert(info, two)
 			o2 = callmethod(info, inputpos, refTbl[two], "order")
-			info[tgetn(info)] = nil
+			tremove(info)
 			info.order = nil
 		end
 		if o1<0 and o2<0 then return o1<o2 end

@@ -4,7 +4,7 @@ local AceGUI = LibStub("AceGUI-3.0")
 -- Lua APIs
 local min, max, floor = math.min, math.max, math.floor
 local pairs, ipairs, type, tostring, format = pairs, ipairs, type, tostring, string.format
-local tsort, tgetn = table.sort, table.getn
+local tsort, tinsert, tgetn = table.sort, table.insert, table.getn
 
 local wowThirdLegion, wowClassicRebased, wowTBCRebased
 do
@@ -184,7 +184,7 @@ do
 
 	-- exported
 	local function AddItem(self, item)
-		self.items[tgetn(self.items) + 1] = item
+		tinsert(self.items, item)
 
 		local h = tgetn(self.items) * 16
 		self.itemFrame:SetHeight(h)
@@ -621,7 +621,7 @@ do
 
 		if type(order) ~= "table" then
 			for v in pairs(list) do
-				sortlist[tgetn(sortlist) + 1] = v
+				tinsert(sortlist, v)
 			end
 			tsort(sortlist, sortTbl)
 
