@@ -8,7 +8,7 @@ if not AceGUI or (AceGUI:GetWidgetVersion(Type) or 0) >= Version then return end
 
 -- Lua APIs
 local next, pairs, ipairs, assert, type = next, pairs, ipairs, assert, type
-local math_min, math_max, floor, loadstring = math.min, math.max, floor, loadstring
+local math_min, math_max, floor, loadstring, format = math.min, math.max, floor, loadstring, string.format
 local tremove, unpack, tconcat, tgetn = table.remove, unpack, table.concat, table.getn
 
 -- WoW APIs
@@ -365,7 +365,7 @@ local methods = {
 
 	["CreateButton"] = function(self)
 		local num = AceGUI:GetNextWidgetNum("TreeGroupButton")
-		local button = CreateFrame("Button", ("AceGUI30TreeButton%d"):format(num), self.treeframe, (wowWotlk or wowClassicRebased or wowTBCRebased) and "OptionsListButtonTemplate" or "InterfaceOptionsButtonTemplate")
+		local button = CreateFrame("Button", format("AceGUI30TreeButton%d", num), self.treeframe, (wowWotlk or wowClassicRebased or wowTBCRebased) and "OptionsListButtonTemplate" or "InterfaceOptionsButtonTemplate")
 		button.obj = self
 
 		local icon = button:CreateTexture(nil, "OVERLAY")
@@ -708,7 +708,7 @@ local function Constructor()
 	dragger:SetScript("OnMouseDown", Dragger_OnMouseDown)
 	dragger:SetScript("OnMouseUp", Dragger_OnMouseUp)
 
-	local scrollbar = CreateFrame("Slider", ("AceConfigDialogTreeGroup%dScrollBar"):format(num), treeframe, "UIPanelScrollBarTemplate")
+	local scrollbar = CreateFrame("Slider", format("AceConfigDialogTreeGroup%dScrollBar", num), treeframe, "UIPanelScrollBarTemplate")
 	scrollbar:SetScript("OnValueChanged", nil)
 	scrollbar:SetPoint("TOPRIGHT", -10, -26)
 	scrollbar:SetPoint("BOTTOMRIGHT", -10, 26)

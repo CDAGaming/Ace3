@@ -3,7 +3,7 @@ local AceGUI = LibStub and LibStub("AceGUI-3.0", true)
 if not AceGUI or (AceGUI:GetWidgetVersion(Type) or 0) >= Version then return end
 
 -- Lua APIs
-local pairs, assert, loadstring, tconcat = pairs, assert, loadstring, table.concat
+local pairs, assert, loadstring, tconcat, format = pairs, assert, loadstring, table.concat, string.format
 
 -- WoW APIs
 local GetCursorInfo, GetSpellInfo, ClearCursor = GetCursorInfo, GetSpellInfo, ClearCursor
@@ -73,7 +73,7 @@ end
 
 function _G.AceGUIMultiLineEditBoxInsertLink(text)
 	for i = 1, AceGUI:GetWidgetCount(Type) do
-		local editbox = _G[("MultiLineEditBox%uEdit"):format(i)]
+		local editbox = _G[format("MultiLineEditBox%uEdit", i)]
 		if editbox and editbox:IsVisible() and editbox:HasFocus() then
 			editbox:Insert(text)
 			return true
@@ -333,7 +333,7 @@ local function Constructor()
 	label:SetText(ACCEPT)
 	label:SetHeight(10)
 
-	local button = CreateFrame("Button", ("%s%dButton"):format(Type, widgetNum), frame, (wowMoP or wowClassicRebased or wowTBCRebased) and "UIPanelButtonTemplate" or "UIPanelButtonTemplate2")
+	local button = CreateFrame("Button", format("%s%dButton", Type, widgetNum), frame, (wowMoP or wowClassicRebased or wowTBCRebased) and "UIPanelButtonTemplate" or "UIPanelButtonTemplate2")
 	button:SetPoint("BOTTOMLEFT", 0, 4)
 	button:SetHeight(22)
 	button:SetWidth(label:GetStringWidth() + 24)
@@ -352,7 +352,7 @@ local function Constructor()
 	scrollBG:SetBackdropColor(0, 0, 0)
 	scrollBG:SetBackdropBorderColor(0.4, 0.4, 0.4)
 
-	local scrollFrame = CreateFrame("ScrollFrame", ("%s%dScrollFrame"):format(Type, widgetNum), frame, "UIPanelScrollFrameTemplate")
+	local scrollFrame = CreateFrame("ScrollFrame", format("%s%dScrollFrame", Type, widgetNum), frame, "UIPanelScrollFrameTemplate")
 
 	local scrollBar = _G[scrollFrame:GetName() .. "ScrollBar"]
 	scrollBar:ClearAllPoints()
@@ -372,7 +372,7 @@ local function Constructor()
 	scrollFrame:SetScript("OnSizeChanged", OnSizeChanged)
 	scrollFrame:HookScript("OnVerticalScroll", OnVerticalScroll)
 
-	local editBox = CreateFrame("EditBox", ("%s%dEdit"):format(Type, widgetNum), scrollFrame)
+	local editBox = CreateFrame("EditBox", format("%s%dEdit", Type, widgetNum), scrollFrame)
 	editBox:SetAllPoints()
 	editBox:SetFontObject(ChatFontNormal)
 	editBox:SetMultiLine(true)

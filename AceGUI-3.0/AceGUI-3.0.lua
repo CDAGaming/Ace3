@@ -31,10 +31,10 @@ local AceGUI, oldminor = LibStub:NewLibrary(ACEGUI_MAJOR, ACEGUI_MINOR)
 if not AceGUI then return end -- No upgrade needed
 
 -- Lua APIs
-local tinsert, tgetn, wipe, tconcat = table.insert, table.getn, table.wipe, table.concat
+local tinsert, tremove, tgetn, wipe, tconcat = table.insert, table.remove, table.getn, table.wipe, table.concat
 local pairs, next, type = pairs, next, type
-local strgsub, strsub, tostring = string.gsub, string.sub, tostring
-local loadstring, assert, error = loadstring, assert, error
+local strgsub, strsub, strupper, format, tostring = string.gsub, string.sub, string.upper, string.format, tostring
+local loadstring, assert, error, unpack = loadstring, assert, error, unpack
 local setmetatable, rawget = setmetatable, rawget
 local math_max, math_mod = math.max, (math.mod or math.fmod)
 
@@ -228,7 +228,7 @@ function AceGUI:Create(type)
 		if widget.OnAcquire then
 			widget:OnAcquire()
 		else
-			error(("Widget type %s doesn't supply an OnAcquire Function"):format(type))
+			error(format("Widget type %s doesn't supply an OnAcquire Function", type))
 		end
 		-- Set the default Layout ("List")
 		safecall(widget.SetLayout, widget, "List")
@@ -253,7 +253,7 @@ function AceGUI:Release(widget)
 	if widget.OnRelease then
 		widget:OnRelease()
 --	else
---		error(("Widget type %s doesn't supply an OnRelease Function"):format(widget.type))
+--		error(format("Widget type %s doesn't supply an OnRelease Function", widget.type))
 	end
 	for k in pairs(widget.userdata) do
 		widget.userdata[k] = nil
@@ -638,7 +638,7 @@ end
 function AceGUI:RegisterLayout(Name, LayoutFunc)
 	assert(type(LayoutFunc) == "function")
 	if type(Name) == "string" then
-		Name = string.upper(Name)
+		Name = strupper(Name)
 	end
 	LayoutRegistry[Name] = LayoutFunc
 end
@@ -647,7 +647,7 @@ end
 -- @param Name The name of the layout
 function AceGUI:GetLayout(Name)
 	if type(Name) == "string" then
-		Name = string.upper(Name)
+		Name = strupper(Name)
 	end
 	return LayoutRegistry[Name]
 end

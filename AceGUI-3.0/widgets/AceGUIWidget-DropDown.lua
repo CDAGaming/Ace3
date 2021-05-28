@@ -3,7 +3,7 @@ local AceGUI = LibStub("AceGUI-3.0")
 
 -- Lua APIs
 local min, max, floor = math.min, math.max, math.floor
-local pairs, ipairs, type, tostring = pairs, ipairs, type, tostring
+local pairs, ipairs, type, tostring, format = pairs, ipairs, type, tostring, string.format
 local tsort, tgetn = table.sort, table.getn
 
 local wowThirdLegion, wowClassicRebased, wowTBCRebased
@@ -584,7 +584,7 @@ do
 	local function AddListItem(self, value, text, itemType)
 		if not itemType then itemType = "Dropdown-Item-Toggle" end
 		local exists = AceGUI:GetWidgetVersion(itemType)
-		if not exists then error(("The given item type, %q, does not exist within AceGUI-3.0"):format(tostring(itemType)), 2) end
+		if not exists then error(format("The given item type, %q, does not exist within AceGUI-3.0", tostring(itemType)), 2) end
 
 		local item = AceGUI:Create(itemType)
 		item:SetText(text)

@@ -35,7 +35,7 @@ local tinsert, tremove, tgetn, tsort, wipe = table.insert, table.remove, table.g
 local strmatch, format, strgsub, strsub, strupper = string.match, string.format, string.gsub, string.sub, string.upper
 local loadstring, assert, error = loadstring, assert, error
 local pairs, next, type, unpack, ipairs, tconcat = pairs, next, type, unpack, ipairs, table.concat
-local tostring, tonumber = tostring, tonumber
+local rawset, tostring, tonumber = rawset, tostring, tonumber
 local math_min, math_max, math_floor = math.min, math.max, math.floor
 
 local tsetn = function(t,n)
@@ -514,7 +514,7 @@ AceConfigDialog.SelectGroup = AceConfigDialog:vararg(2, function(self, appName, 
 
 	local app = reg:GetOptionsTable(appName)
 	if not app then
-		error(("%s isn't registed with AceConfigRegistry, unable to open config"):format(appName), 2)
+		error(format("%s isn't registed with AceConfigRegistry, unable to open config", appName), 2)
 	end
 	local options = app("dialog", MAJOR)
 	local group = options
@@ -1581,7 +1581,7 @@ local function TreeOnButtonEnter(widget, event, uniquevalue, button)
 		feedpath[i] = path[i]
 	end
 
-	BuildPath(feedpath, ("\001"):split(uniquevalue))
+	BuildPath(feedpath, strsplit("\001", uniquevalue))
 	local group = options
 	for i = 1, tgetn(feedpath) do
 		if not group then return end
@@ -1622,7 +1622,7 @@ local function GroupExists(appName, options, path, uniquevalue)
 		feedpath[i] = path[i]
 	end
 
-	BuildPath(feedpath, ("\001"):split(uniquevalue))
+	BuildPath(feedpath, strsplit("\001", uniquevalue))
 
 	local group = options
 	for i = 1, tgetn(feedpath) do
@@ -1655,7 +1655,7 @@ local function GroupSelected(widget, event, uniquevalue)
 		feedpath[i] = path[i]
 	end
 
-	BuildPath(feedpath, ("\001"):split(uniquevalue))
+	BuildPath(feedpath, strsplit("\001", uniquevalue))
 	widget:ReleaseChildren()
 	AceConfigDialog:FeedGroup(user.appName,options,widget,rootframe,feedpath)
 
@@ -1946,7 +1946,7 @@ AceConfigDialog.Open = AceConfigDialog:vararg(3, function(self, appName, contain
 	end
 	local app = reg:GetOptionsTable(appName)
 	if not app then
-		error(("%s isn't registed with AceConfigRegistry, unable to open config"):format(appName), 2)
+		error(format("%s isn't registed with AceConfigRegistry, unable to open config", appName), 2)
 	end
 	local options = app("dialog", MAJOR)
 
@@ -1962,7 +1962,7 @@ AceConfigDialog.Open = AceConfigDialog:vararg(3, function(self, appName, contain
 		container = nil
 	end
 	for n = 1, tgetn(arg) do
-		tinsert(path, (arg[n]))
+		tinsert(path, arg[n])
 	end
 
 	local option = options
@@ -2098,6 +2098,6 @@ AceConfigDialog.AddToBlizOptions = AceConfigDialog:vararg(4, function(self, appN
 		InterfaceOptions_AddCategory(group.frame)
 		return group.frame
 	else
-		error(("%s has already been added to the Blizzard Options Window with the given path"):format(appName), 2)
+		error(format("%s has already been added to the Blizzard Options Window with the given path", appName), 2)
 	end
 end)

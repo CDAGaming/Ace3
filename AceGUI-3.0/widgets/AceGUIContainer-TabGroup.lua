@@ -7,7 +7,9 @@ local AceGUI = LibStub and LibStub("AceGUI-3.0", true)
 if not AceGUI or (AceGUI:GetWidgetVersion(Type) or 0) >= Version then return end
 
 -- Lua APIs
-local pairs, ipairs, assert, type, wipe, tgetn = pairs, ipairs, assert, type, table.wipe, table.getn
+local pairs, ipairs, assert, type = pairs, ipairs, assert, type
+local wipe, tgetn = table.wipe, table.getn
+local format = string.format
 
 local tsetn = function(t,n)
 	setmetatable(t,{__len=function() return n end})
@@ -131,7 +133,7 @@ local methods = {
 	end,
 
 	["CreateTab"] = function(self, id)
-		local tabname = ("AceGUITabGroup%dTab%d"):format(self.num, id)
+		local tabname = format("AceGUITabGroup%dTab%d", self.num, id)
 		local tab = CreateFrame("Button", tabname, self.border, "OptionsFrameTabButtonTemplate")
 		tab.obj = self
 		tab.id = id

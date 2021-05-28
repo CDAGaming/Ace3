@@ -8,7 +8,7 @@ if not AceGUI or (AceGUI:GetWidgetVersion(Type) or 0) >= Version then return end
 
 -- Lua APIs
 local min, max, floor = math.min, math.max, math.floor
-local tonumber, pairs, strgsub = tonumber, pairs, string.gsub
+local tonumber, pairs, strgsub, format = tonumber, pairs, string.gsub, string.format
 
 local wowThirdLegion, wowClassicRebased, wowTBCRebased
 do
@@ -33,7 +33,7 @@ Support functions
 local function UpdateText(self)
 	local value = self.value or 0
 	if self.ispercent then
-		self.editbox:SetText(("%s%%"):format(floor(value * 1000 + 0.5) / 10))
+		self.editbox:SetText(format("%s%%", floor(value * 1000 + 0.5) / 10))
 	else
 		self.editbox:SetText(floor(value * 100 + 0.5) / 100)
 	end

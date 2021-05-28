@@ -9,6 +9,7 @@ if not AceGUI or (AceGUI:GetWidgetVersion(Type) or 0) >= Version then return end
 -- Lua APIs
 local pairs, assert, type = pairs, assert, type
 local min, max, floor = math.min, math.max, math.floor
+local format = string.format
 
 -- WoW APIs
 local CreateFrame, UIParent = CreateFrame, UIParent
@@ -174,7 +175,7 @@ local function Constructor()
 	scrollframe:SetScript("OnMouseWheel", ScrollFrame_OnMouseWheel)
 	scrollframe:SetScript("OnSizeChanged", ScrollFrame_OnSizeChanged)
 
-	local scrollbar = CreateFrame("Slider", ("AceConfigDialogScrollFrame%dScrollBar"):format(num), scrollframe, "UIPanelScrollBarTemplate")
+	local scrollbar = CreateFrame("Slider", format("AceConfigDialogScrollFrame%dScrollBar", num), scrollframe, "UIPanelScrollBarTemplate")
 	scrollbar:SetPoint("TOPLEFT", scrollframe, "TOPRIGHT", 4, -16)
 	scrollbar:SetPoint("BOTTOMLEFT", scrollframe, "BOTTOMRIGHT", 4, 16)
 	scrollbar:SetMinMaxValues(0, 1000)

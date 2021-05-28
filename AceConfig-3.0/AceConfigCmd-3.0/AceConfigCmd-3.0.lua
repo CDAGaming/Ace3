@@ -29,7 +29,7 @@ local AceConsoleName = "AceConsole-3.0"
 
 -- Lua APIs
 local strgsub, strsub, strsplit, strmatch = string.gsub, string.sub, string.split, string.match
-local strlower, strupper = string.lower, string.upper
+local strlower, strupper, format = string.lower, string.upper, string.format
 local format, tonumber, tostring = string.format, tonumber, tostring
 local tsort, tinsert, tconcat, tremove, tgetn, tsetn = table.sort, table.insert, table.concat, table.remove, table.getn, table.setn
 local pairs, next, type = pairs, next, type
@@ -536,9 +536,9 @@ local function handle(info, inputpos, tab, depth, retfalse)
 			print(L["Options for |cffffff78"..info[tgetn(info)].."|r:"])
 			for k, v in pairs(values) do
 				if b == k then
-					print(fmt_sel:format(k, v))
+					print(format(fmt_sel, k, v))
 				else
-					print(fmt:format(k, v))
+					print(format(fmt, k, v))
 				end
 			end
 			return
@@ -576,9 +576,9 @@ local function handle(info, inputpos, tab, depth, retfalse)
 			print(L["Options for |cffffff78"..info[tgetn(info)].."|r (multiple possible):"])
 			for k, v in pairs(values) do
 				if callmethod(info, inputpos, tab, "get", k) then
-					print(fmt_sel:format(k, v))
+					print(format(fmt_sel, k, v))
 				else
-					print(fmt:format(k, v))
+					print(format(fmt, k, v))
 				end
 			end
 			return
