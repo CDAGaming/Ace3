@@ -108,7 +108,7 @@ local function CreateDispatcher(argCount)
 
 	local ARGS = {}
 	for i = 1, argCount do ARGS[i] = "arg"..i end
-	code = strgsub(code,"ARGS", tconcat(ARGS, ", "))
+	code = strgsub(code, "ARGS", tconcat(ARGS, ", "))
 	return assert(loadstring(code, "safecall Dispatcher["..argCount.."]"))(xpcall, errorhandler)
 end
 
@@ -187,7 +187,7 @@ end
 -- picks the first non-nil value and returns it
 local pickfirstset = AceConfigDialog:vararg(0, function(arg)
 	for i=1,tgetn(arg) do
-		if arg[i] then
+		if arg[i]~=nil then
 			return arg[i]
 		end
 	end

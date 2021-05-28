@@ -98,7 +98,7 @@ local funcmsg = "expected function or member name"
 -- picks the first non-nil value and returns it
 local pickfirstset = AceConfigCmd:vararg(0, function(arg)
 	for i=1,tgetn(arg) do
-		if arg[i] then
+		if arg[i]~=nil then
 			return arg[i]
 		end
 	end
