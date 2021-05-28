@@ -112,6 +112,8 @@ local basekeys={
 	func=optmethodfalse,
 	arg={["*"]=true},
 	width=optstringnumber,
+	-- This key is used by legacy versions of ElvUI --
+	buttonElvUI=optmethodbool,
 }
 
 local typedkeys={
