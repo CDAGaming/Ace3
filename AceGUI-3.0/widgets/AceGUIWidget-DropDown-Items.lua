@@ -3,7 +3,7 @@
 local AceGUI = LibStub("AceGUI-3.0")
 
 -- Lua APIs
-local assert, loadstring, tconcat = assert, loadstring, table.concat
+local assert, loadstring, tconcat, tgetn = assert, loadstring, table.concat, table.getn
 
 -- WoW APIs
 local PlaySound = PlaySound
@@ -39,27 +39,26 @@ do
 	wowTBCRebased = (interface >= 20500 and interface < 30000)
 end
 
-local function fixlevels(parent,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
-	local args = {a1,a2,a3,a4,a5,a6,a7,a8,a9,a10}
-	local i = 1
-	local child = args[i]
-	while child do
-		child:SetFrameLevel(parent:GetFrameLevel()+1)
-		fixlevels(child, child:GetChildren())
-		i = i + 1
-		child = args[i]
+local function fixlevels(parent)
+	local child
+	local childList = {parent:GetChildren()}
+	local level = parent:GetFrameLevel() + 1
+
+	for i = 1, tgetn(childList) do
+		child = childList[i]
+		child:SetFrameLevel(level)
+		fixlevels(child)
 	end
 end
 
-local function fixstrata(strata, parent, a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
-	local args = {a1,a2,a3,a4,a5,a6,a7,a8,a9,a10}
-	local i = 1
-	local child = args[i]
-	parent:SetFrameStrata(strata)
-	while child do
-		fixstrata(strata, child, child:GetChildren())
-		i = i + 1
-		child = args[i]
+local function fixstrata(strata, parent)
+	local child
+	local childList = {parent:GetChildren()}
+
+	for i = 1, tgetn(childList) do
+		child = childList[i]
+		child:SetFrameStrata(strata)
+		fixstrata(strata, child)
 	end
 end
 
@@ -127,7 +126,7 @@ function ItemBase.SetPullout(self, pullout)
 	self.frame:SetParent(nil)
 	self.frame:SetParent(pullout.itemFrame)
 	self.parent = pullout.itemFrame
-	fixlevels(pullout.itemFrame, pullout.itemFrame:GetChildren())
+	fixlevels(pullout.itemFrame)
 end
 
 -- exported
