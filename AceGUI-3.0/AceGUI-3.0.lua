@@ -53,6 +53,13 @@ end)
 -- WoW APIs
 local UIParent = UIParent
 
+local wowLegacy
+do
+	local _, build, _, interface = GetBuildInfo()
+	interface = interface or tonumber(build)
+	wowLegacy = (interface <= 11201)
+end
+
 -- Global vars/functions that we don't upvalue since they might get hooked, or upgraded
 -- List them here for Mikk's FindGlobals script
 -- GLOBALS: geterrorhandler, LibStub
@@ -64,7 +71,7 @@ AceGUI.LayoutRegistry = AceGUI.LayoutRegistry or {}
 AceGUI.WidgetBase = AceGUI.WidgetBase or {}
 AceGUI.WidgetContainerBase = AceGUI.WidgetContainerBase or {}
 AceGUI.WidgetVersions = AceGUI.WidgetVersions or {}
-AceGUI.tooltip = AceGUI.tooltip or CreateFrame("GameTooltip", "AceGUITooltip", UIParent, "GameTooltipTemplate")
+AceGUI.tooltip = AceGUI.tooltip or (wowLegacy and GameTooltip) or CreateFrame("GameTooltip", "AceGUITooltip", UIParent, "GameTooltipTemplate")
 
 -- local upvalues
 local WidgetRegistry = AceGUI.WidgetRegistry
@@ -196,6 +203,18 @@ do
 	end
 end
 
+
+local function fixlevels(parent)
+	local child
+	local childList = {parent:GetChildren()}
+	local level = parent:GetFrameLevel() + 1
+
+	for i = 1, tgetn(childList) do
+		child = childList[i]
+		child:SetFrameLevel(level)
+		fixlevels(child)
+	end
+end
 
 -------------------
 -- API Functions --
@@ -360,6 +379,7 @@ do
 		frame:SetParent(nil)
 		frame:SetParent(parent.content)
 		self.parent = parent
+		fixlevels(frame)
 	end
 
 	WidgetBase.SetCallback = function(self, name, func)
@@ -538,8 +558,19 @@ do
 	WidgetContainerBase.ReleaseChildren = function(self)
 		local children = self.children
 		for i = 1,tgetn(children) do
-			AceGUI:Release(children[i])
-			children[i] = nil
+			AceGUI:Release(tremove(children))
+		end
+	end
+
+	WidgetContainerBase.SetParent = function(self, parent)
+		WidgetBase.SetParent(self, parent)
+
+		local level = self.frame:GetFrameLevel()
+		self.content:SetFrameLevel(level + 1)
+		local children = self.children
+		for i = 1,tgetn(children) do
+			local child = children[i]
+			child:SetParent(self)
 		end
 	end
 

@@ -12,14 +12,13 @@ local AceConfigDialog, oldminor = LibStub:NewLibrary(MAJOR, MINOR)
 
 if not AceConfigDialog then return end
 
-AceConfigDialog.OpenFrames = AceConfigDialog.OpenFrames or {}
-AceConfigDialog.Status = AceConfigDialog.Status or {}
-AceConfigDialog.frame = AceConfigDialog.frame or CreateFrame("Frame")
-AceConfigDialog.tooltip = AceConfigDialog.tooltip or CreateFrame("GameTooltip", "AceConfigDialogTooltip", UIParent, "GameTooltipTemplate")
-
-AceConfigDialog.frame.apps = AceConfigDialog.frame.apps or {}
-AceConfigDialog.frame.closing = AceConfigDialog.frame.closing or {}
-AceConfigDialog.frame.closeAllOverride = AceConfigDialog.frame.closeAllOverride or {}
+-- Lua APIs
+local tinsert, tremove, tgetn, tsort, wipe = table.insert, table.remove, table.getn, table.sort, table.wipe
+local strmatch, format, strgsub, strsub, strupper = string.match, string.format, string.gsub, string.sub, string.upper
+local loadstring, assert, error = loadstring, assert, error
+local pairs, next, type, unpack, ipairs, tconcat = pairs, next, type, unpack, ipairs, table.concat
+local rawset, tostring, tonumber = rawset, tostring, tonumber
+local math_min, math_max, math_floor = math.min, math.max, math.floor
 
 local wowLegacy, wowThirdLegion, wowClassicRebased, wowTBCRebased
 do
@@ -30,14 +29,6 @@ do
 	wowClassicRebased = (interface >= 11300 and interface < 20000)
 	wowTBCRebased = (interface >= 20500 and interface < 30000)
 end
-
--- Lua APIs
-local tinsert, tremove, tgetn, tsort, wipe = table.insert, table.remove, table.getn, table.sort, table.wipe
-local strmatch, format, strgsub, strsub, strupper = string.match, string.format, string.gsub, string.sub, string.upper
-local loadstring, assert, error = loadstring, assert, error
-local pairs, next, type, unpack, ipairs, tconcat = pairs, next, type, unpack, ipairs, table.concat
-local rawset, tostring, tonumber = rawset, tostring, tonumber
-local math_min, math_max, math_floor = math.min, math.max, math.floor
 
 local setn = function(t,n)
 	if wowLegacy then
@@ -62,6 +53,15 @@ end)
 -- GLOBALS: NORMAL_FONT_COLOR, ACCEPT, CANCEL
 -- GLOBALS: PlaySound, GameFontHighlight, GameFontHighlightSmall, GameFontHighlightLarge
 -- GLOBALS: CloseSpecialWindows, InterfaceOptions_AddCategory, geterrorhandler
+
+AceConfigDialog.OpenFrames = AceConfigDialog.OpenFrames or {}
+AceConfigDialog.Status = AceConfigDialog.Status or {}
+AceConfigDialog.frame = AceConfigDialog.frame or CreateFrame("Frame")
+AceConfigDialog.tooltip = AceConfigDialog.tooltip or (wowLegacy and GameTooltip) or CreateFrame("GameTooltip", "AceConfigDialogTooltip", UIParent, "GameTooltipTemplate")
+
+AceConfigDialog.frame.apps = AceConfigDialog.frame.apps or {}
+AceConfigDialog.frame.closing = AceConfigDialog.frame.closing or {}
+AceConfigDialog.frame.closeAllOverride = AceConfigDialog.frame.closeAllOverride or {}
 
 local emptyTbl = {}
 
