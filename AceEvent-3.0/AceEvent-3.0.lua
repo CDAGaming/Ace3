@@ -18,7 +18,7 @@ local AceEvent = LibStub:NewLibrary(MAJOR, MINOR)
 if not AceEvent then return end
 
 -- Lua APIs
-local pairs, unpack = pairs, unpack
+local pairs, tconcat, unpack, assert, loadstring = pairs, table.concat, unpack, assert, loadstring
 
 local supports_ellipsis = loadstring("return ...") ~= nil
 local template_args = supports_ellipsis and "{...}" or "arg"
@@ -28,7 +28,7 @@ local function vararg(n, f)
 	local params = ""
 	if n > 0 then
 		for i = 1, n do t[ i ] = "_"..i end
-		params = table.concat(t, ", ", 1, n)
+		params = tconcat(t, ", ", 1, n)
 		params = params .. ", "
 	end
 	local code = [[

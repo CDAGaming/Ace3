@@ -3,7 +3,7 @@ local AceGUI = LibStub and LibStub("AceGUI-3.0", true)
 if not AceGUI or (AceGUI:GetWidgetVersion(Type) or 0) >= Version then return end
 
 -- Lua APIs
-local pairs = pairs
+local pairs, assert, loadstring, tconcat = pairs, assert, loadstring, table.concat
 
 -- WoW APIs
 local GetCursorInfo, GetSpellInfo, ClearCursor = GetCursorInfo, GetSpellInfo, ClearCursor
@@ -18,7 +18,7 @@ local function vararg(n, f)
 	local params = ""
 	if n > 0 then
 		for i = 1, n do t[ i ] = "_"..i end
-		params = table.concat(t, ", ", 1, n)
+		params = tconcat(t, ", ", 1, n)
 		params = params .. ", "
 	end
 	local code = [[

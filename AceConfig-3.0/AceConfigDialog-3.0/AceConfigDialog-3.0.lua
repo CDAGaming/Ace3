@@ -34,7 +34,7 @@ end
 local tinsert, tremove, tgetn, tsort, wipe = table.insert, table.remove, table.getn, table.sort, table.wipe
 local strmatch, format, strgsub, strsub, strupper = string.match, string.format, string.gsub, string.sub, string.upper
 local loadstring, assert, error = loadstring, assert, error
-local pairs, next, type, unpack, ipairs = pairs, next, type, unpack, ipairs
+local pairs, next, type, unpack, ipairs, tconcat = pairs, next, type, unpack, ipairs, table.concat
 local tostring, tonumber = tostring, tonumber
 local math_min, math_max, math_floor = math.min, math.max, math.floor
 
@@ -71,7 +71,7 @@ function AceConfigDialog:vararg(n, f)
 	local params = ""
 	if n > 0 then
 		for i = 1, n do t[ i ] = "_"..i end
-		params = table.concat(t, ", ", 1, n)
+		params = tconcat(t, ", ", 1, n)
 		params = params .. ", "
 	end
 	local code = [[
@@ -87,10 +87,43 @@ end
 local function errorhandler(err)
 	return geterrorhandler()(err)
 end
+AceConfigDialog.errorhandler = errorhandler
+
+local function CreateDispatcher(argCount)
+	local code = [[
+		local root = LibStub("AceConfigDialog-3.0")
+		local xpcall, eh = xpcall, root.errorhandler
+		local method, ARGS
+		local function call() return method(ARGS) end
+
+		local dispatch = root:vararg(1, function(func, arg)
+			 method = func
+			 if not method then return end
+			 ARGS = unpack(arg)
+			 return xpcall(call, eh)
+		end)
+
+		return dispatch
+	]]
+
+	local ARGS = {}
+	for i = 1, argCount do ARGS[i] = "arg"..i end
+	code = strgsub(code,"ARGS", tconcat(ARGS, ", "))
+	return assert(loadstring(code, "safecall Dispatcher["..argCount.."]"))(xpcall, errorhandler)
+end
+
+local Dispatchers = setmetatable({}, {__index=function(self, argCount)
+	local dispatcher = CreateDispatcher(argCount)
+	rawset(self, argCount, dispatcher)
+	return dispatcher
+end})
+Dispatchers[0] = function(func)
+	return xpcall(func, errorhandler)
+end
 
 local safecall = AceConfigDialog:vararg(1, function(func, arg)
 	if func then
-		return xpcall(func, errorhandler, unpack(arg))
+		return Dispatchers[tgetn(arg)](func, unpack(arg))
 	end
 end)
 

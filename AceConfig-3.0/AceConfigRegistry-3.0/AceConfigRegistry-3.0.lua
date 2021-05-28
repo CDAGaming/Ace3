@@ -26,7 +26,7 @@ end
 local tinsert, tconcat, tgetn = table.insert, table.concat, table.getn
 local strfind = string.find
 local type, tostring, pairs = type, tostring, pairs
-local error, assert = error, assert
+local error, assert, loadstring = error, assert, loadstring
 
 local supports_ellipsis = loadstring("return ...") ~= nil
 local template_args = supports_ellipsis and "{...}" or "arg"
@@ -36,7 +36,7 @@ local function vararg(n, f)
 	local params = ""
 	if n > 0 then
 		for i = 1, n do t[ i ] = "_"..i end
-		params = table.concat(t, ", ", 1, n)
+		params = tconcat(t, ", ", 1, n)
 		params = params .. ", "
 	end
 	local code = [[

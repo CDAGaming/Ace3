@@ -8,7 +8,7 @@ if not AceGUI or (AceGUI:GetWidgetVersion(Type) or 0) >= Version then return end
 
 -- Lua APIs
 local next, pairs, ipairs, assert, type = next, pairs, ipairs, assert, type
-local math_min, math_max, floor = math.min, math.max, floor
+local math_min, math_max, floor, loadstring = math.min, math.max, floor, loadstring
 local tremove, unpack, tconcat, tgetn = table.remove, unpack, table.concat, table.getn
 
 -- WoW APIs
@@ -22,7 +22,7 @@ local function vararg(n, f)
 	local params = ""
 	if n > 0 then
 		for i = 1, n do t[ i ] = "_"..i end
-		params = table.concat(t, ", ", 1, n)
+		params = tconcat(t, ", ", 1, n)
 		params = params .. ", "
 	end
 	local code = [[

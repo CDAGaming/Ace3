@@ -31,7 +31,7 @@ local AceGUI, oldminor = LibStub:NewLibrary(ACEGUI_MAJOR, ACEGUI_MINOR)
 if not AceGUI then return end -- No upgrade needed
 
 -- Lua APIs
-local tinsert, tgetn, wipe = table.insert, table.getn, table.wipe
+local tinsert, tgetn, wipe, tconcat = table.insert, table.getn, table.wipe, table.concat
 local pairs, next, type = pairs, next, type
 local strgsub, strsub, tostring = string.gsub, string.sub, tostring
 local loadstring, assert, error = loadstring, assert, error
@@ -84,7 +84,7 @@ function AceGUI:vararg(n, f)
 	local params = ""
 	if n > 0 then
 		for i = 1, n do t[ i ] = "_"..i end
-		params = table.concat(t, ", ", 1, n)
+		params = tconcat(t, ", ", 1, n)
 		params = params .. ", "
 	end
 	local code = [[
@@ -100,10 +100,43 @@ end
 local function errorhandler(err)
 	return geterrorhandler()(err)
 end
+AceGUI.errorhandler = errorhandler
+
+local function CreateDispatcher(argCount)
+	local code = [[
+		local root = LibStub("AceGUI-3.0")
+		local xpcall, eh = xpcall, root.errorhandler
+		local method, ARGS
+		local function call() return method(ARGS) end
+
+		local dispatch = root:vararg(1, function(func, arg)
+			 method = func
+			 if not method then return end
+			 ARGS = unpack(arg)
+			 return xpcall(call, eh)
+		end)
+
+		return dispatch
+	]]
+
+	local ARGS = {}
+	for i = 1, argCount do ARGS[i] = "arg"..i end
+	code = strgsub(code,"ARGS", tconcat(ARGS, ", "))
+	return assert(loadstring(code, "safecall Dispatcher["..argCount.."]"))(xpcall, errorhandler)
+end
+
+local Dispatchers = setmetatable({}, {__index=function(self, argCount)
+	local dispatcher = CreateDispatcher(argCount)
+	rawset(self, argCount, dispatcher)
+	return dispatcher
+end})
+Dispatchers[0] = function(func)
+	return xpcall(func, errorhandler)
+end
 
 local safecall = AceGUI:vararg(1, function(func, arg)
 	if func then
-		return xpcall(func, errorhandler, unpack(arg))
+		return Dispatchers[tgetn(arg)](func, unpack(arg))
 	end
 end)
 

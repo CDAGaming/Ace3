@@ -7,7 +7,7 @@ if not CallbackHandler then return end -- No upgrade needed
 local meta = {__index = function(tbl, key) tbl[key] = {} return tbl[key] end}
 
 -- Lua APIs
-local tgetn = table.getn
+local tgetn, tconcat = table.getn, table.concat
 local strgsub, strsub = string.gsub, string.sub
 local assert, error, loadstring, unpack = assert, error, loadstring, unpack
 local setmetatable, rawset, rawget = setmetatable, rawset, rawget
@@ -27,7 +27,7 @@ function CallbackHandler:vararg(n, f)
 	local params = ""
 	if n > 0 then
 		for i = 1, n do t[ i ] = "_"..i end
-		params = table.concat(t, ", ", 1, n)
+		params = tconcat(t, ", ", 1, n)
 		params = params .. ", "
 	end
 	local code = [[
@@ -43,15 +43,43 @@ end
 local function errorhandler(err)
 	return geterrorhandler()(err)
 end
+CallbackHandler.errorhandler = errorhandler
 
-local Dispatch = CallbackHandler:vararg(1, function(handlers, arg)
-	local index, method = next(handlers)
-	if not method then return end
-	repeat
-		xpcall(method, errorhandler, unpack(arg))
-		index, method = next(handlers, index)
-	until not method
-end)
+local function CreateDispatcher(argCount)
+	local code = [[
+	local root = LibStub("CallbackHandler-1.0")
+	local next, xpcall, eh = next, xpcall, root.errorhandler
+
+	local method, ARGS
+	local function call() method(ARGS) end
+
+	local dispatch = root:vararg(1, function(handlers, arg)
+		local index
+		index, method = next(handlers)
+		if not method then return end
+		local OLD_ARGS = ARGS
+		ARGS = unpack(arg)
+		repeat
+			xpcall(call, eh)
+			index, method = next(handlers, index)
+		until not method
+		ARGS = OLD_ARGS
+	end)
+
+	return dispatch
+	]]
+
+	local ARGS, OLD_ARGS = {}, {}
+	for i = 1, argCount do ARGS[i], OLD_ARGS[i] = "arg"..i, "old_arg"..i end
+	code = strgsub(strgsub(code, "OLD_ARGS", tconcat(OLD_ARGS, ", ")), "ARGS", tconcat(ARGS, ", "))
+	return assert(loadstring(code, "safecall Dispatcher["..argCount.."]"))(next, xpcall, errorhandler)
+end
+
+local Dispatchers = setmetatable({}, {__index=function(self, argCount)
+	local dispatcher = CreateDispatcher(argCount)
+	rawset(self, argCount, dispatcher)
+	return dispatcher
+end})
 
 --------------------------------------------------------------------------
 -- CallbackHandler:New
@@ -82,7 +110,7 @@ function CallbackHandler:New(target, RegisterName, UnregisterName, UnregisterAll
 		local oldrecurse = registry.recurse
 		registry.recurse = oldrecurse + 1
 
-		Dispatch(events[eventname], eventname, unpack(arg))
+		Dispatchers[tgetn(arg) + 1](events[eventname], eventname, unpack(arg))
 
 		registry.recurse = oldrecurse
 

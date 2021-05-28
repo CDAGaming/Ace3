@@ -8,7 +8,7 @@ if not AceGUI or (AceGUI:GetWidgetVersion(Type) or 0) >= Version then return end
 
 -- Lua APIs
 local max, pairs = math.max, pairs
-local tgetn = table.getn
+local tgetn, tconcat, loadstring = table.getn, table.concat, loadstring
 
 -- WoW APIs
 local CreateFrame, UIParent = CreateFrame, UIParent
@@ -21,7 +21,7 @@ local function vararg(n, f)
 	local params = ""
 	if n > 0 then
 		for i = 1, n do t[ i ] = "_"..i end
-		params = table.concat(t, ", ", 1, n)
+		params = tconcat(t, ", ", 1, n)
 		params = params .. ", "
 	end
 	local code = [[

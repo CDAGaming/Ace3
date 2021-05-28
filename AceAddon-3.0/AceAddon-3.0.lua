@@ -74,7 +74,7 @@ function AceAddon:vararg(n, f)
 	local params = ""
 	if n > 0 then
 		for i = 1, n do t[ i ] = "_"..i end
-		params = table.concat(t, ", ", 1, n)
+		params = tconcat(t, ", ", 1, n)
 		params = params .. ", "
 	end
 	local code = [[
@@ -90,21 +90,46 @@ end
 local function errorhandler(err)
 	return geterrorhandler()(err)
 end
+AceAddon.errorhandler = errorhandler
+
+local function CreateDispatcher(argCount)
+	local code = [[
+		local root = LibStub("AceAddon-3.0")
+		local xpcall, eh = xpcall, root.errorhandler
+		local method, ARGS
+		local function call() return method(ARGS) end
+
+		local dispatch = root:vararg(1, function(func, arg)
+			 method = func
+			 if not method then return end
+			 ARGS = unpack(arg)
+			 return xpcall(call, eh)
+		end)
+
+		return dispatch
+	]]
+
+	local ARGS = {}
+	for i = 1, argCount do ARGS[i] = "arg"..i end
+	code = strgsub(code,"ARGS", tconcat(ARGS, ", "))
+	return assert(loadstring(code, "safecall Dispatcher["..argCount.."]"))(xpcall, errorhandler)
+end
+
+local Dispatchers = setmetatable({}, {__index=function(self, argCount)
+	local dispatcher = CreateDispatcher(argCount)
+	rawset(self, argCount, dispatcher)
+	return dispatcher
+end})
+Dispatchers[0] = function(func)
+	return xpcall(func, errorhandler)
+end
 
 local safecall = AceAddon:vararg(1, function(func, arg)
 	-- we check to see if the func is passed is actually a function here and don't error when it isn't
 	-- this safecall is used for optional functions like OnInitialize OnEnable etc. When they are not
 	-- present execution should continue without hinderance
 	if type(func) == "function" then
-		if wowLegacy then
-			local success, err = pcall(func, unpack(arg))
-			if success then return err end
-
-			if not strfind(err, "%.lua:%d+:") then err = (strmatch(debugstack(), "\n(.-: )in.-\n") or "") .. err end
-			errorhandler()(err)
-		else
-			return xpcall(func, errorhandler, unpack(arg))
-		end
+		return Dispatchers[tgetn(arg)](func, unpack(arg))
 	end
 end)
 
