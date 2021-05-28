@@ -399,10 +399,10 @@ local function BuildSortedOptionsTable(group, keySort, opts, options, path, appN
 					tinsert(keySort, k)
 					opts[k] = v
 
-					path[tgetn(path)+1] = k
+					tinsert(path,k)
 					tempOrders[k] = GetOptionsMemberValue("order", v, options, path, appName)
 					tempNames[k] = GetOptionsMemberValue("name", v, options, path, appName)
-					path[tgetn(path)] = nil
+					tremove(path)
 				end
 			end
 		end
@@ -413,10 +413,10 @@ local function BuildSortedOptionsTable(group, keySort, opts, options, path, appN
 			tinsert(keySort, k)
 			opts[k] = v
 
-			path[tgetn(path)+1] = k
+			tinsert(path,k)
 			tempOrders[k] = GetOptionsMemberValue("order", v, options, path, appName)
 			tempNames[k] = GetOptionsMemberValue("name", v, options, path, appName)
-			path[tgetn(path)] = nil
+			tremove(path)
 		end
 	end
 
@@ -1076,14 +1076,14 @@ local function BuildSelect(group, options, path, appName)
 		local k = keySort[i]
 		local v = opts[k]
 		if v.type == "group" then
-			path[tgetn(path)+1] = k
+			tinsert(path, k)
 			local inline = pickfirstset(v.dialogInline,v.guiInline,v.inline, false)
 			local hidden = CheckOptionHidden(v, options, path, appName)
 			if not inline and not hidden then
 				groups[k] = GetOptionsMemberValue("name", v, options, path, appName)
 				tinsert(order, k)
 			end
-			path[tgetn(path)] = nil
+			tremove(path)
 		end
 	end
 
@@ -1103,7 +1103,7 @@ local function BuildSubGroups(group, tree, options, path, appName)
 		local k = keySort[i]
 		local v = opts[k]
 		if v.type == "group" then
-			path[tgetn(path)+1] = k
+			tinsert(path, k)
 			local inline = pickfirstset(v.dialogInline,v.guiInline,v.inline, false)
 			local hidden = CheckOptionHidden(v, options, path, appName)
 			if not inline and not hidden then
@@ -1119,7 +1119,7 @@ local function BuildSubGroups(group, tree, options, path, appName)
 					BuildSubGroups(v,entry, options, path, appName)
 				end
 			end
-			path[tgetn(path)] = nil
+			tremove(path)
 		end
 	end
 
@@ -1138,7 +1138,7 @@ local function BuildGroups(group, options, path, appName, recurse)
 		local k = keySort[i]
 		local v = opts[k]
 		if v.type == "group" then
-			path[tgetn(path)+1] = k
+			tinsert(path,k)
 			local inline = pickfirstset(v.dialogInline,v.guiInline,v.inline, false)
 			local hidden = CheckOptionHidden(v, options, path, appName)
 			if not inline and not hidden then
@@ -1153,7 +1153,7 @@ local function BuildGroups(group, options, path, appName, recurse)
 					BuildSubGroups(v,entry, options, path, appName)
 				end
 			end
-			path[tgetn(path)] = nil
+			tremove(path)
 		end
 	end
 	del(keySort)
@@ -1334,7 +1334,7 @@ local function FeedOptions(appName, options,container,rootframe,path,group,inlin
 						if not sorting then
 							sorting = {}
 							for value, text in pairs(values) do
-								sorting[tgetn(sorting)+1]=value
+								tinsert(sorting, value)
 							end
 							tsort(sorting, sortTblAsStrings)
 						end
