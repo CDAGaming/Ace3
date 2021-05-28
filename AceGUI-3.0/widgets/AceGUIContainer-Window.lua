@@ -32,30 +32,35 @@ do
 	local Type = "Window"
 	local Version = 6
 
-	local function frameOnShow(this)
-		this.obj:Fire("OnShow")
+	local function frameOnShow(frame)
+		frame = frame or this
+		frame.obj:Fire("OnShow")
 	end
 
-	local function frameOnClose(this)
-		this.obj:Fire("OnClose")
+	local function frameOnClose(frame)
+		frame = frame or this
+		frame.obj:Fire("OnClose")
 	end
 
-	local function closeOnClick(this)
+	local function closeOnClick(frame)
+		frame = frame or this
 		PlaySound((wowThirdLegion or wowClassicRebased or wowTBCRebased) and 799 or "gsTitleOptionExit") -- SOUNDKIT.GS_TITLE_OPTION_EXIT
-		this.obj:Hide()
+		frame.obj:Hide()
 	end
 
-	local function frameOnMouseDown(this)
+	local function frameOnMouseDown(frame)
 		AceGUI:ClearFocus()
 	end
 
-	local function titleOnMouseDown(this)
-		this:GetParent():StartMoving()
+	local function titleOnMouseDown(frame)
+		frame = frame or this
+		frame:GetParent():StartMoving()
 		AceGUI:ClearFocus()
 	end
 
-	local function frameOnMouseUp(this)
-		local frame = this:GetParent()
+	local function frameOnMouseUp(frame)
+		frame = frame or this
+		local frame = frame:GetParent()
 		frame:StopMovingOrSizing()
 		local self = frame.obj
 		local status = self.status or self.localstatus
@@ -65,23 +70,27 @@ do
 		status.left = frame:GetLeft()
 	end
 
-	local function sizerseOnMouseDown(this)
-		this:GetParent():StartSizing("BOTTOMRIGHT")
+	local function sizerseOnMouseDown(frame)
+		frame = frame or this
+		frame:GetParent():StartSizing("BOTTOMRIGHT")
 		AceGUI:ClearFocus()
 	end
 
-	local function sizersOnMouseDown(this)
-		this:GetParent():StartSizing("BOTTOM")
+	local function sizersOnMouseDown(frame)
+		frame = frame or this
+		frame:GetParent():StartSizing("BOTTOM")
 		AceGUI:ClearFocus()
 	end
 
-	local function sizereOnMouseDown(this)
-		this:GetParent():StartSizing("RIGHT")
+	local function sizereOnMouseDown(frame)
+		frame = frame or this
+		frame:GetParent():StartSizing("RIGHT")
 		AceGUI:ClearFocus()
 	end
 
-	local function sizerOnMouseUp(this)
-		this:GetParent():StopMovingOrSizing()
+	local function sizerOnMouseUp(frame)
+		frame = frame or this
+		frame:GetParent():StopMovingOrSizing()
 	end
 
 	local function SetTitle(self,title)

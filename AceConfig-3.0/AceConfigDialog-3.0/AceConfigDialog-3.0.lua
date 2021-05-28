@@ -1841,8 +1841,9 @@ end
 local old_CloseSpecialWindows
 
 
-local function RefreshOnUpdate(this)
-	for appName in pairs(this.closing) do
+local function RefreshOnUpdate(frame)
+	frame = frame or this
+	for appName in pairs(frame.closing) do
 		if AceConfigDialog.OpenFrames[appName] then
 			AceConfigDialog.OpenFrames[appName]:Hide()
 		end
@@ -1853,20 +1854,20 @@ local function RefreshOnUpdate(this)
 				end
 			end
 		end
-		this.closing[appName] = nil
+		frame.closing[appName] = nil
 	end
 
-	if this.closeAll then
+	if frame.closeAll then
 		for k, v in pairs(AceConfigDialog.OpenFrames) do
-			if not this.closeAllOverride[k] then
+			if not frame.closeAllOverride[k] then
 				v:Hide()
 			end
 		end
-		this.closeAll = nil
-		wipe(this.closeAllOverride)
+		frame.closeAll = nil
+		wipe(frame.closeAllOverride)
 	end
 
-	for appName in pairs(this.apps) do
+	for appName in pairs(frame.apps) do
 		if AceConfigDialog.OpenFrames[appName] then
 			local user = AceConfigDialog.OpenFrames[appName]:GetUserDataTable()
 			AceConfigDialog:Open(appName, unpack(user.basepath or emptyTbl))
@@ -1879,9 +1880,9 @@ local function RefreshOnUpdate(this)
 				end
 			end
 		end
-		this.apps[appName] = nil
+		frame.apps[appName] = nil
 	end
-	this:SetScript("OnUpdate", nil)
+	frame:SetScript("OnUpdate", nil)
 end
 
 -- Upgrade the OnUpdate script as well, if needed.

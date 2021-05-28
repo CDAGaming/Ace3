@@ -555,23 +555,25 @@ do
 		end
 	end
 
-	local function FrameResize(this)
-		local self = this.obj
-		if this:GetWidth() and this:GetHeight() then
+	local function FrameResize(frame)
+		frame = frame or this
+		local self = frame.obj
+		if frame:GetWidth() and frame:GetHeight() then
 			if self.OnWidthSet then
-				self:OnWidthSet(this:GetWidth())
+				self:OnWidthSet(frame:GetWidth())
 			end
 			if self.OnHeightSet then
-				self:OnHeightSet(this:GetHeight())
+				self:OnHeightSet(frame:GetHeight())
 			end
 		end
 	end
 
-	local function ContentResize(this)
-		if this:GetWidth() and this:GetHeight() then
-			this.width = this:GetWidth()
-			this.height = this:GetHeight()
-			this.obj:DoLayout()
+	local function ContentResize(frame)
+		frame = frame or this
+		if frame:GetWidth() and frame:GetHeight() then
+			frame.width = frame:GetWidth()
+			frame.height = frame:GetHeight()
+			frame.obj:DoLayout()
 		end
 	end
 

@@ -87,16 +87,21 @@ do
 	end
 
 	-- See the note in Constructor() for each scroll related function
-	local function OnMouseWheel(this, value)
-		this.obj:MoveScroll(value)
+	local function OnMouseWheel(frame, value)
+		frame = frame or this
+		value = value or arg1
+		frame.obj:MoveScroll(value)
 	end
 
-	local function OnScrollValueChanged(this, value)
-		this.obj:SetScroll(value)
+	local function OnScrollValueChanged(frame, value)
+		frame = frame or this
+		value = value or arg1
+		frame.obj:SetScroll(value)
 	end
 
-	local function OnSizeChanged(this)
-		this.obj:FixScroll()
+	local function OnSizeChanged(frame)
+		frame = frame or this
+		frame.obj:FixScroll()
 	end
 
 	--[[ Exported methods ]]--
@@ -368,25 +373,29 @@ do
 
 	--[[ UI event handler ]]--
 
-	local function Control_OnEnter(this)
-		this.obj.button:LockHighlight()
-		this.obj:Fire("OnEnter")
+	local function Control_OnEnter(frame)
+		frame = frame or this
+		frame.obj.button:LockHighlight()
+		frame.obj:Fire("OnEnter")
 	end
 
-	local function Control_OnLeave(this)
-		this.obj.button:UnlockHighlight()
-		this.obj:Fire("OnLeave")
+	local function Control_OnLeave(frame)
+		frame = frame or this
+		frame.obj.button:UnlockHighlight()
+		frame.obj:Fire("OnLeave")
 	end
 
-	local function Dropdown_OnHide(this)
-		local self = this.obj
+	local function Dropdown_OnHide(frame)
+		frame = frame or this
+		local self = frame.obj
 		if self.open then
 			self.pullout:Close()
 		end
 	end
 
-	local function Dropdown_TogglePullout(this)
-		local self = this.obj
+	local function Dropdown_TogglePullout(frame)
+		frame = frame or this
+		local self = frame.obj
 		PlaySound((wowThirdLegion or wowClassicRebased or wowTBCRebased) and 856 or "igMainMenuOptionCheckBoxOn") -- SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON
 		if self.open then
 			self.open = nil

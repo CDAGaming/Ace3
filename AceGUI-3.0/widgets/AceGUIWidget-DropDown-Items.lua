@@ -77,8 +77,9 @@ local ItemBase = {
 	counter = 0,
 }
 
-function ItemBase.Frame_OnEnter(this)
-	local self = this.obj
+function ItemBase.Frame_OnEnter(frame)
+	frame = frame or this
+	local self = frame.obj
 
 	if self.useHighlight then
 		self.highlight:Show()
@@ -90,8 +91,9 @@ function ItemBase.Frame_OnEnter(this)
 	end
 end
 
-function ItemBase.Frame_OnLeave(this)
-	local self = this.obj
+function ItemBase.Frame_OnLeave(frame)
+	frame = frame or this
+	local self = frame.obj
 
 	self.highlight:Hide()
 	self:Fire("OnLeave")
@@ -280,8 +282,9 @@ do
 	local widgetType = "Dropdown-Item-Header"
 	local widgetVersion = 1
 
-	local function OnEnter(this)
-		local self = this.obj
+	local function OnEnter(frame)
+		frame = frame or this
+		local self = frame.obj
 		self:Fire("OnEnter")
 
 		if self.specialOnEnter then
@@ -289,8 +292,9 @@ do
 		end
 	end
 
-	local function OnLeave(this)
-		local self = this.obj
+	local function OnLeave(frame)
+		frame = frame or this
+		local self = frame.obj
 		self:Fire("OnLeave")
 
 		if self.specialOnLeave then
@@ -329,8 +333,10 @@ do
 	local widgetType = "Dropdown-Item-Execute"
 	local widgetVersion = 1
 
-	local function Frame_OnClick(this, button)
-		local self = this.obj
+	local function Frame_OnClick(frame, button)
+		frame = frame or this
+		button = button or arg1
+		local self = frame.obj
 		if self.disabled then return end
 		self:Fire("OnClick")
 		if self.pullout then
@@ -370,8 +376,10 @@ do
 		self:SetValue(nil)
 	end
 
-	local function Frame_OnClick(this, button)
-		local self = this.obj
+	local function Frame_OnClick(frame, button)
+		frame = frame or this
+		button = button or arg1
+		local self = frame.obj
 		if self.disabled then return end
 		self.value = not self.value
 		if self.value then
@@ -417,8 +425,9 @@ do
 	local widgetType = "Dropdown-Item-Menu"
 	local widgetVersion = 2
 
-	local function OnEnter(this)
-		local self = this.obj
+	local function OnEnter(frame)
+		frame = frame or this
+		local self = frame.obj
 		self:Fire("OnEnter")
 
 		if self.specialOnEnter then
@@ -432,8 +441,9 @@ do
 		end
 	end
 
-	local function OnHide(this)
-		local self = this.obj
+	local function OnHide(frame)
+		frame = frame or this
+		local self = frame.obj
 		if self.submenu then
 			self.submenu:Close()
 		end
