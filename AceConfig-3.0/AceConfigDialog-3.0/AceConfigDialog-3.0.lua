@@ -21,10 +21,11 @@ AceConfigDialog.frame.apps = AceConfigDialog.frame.apps or {}
 AceConfigDialog.frame.closing = AceConfigDialog.frame.closing or {}
 AceConfigDialog.frame.closeAllOverride = AceConfigDialog.frame.closeAllOverride or {}
 
-local wowThirdLegion, wowClassicRebased, wowTBCRebased
+local wowLegacy, wowThirdLegion, wowClassicRebased, wowTBCRebased
 do
 	local _, build, _, interface = GetBuildInfo()
 	interface = interface or tonumber(build)
+	wowLegacy = (interface <= 11201)
 	wowThirdLegion = (interface >= 70300)
 	wowClassicRebased = (interface >= 11300 and interface < 20000)
 	wowTBCRebased = (interface >= 20500 and interface < 30000)
@@ -37,6 +38,12 @@ local loadstring, assert, error = loadstring, assert, error
 local pairs, next, type, unpack, ipairs, tconcat = pairs, next, type, unpack, ipairs, table.concat
 local rawset, tostring, tonumber = rawset, tostring, tonumber
 local math_min, math_max, math_floor = math.min, math.max, math.floor
+
+local setn = function(t,n)
+	if wowLegacy then
+		table.setn(t,n)
+	end
+end
 
 local tsetn = function(t,n)
 	setmetatable(t,{__len=function() return n end})
@@ -168,6 +175,7 @@ do
 		for k, v in pairs(t) do
 			c[k] = v
 		end
+		setn(c, tgetn(t))
 		return c
 	end
 	function del(t)
@@ -273,11 +281,13 @@ local GetOptionsMemberValue = AceConfigDialog:vararg(5, function(membername, opt
 		local group = options
 		handler = group.handler or handler
 
-		for i = 1, tgetn(path) do
+		local x = tgetn(path)
+		for i = 1, x do
 			group = GetSubOption(group, path[i])
 			info[i] = path[i]
 			handler = group.handler or handler
 		end
+		setn(info, x)
 
 		info.options = options
 		info.appName = appName
@@ -771,7 +781,8 @@ local ActivateControl = AceConfigDialog:vararg(2, function(widget, event, arg)
 	handler = group.handler or handler
 	confirm = group.confirm
 	validate = group.validate
-	for i = 1, tgetn(path) do
+	local x = tgetn(path)
+	for i = 1, x do
 		local v = path[i]
 		group = GetSubOption(group, v)
 		info[i] = v
@@ -786,6 +797,7 @@ local ActivateControl = AceConfigDialog:vararg(2, function(widget, event, arg)
 			validate = group.validate
 		end
 	end
+	setn(info, x)
 
 	info.options = options
 	info.appName = user.appName
@@ -1047,14 +1059,14 @@ local function BuildTabs(group, options, path, appName)
 		local k = keySort[i]
 		local v = opts[k]
 		if v.type == "group" then
-			path[tgetn(path)+1] = k
+			tinsert(path, k)
 			local inline = pickfirstset(v.dialogInline,v.guiInline,v.inline, false)
 			local hidden = CheckOptionHidden(v, options, path, appName)
 			if not inline and not hidden then
 				tinsert(tabs, k)
 				text[k] = GetOptionsMemberValue("name", v, options, path, appName)
 			end
-			path[tgetn(path)] = nil
+			tremove(path)
 		end
 	end
 
@@ -1163,9 +1175,11 @@ end
 
 local function InjectInfo(control, options, option, path, rootframe, appName)
 	local user = control:GetUserDataTable()
-	for i = 1, tgetn(path) do
+	local x = tgetn(path)
+	for i = 1, x do
 		user[i] = path[i]
 	end
+	setn(user, x)
 	user.rootframe = rootframe
 	user.option = option
 	user.options = options
@@ -1577,9 +1591,11 @@ local function TreeOnButtonEnter(widget, event, uniquevalue, button)
 	local tooltip = AceConfigDialog.tooltip
 
 	local feedpath = new()
-	for i = 1, tgetn(path) do
+	local x = tgetn(path)
+	for i = 1, x do
 		feedpath[i] = path[i]
 	end
+	setn(feedpath, x)
 
 	BuildPath(feedpath, strsplit("\001", uniquevalue))
 	local group = options
@@ -1618,9 +1634,11 @@ local function GroupExists(appName, options, path, uniquevalue)
 
 	local feedpath = new()
 	local temppath = new()
-	for i = 1, tgetn(path) do
+	local x = tgetn(path)
+	for i = 1, x do
 		feedpath[i] = path[i]
 	end
+	setn(feedpath, x)
 
 	BuildPath(feedpath, strsplit("\001", uniquevalue))
 
@@ -1651,9 +1669,11 @@ local function GroupSelected(widget, event, uniquevalue)
 	local rootframe = user.rootframe
 
 	local feedpath = new()
-	for i = 1, tgetn(path) do
+	local x = tgetn(path)
+	for i = 1, x do
 		feedpath[i] = path[i]
 	end
+	setn(feedpath, x)
 
 	BuildPath(feedpath, strsplit("\001", uniquevalue))
 	widget:ReleaseChildren()
