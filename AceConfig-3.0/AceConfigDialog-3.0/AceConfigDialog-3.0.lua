@@ -1255,8 +1255,10 @@ local function FeedOptions(appName, options,container,rootframe,path,group,inlin
 					local imageCoords = GetOptionsMemberValue("imageCoords",v, options, path, appName)
 					local image, width, height = GetOptionsMemberValue("image",v, options, path, appName)
 
+					local buttonElvUI = GetOptionsMemberValue("buttonElvUI",v, options, path, appName)
+
 					local iconControl = type(image) == "string" or type(image) == "number"
-					control = CreateControl(v.dialogControl or v.control, iconControl and "Icon" or "Button")
+					control = CreateControl(v.dialogControl or v.control, iconControl and "Icon" or (buttonElvUI and "Button-ElvUI" or "Button"))
 					if iconControl then
 						if not width then
 							width = GetOptionsMemberValue("imageWidth",v, options, path, appName)
