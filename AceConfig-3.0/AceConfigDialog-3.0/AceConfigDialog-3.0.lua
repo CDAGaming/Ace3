@@ -1682,6 +1682,12 @@ local function GroupSelected(widget, event, uniquevalue)
 	setn(feedpath, x)
 
 	BuildPath(feedpath, strsplit("\001", uniquevalue))
+	if wowLegacy then
+		local group = options
+		for i = 1, tgetn(feedpath) do
+			group = GetSubOption(group, feedpath[i])
+		end
+	end
 	widget:ReleaseChildren()
 	AceConfigDialog:FeedGroup(user.appName,options,widget,rootframe,feedpath)
 
@@ -1716,7 +1722,8 @@ function AceConfigDialog:FeedGroup(appName,options,container,rootframe,path, isR
 	for i = 1, tgetn(path) do
 		local v = path[i]
 		group = GetSubOption(group, v)
-		inline = inline or pickfirstset(v.dialogInline,v.guiInline,v.inline, false)
+		local target = (wowLegacy and group) or v
+		inline = inline or pickfirstset(target.dialogInline,target.guiInline,target.inline, false)
 		parenttype = grouptype
 		grouptype = group.childGroups
 	end

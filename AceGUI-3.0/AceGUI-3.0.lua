@@ -379,7 +379,9 @@ do
 		frame:SetParent(nil)
 		frame:SetParent(parent.content)
 		self.parent = parent
-		fixlevels(frame)
+		if wowLegacy then
+			fixlevels(frame)
+		end
 	end
 
 	WidgetBase.SetCallback = function(self, name, func)
