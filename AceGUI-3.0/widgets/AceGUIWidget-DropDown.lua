@@ -6,13 +6,20 @@ local min, max, floor = math.min, math.max, math.floor
 local pairs, ipairs, type, tostring, format = pairs, ipairs, type, tostring, string.format
 local tsort, tinsert, tgetn = table.sort, table.insert, table.getn
 
-local wowThirdLegion, wowClassicRebased, wowTBCRebased
+local wowLegacy, wowThirdLegion, wowClassicRebased, wowTBCRebased
 do
 	local _, build, _, interface = GetBuildInfo()
 	interface = interface or tonumber(build)
+	wowLegacy = (interface <= 11201)
 	wowThirdLegion = (interface >= 70300)
 	wowClassicRebased = (interface >= 11300 and interface < 20000)
 	wowTBCRebased = (interface >= 20500 and interface < 30000)
+end
+
+local setn = function(t,n)
+	if wowLegacy then
+		table.setn(t,n)
+	end
 end
 
 -- WoW APIs
@@ -232,6 +239,7 @@ do
 			AceGUI:Release(item)
 			items[i] = nil
 		end
+		setn(items, 0)
 	end
 
 	-- exported
@@ -629,6 +637,7 @@ do
 				AddListItem(self, key, list[key], itemType)
 				sortlist[i] = nil
 			end
+			setn(sortlist, 0)
 		else
 			for i, key in ipairs(order) do
 				AddListItem(self, key, list[key], itemType)
