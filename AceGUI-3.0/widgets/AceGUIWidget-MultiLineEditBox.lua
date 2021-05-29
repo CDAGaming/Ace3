@@ -4,6 +4,7 @@ if not AceGUI or (AceGUI:GetWidgetVersion(Type) or 0) >= Version then return end
 
 -- Lua APIs
 local pairs, assert, loadstring, tconcat, format = pairs, assert, loadstring, table.concat, string.format
+local unpack, type, error = unpack, type, error
 
 -- WoW APIs
 local GetCursorInfo, GetSpellInfo, ClearCursor = GetCursorInfo, GetSpellInfo, ClearCursor
@@ -45,19 +46,19 @@ do
 	wowLegacy = (interface <= 11201)
 end
 
-local hooksecurefunc = hooksecurefunc or function (arg1, arg2, arg3)
-	if type(arg1) == "string" then
-		arg1, arg2, arg3 = _G, arg1, arg2
+local hooksecurefunc = hooksecurefunc or function (table, functionName, hookfunc)
+	if type(table) == "string" then
+		table, functionName, hookfunc = _G, table, functionName
 	end
-	local orig = arg1[arg2]
+	local orig = table[functionName]
 	if type(orig) ~= "function" then
-		error("The function "..arg2.." does not exist", 2)
+		error("The function "..functionName.." does not exist", 2)
 	end
-	arg1[arg2] = function(...)
+	table[functionName] = vararg(0, function(arg)
 		local tmp = {orig(unpack(arg))}
-		arg3(unpack(arg))
+		hookfunc(unpack(arg))
 		return unpack(tmp)
-	end
+	end)
 end
 
 --[[-----------------------------------------------------------------------------
@@ -66,9 +67,9 @@ Support functions
 
 if not AceGUIMultiLineEditBoxInsertLink and not wowLegacy then
 	-- upgradeable hook
-	hooksecurefunc("ChatEdit_InsertLink", function(a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
-		return _G.AceGUIMultiLineEditBoxInsertLink(a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
-	end)
+	hooksecurefunc("ChatEdit_InsertLink", vararg(0, function(arg)
+		return _G.AceGUIMultiLineEditBoxInsertLink(unpack(arg))
+	end))
 end
 
 function _G.AceGUIMultiLineEditBoxInsertLink(text)

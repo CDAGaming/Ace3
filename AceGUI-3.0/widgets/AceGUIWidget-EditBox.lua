@@ -6,7 +6,8 @@ local AceGUI = LibStub and LibStub("AceGUI-3.0", true)
 if not AceGUI or (AceGUI:GetWidgetVersion(Type) or 0) >= Version then return end
 
 -- Lua APIs
-local tostring, pairs = tostring, pairs
+local tostring, pairs, tconcat, unpack = tostring, pairs, table.concat, unpack
+local assert, type, error, loadstring = assert, type, error, loadstring
 
 local wowThirdLegion, wowLegacy, wowClassicRebased, wowTBCRebased
 do
@@ -18,25 +19,46 @@ do
 	wowTBCRebased = (interface >= 20500 and interface < 30000)
 end
 
+local supports_ellipsis = loadstring("return ...") ~= nil
+local template_args = supports_ellipsis and "{...}" or "arg"
+
+local function vararg(n, f)
+	local t = {}
+	local params = ""
+	if n > 0 then
+		for i = 1, n do t[ i ] = "_"..i end
+		params = tconcat(t, ", ", 1, n)
+		params = params .. ", "
+	end
+	local code = [[
+        return function( f )
+        return function( ]]..params..[[... )
+            return f( ]]..params..template_args..[[ )
+        end
+        end
+    ]]
+	return assert(loadstring(code, "=(vararg)"))()(f)
+end
+
 -- WoW APIs
 local PlaySound = PlaySound
 local GetCursorInfo, ClearCursor, GetSpellInfo = GetCursorInfo, ClearCursor, GetSpellInfo
 local CreateFrame, UIParent = CreateFrame, UIParent
 local _G = getfenv() or _G or {}
 
-local hooksecurefunc = hooksecurefunc or function (arg1, arg2, arg3)
-	if type(arg1) == "string" then
-		arg1, arg2, arg3 = _G, arg1, arg2
+local hooksecurefunc = hooksecurefunc or function (table, functionName, hookfunc)
+	if type(table) == "string" then
+		table, functionName, hookfunc = _G, table, functionName
 	end
-	local orig = arg1[arg2]
+	local orig = table[functionName]
 	if type(orig) ~= "function" then
-		error("The function "..arg2.." does not exist", 2)
+		error("The function "..functionName.." does not exist", 2)
 	end
-	arg1[arg2] = function(...)
+	table[functionName] = vararg(0, function(arg)
 		local tmp = {orig(unpack(arg))}
-		arg3(unpack(arg))
+		hookfunc(unpack(arg))
 		return unpack(tmp)
-	end
+	end)
 end
 
 -- Global vars/functions that we don't upvalue since they might get hooked, or upgraded
@@ -48,9 +70,9 @@ Support functions
 -------------------------------------------------------------------------------]]
 if not AceGUIEditBoxInsertLink and not wowLegacy then
 	-- upgradeable hook
-	hooksecurefunc("ChatEdit_InsertLink", function(a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
-		return _G.AceGUIEditBoxInsertLink(a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
-	end)
+	hooksecurefunc("ChatEdit_InsertLink", vararg(0, function(arg)
+		return _G.AceGUIEditBoxInsertLink(unpack(arg))
+	end))
 end
 
 function _G.AceGUIEditBoxInsertLink(text)
