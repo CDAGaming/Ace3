@@ -43,7 +43,7 @@ AceAddon.enablequeue = AceAddon.enablequeue or {} -- addons that are initialized
 AceAddon.embeds = AceAddon.embeds or setmetatable({}, {__index = function(tbl, key) tbl[key] = {} return tbl[key] end }) -- contains a list of libraries embedded in an addon
 
 -- Lua APIs
-local tinsert, tconcat, tremove, tgetn, tsetn = table.insert, table.concat, table.remove, table.getn, table.setn
+local tinsert, tconcat, tremove, tgetn = table.insert, table.concat, table.remove, table.getn
 local strfmt, strgsub, strsub, tostring = string.format, string.gsub, string.sub, tostring
 local strfind, strmatch = string.find, string.match
 local select, pairs, next, type, unpack = select, pairs, next, type, unpack
