@@ -27,6 +27,27 @@ local format, strfind, strsub = string.format, string.find, string.sub
 local strlower, strupper = string.lower, string.upper
 local max = math.max
 
+local supports_ellipsis = loadstring("return ...") ~= nil
+local template_args = supports_ellipsis and "{...}" or "arg"
+
+local function vararg(n, f)
+	local t = {}
+	local params = ""
+	if n > 0 then
+		for i = 1, n do t[ i ] = "_"..i end
+		params = tconcat(t, ", ", 1, n)
+		params = params .. ", "
+	end
+	local code = [[
+        return function( f )
+        return function( ]]..params..[[... )
+            return f( ]]..params..template_args..[[ )
+        end
+        end
+    ]]
+	return assert(loadstring(code, "=(vararg)"))()(f)
+end
+
 -- WoW APIs
 local _G = getfenv() or _G or {}
 
@@ -130,16 +151,15 @@ end
 function AceConsole:IterateChatCommands() return pairs(AceConsole.commands) end
 
 
-local function nils(n,a0,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
-	local args = {a0,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10}
+AceConsole.nils = vararg(1, function(n,arg)
 	if n>1 then
-		return nil, nils(n-1, args)
+		return nil, AceConsole.nils(n-1, arg)
 	elseif n==1 then
-		return nil,a0,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10
+		return nil,unpack(arg)
 	else
-		return a0,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10
+		return unpack(arg)
 	end
-end
+end)
 
 
 --- Retreive one or more space-separated arguments from a string.
@@ -158,7 +178,7 @@ function AceConsole:GetArgs(str, numargs, startpos)
 	-- find start of new arg
 	pos = strfind(str, "[^ ]", pos)
 	if not pos then	-- whoops, end of string
-		return nils(numargs, 1e9)
+		return AceConsole.nils(numargs, 1e9)
 	end
 
 	if numargs<1 then
@@ -213,7 +233,7 @@ function AceConsole:GetArgs(str, numargs, startpos)
 	end
 
 	-- search aborted, we hit end of string. return it all as one argument. (yes, even if it's an unterminated quote or hyperlink)
-	return strsub(str, startpos), nils(numargs-1, 1e9)
+	return strsub(str, startpos), AceConsole.nils(numargs-1, 1e9)
 end
 
 

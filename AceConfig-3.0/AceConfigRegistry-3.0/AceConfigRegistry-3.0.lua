@@ -24,7 +24,7 @@ end
 
 -- Lua APIs
 local tinsert, tconcat, tgetn = table.insert, table.concat, table.getn
-local strfind = string.find
+local strfind, unpack = string.find, unpack
 local type, tostring, pairs = type, tostring, pairs
 local error, assert, loadstring = error, assert, loadstring
 
@@ -239,56 +239,56 @@ local validateVal = vararg(3, function(v, oktypes, errlvl,arg)
 	end
 end)
 
-local function validate(options,errlvl,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
+AceConfigRegistry.validate = vararg(2, function(options,errlvl,arg)
 	errlvl=(errlvl or 0)+1
 	-- basic consistency
 	if type(options)~="table" then
-		err(": expected a table, got a "..type(options), errlvl,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
+		err(": expected a table, got a "..type(options), errlvl,unpack(arg))
 	end
 	if type(options.type)~="string" then
-		err(".type: expected a string, got a "..type(options.type), errlvl,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
+		err(".type: expected a string, got a "..type(options.type), errlvl,unpack(arg))
 	end
 
 	-- get type and 'typedkeys' member
 	local tk = typedkeys[options.type]
 	if not tk then
-		err(".type: unknown type '"..options.type.."'", errlvl,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
+		err(".type: unknown type '"..options.type.."'", errlvl,unpack(arg))
 	end
 
 	-- make sure that all options[] are known parameters
 	for k,v in pairs(options) do
 		if not (tk[k] or basekeys[k]) then
-			err(": unknown parameter", errlvl,tostring(k),a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
+			err(": unknown parameter", errlvl,tostring(k),unpack(arg))
 		end
 	end
 
 	-- verify that required params are there, and that everything is the right type
 	for k,oktypes in pairs(basekeys) do
-		validateVal(options[k], oktypes, errlvl,k,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
+		validateVal(options[k], oktypes, errlvl,k,unpack(arg))
 	end
 	for k,oktypes in pairs(tk) do
-		validateVal(options[k], oktypes, errlvl,k,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
+		validateVal(options[k], oktypes, errlvl,k,unpack(arg))
 	end
 
 	-- extra logic for groups
 	if options.type=="group" then
 		for k,v in pairs(options.args) do
-			validateKey(k,errlvl,"args",a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
-			validate(v, errlvl,k,"args",a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
+			validateKey(k,errlvl,"args",unpack(arg))
+			AceConfigRegistry.validate(v, errlvl,k,"args",unpack(arg))
 		end
 		if options.plugins then
 			for plugname,plugin in pairs(options.plugins) do
 				if type(plugin)~="table" then
-					err(": expected a table, got '"..tostring(plugin).."'", errlvl,tostring(plugname),"plugins",a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
+					err(": expected a table, got '"..tostring(plugin).."'", errlvl,tostring(plugname),"plugins",unpack(arg))
 				end
 				for k,v in pairs(plugin) do
-					validateKey(k,errlvl,tostring(plugname),"plugins",a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
-					validate(v, errlvl,k,tostring(plugname),"plugins",a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
+					validateKey(k,errlvl,tostring(plugname),"plugins",unpack(arg))
+					AceConfigRegistry.validate(v, errlvl,k,tostring(plugname),"plugins",unpack(arg))
 				end
 			end
 		end
 	end
-end
+end)
 
 
 --- Validates basic structure and integrity of an options table \\
@@ -302,7 +302,7 @@ function AceConfigRegistry:ValidateOptionsTable(options,name,errlvl)
 	if not options.name then
 		options.name=name	-- bit of a hack, the root level doesn't really need a .name :-/
 	end
-	validate(options,errlvl,name)
+	AceConfigRegistry.validate(options,errlvl,name)
 end
 
 --- Fires a "ConfigTableChange" callback for those listening in on it, allowing config GUIs to refresh.
