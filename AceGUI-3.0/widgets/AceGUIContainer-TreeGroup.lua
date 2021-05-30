@@ -205,15 +205,14 @@ local function FirstFrameUpdate(frame)
 	self:RefreshTree(nil, true)
 end
 
-local function BuildUniqueValue(a0,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
-	local args = {a0,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10}
-	local n = tgetn(args)
+local BuildUniqueValue = vararg(0, function(arg)
+	local n = tgetn(arg)
 	if n == 1 then
-		return args[1]
+		return arg[1]
 	else
-		return tconcat(args, "\001", 1, tgetn(args))
+		return tconcat(arg, "\001", 1, tgetn(arg))
 	end
-end
+end)
 
 --[[-----------------------------------------------------------------------------
 Scripts
