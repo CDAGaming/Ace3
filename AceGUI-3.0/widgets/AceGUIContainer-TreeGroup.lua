@@ -558,18 +558,18 @@ local methods = {
 		end
 	end,
 
-	["Select"] = function(self, uniquevalue, a0,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10)
+	["Select"] = vararg(2, function(self, uniquevalue, arg)
 		self.filter = false
 		local status = self.status or self.localstatus
 		local groups = status.groups
-		local path = {a0,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10}
+		local path = arg
 		for i = 1, tgetn(path) do
 			groups[tconcat(path, "\001", 1, i)] = true
 		end
 		status.selected = uniquevalue
 		self:RefreshTree(true)
 		self:Fire("OnGroupSelected", uniquevalue)
-	end,
+	end),
 
 	["SelectByPath"] = vararg(1, function(self, arg)
 		self:Select(BuildUniqueValue(unpack(arg)), unpack(arg))

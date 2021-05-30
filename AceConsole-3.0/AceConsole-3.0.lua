@@ -57,32 +57,30 @@ function Print(self, frame, arg)
 end
 end	-- Print
 
-function AceConsole:Print(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9)
-	local args = {arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9}
-	local frame = arg1
+AceConsole.Print = vararg(1, function(self, arg)
+	local frame = arg[1]
 	if type(frame) == "table" and frame.AddMessage then	-- Is first argument something with an .AddMessage member?
-		return Print(self, nil, args)
+		return Print(self, nil, arg)
 	else
-		return Print(self, DEFAULT_CHAT_FRAME, args)
+		return Print(self, DEFAULT_CHAT_FRAME, arg)
 	end
-end
+end)
 
 --- Formatted (using format()) print to DEFAULT_CHAT_FRAME or given ChatFrame (anything with an .AddMessage function)
 -- @paramsig [chatframe ,] "format"[, ...]
 -- @param chatframe Custom ChatFrame to print to (or any frame with an .AddMessage function)
 -- @param format Format string - same syntax as standard Lua format()
 -- @param ... Arguments to the format string
-function AceConsole:Printf(a1, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9)
-	local args = {arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9}
+AceConsole.Printf = vararg(2, function(self, a1, arg)
 	local frame, succ, s
 	if type(a1) == "table" and a1.AddMessage then	-- Is first argument something with an .AddMessage member?
-		frame, succ, s = a1, pcall(format, unpack(args))
+		frame, succ, s = a1, pcall(format, unpack(arg))
 	else
-		frame, succ, s = DEFAULT_CHAT_FRAME, pcall(format, a1, unpack(args))
+		frame, succ, s = DEFAULT_CHAT_FRAME, pcall(format, a1, unpack(arg))
 	end
 	if not succ then error(s,2) end
 	return Print(self, frame, s)
-end
+end)
 
 
 
