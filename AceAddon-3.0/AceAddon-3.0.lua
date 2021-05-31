@@ -164,11 +164,13 @@ end
 -- -- Create a Addon object based on the table of a frame
 -- local MyFrame = CreateFrame("Frame")
 -- MyAddon = LibStub("AceAddon-3.0"):NewAddon(MyFrame, "MyAddon", "AceEvent-3.0")
-AceAddon.NewAddon = AceAddon:vararg(3, function(self,objectorname,a0,arg)
+AceAddon.NewAddon = AceAddon:vararg(2, function(self,objectorname,arg)
 	local object,name
+	local i=1
 	if type(objectorname)=="table" then
 		object=objectorname
-		name=a0
+		name=arg[1]
+		i=2
 	else
 		name=objectorname
 	end
@@ -195,11 +197,7 @@ AceAddon.NewAddon = AceAddon:vararg(3, function(self,objectorname,a0,arg)
 	object.orderedModules = {}
 	object.defaultModuleLibraries = {}
 	Embed( object ) -- embed NewModule, GetModule methods
-	if type(objectorname)=="table" then
-		self:EmbedLibraries(object,nil,unpack(arg))
-	elseif a0 then
-		self:EmbedLibraries(object,a0,unpack(arg))
-	end
+	self:EmbedLibraries(object, select(i,unpack(arg)))
 
 	-- add to queue of addons to be initialized upon ADDON_LOADED
 	tinsert(self.initializequeue, object)
@@ -228,8 +226,7 @@ end
 -- @paramsig addon, [lib, ...]
 -- @param addon addon object to embed the libs in
 -- @param lib List of libraries to embed into the addon
-AceAddon.EmbedLibraries = AceAddon:vararg(3, function(self, addon, a1, arg)
-	if a1 then self:EmbedLibrary(addon, a1, false, 4) end
+AceAddon.EmbedLibraries = AceAddon:vararg(2, function(self, addon, arg)
 	for i=1,tgetn(arg) do
 		local libname = arg[i]
 		self:EmbedLibrary(addon, libname, false, 4)

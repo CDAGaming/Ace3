@@ -21,7 +21,7 @@ AceConsole.commands = AceConsole.commands or {} -- table containing commands reg
 AceConsole.weakcommands = AceConsole.weakcommands or {} -- table containing self, command => func references for weak commands that don't persist through enable/disable
 
 -- Lua APIs
-local tconcat, tgetn, tostring = table.concat, table.getn, tostring
+local tconcat, tgetn, tostring, select = table.concat, table.getn, tostring, select
 local type, pairs, error = type, pairs, error
 local format, strfind, strsub = string.format, string.find, string.sub
 local strlower, strupper = string.lower, string.upper
@@ -81,7 +81,7 @@ end	-- Print
 AceConsole.Print = vararg(1, function(self, arg)
 	local frame = arg[1]
 	if type(frame) == "table" and frame.AddMessage then	-- Is first argument something with an .AddMessage member?
-		return Print(self, nil, arg)
+		return Print(self, frame, select(2, arg))
 	else
 		return Print(self, DEFAULT_CHAT_FRAME, arg)
 	end
@@ -92,15 +92,13 @@ end)
 -- @param chatframe Custom ChatFrame to print to (or any frame with an .AddMessage function)
 -- @param format Format string - same syntax as standard Lua format()
 -- @param ... Arguments to the format string
-AceConsole.Printf = vararg(2, function(self, a1, arg)
-	local frame, succ, s
-	if type(a1) == "table" and a1.AddMessage then	-- Is first argument something with an .AddMessage member?
-		frame, succ, s = a1, pcall(format, unpack(arg))
+AceConsole.Printf = vararg(1, function(self, arg)
+	local frame = arg[1]
+	if type(frame) == "table" and frame.AddMessage then	-- Is first argument something with an .AddMessage member?
+		return Print(self, frame, format(select(2, arg)))
 	else
-		frame, succ, s = DEFAULT_CHAT_FRAME, pcall(format, a1, unpack(arg))
+		return Print(self, DEFAULT_CHAT_FRAME, format(unpack(arg)))
 	end
-	if not succ then error(s,2) end
-	return Print(self, frame, s)
 end)
 
 
