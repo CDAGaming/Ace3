@@ -22,10 +22,10 @@ AceConsole.weakcommands = AceConsole.weakcommands or {} -- table containing self
 
 -- Lua APIs
 local tconcat, tgetn, tostring, select = table.concat, table.getn, tostring, select
-local type, pairs, error = type, pairs, error
+local type, pairs, error, unpack = type, pairs, error, unpack
 local format, strfind, strsub = string.format, string.find, string.sub
 local strlower, strupper = string.lower, string.upper
-local max = math.max
+local max, assert, loadstring = math.max, assert, loadstring
 
 local supports_ellipsis = loadstring("return ...") ~= nil
 local template_args = supports_ellipsis and "{...}" or "arg"
@@ -151,7 +151,7 @@ function AceConsole:IterateChatCommands() return pairs(AceConsole.commands) end
 
 AceConsole.nils = vararg(1, function(n,arg)
 	if n>1 then
-		return nil, AceConsole.nils(n-1, arg)
+		return nil, AceConsole.nils(n-1, unpack(arg))
 	elseif n==1 then
 		return nil,unpack(arg)
 	else
