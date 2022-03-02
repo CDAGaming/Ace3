@@ -6,14 +6,11 @@ local min, max, floor = math.min, math.max, math.floor
 local pairs, ipairs, type, tostring, format = pairs, ipairs, type, tostring, string.format
 local tsort, tinsert, tgetn = table.sort, table.insert, table.getn
 
-local wowLegacy, wowThirdLegion, wowClassicRebased, wowTBCRebased
+local wowLegacy
 do
 	local _, build, _, interface = GetBuildInfo()
 	interface = interface or tonumber(build)
 	wowLegacy = (interface <= 11201)
-	wowThirdLegion = (interface >= 70300)
-	wowClassicRebased = (interface >= 11300 and interface < 20000)
-	wowTBCRebased = (interface >= 20500 and interface < 30000)
 end
 
 local setn = function(t,n)
@@ -374,7 +371,7 @@ end
 
 do
 	local widgetType = "Dropdown"
-	local widgetVersion = 35
+	local widgetVersion = 36
 
 	--[[ Static data ]]--
 
@@ -403,7 +400,6 @@ do
 	local function Dropdown_TogglePullout(frame)
 		frame = frame or this
 		local self = frame.obj
-		PlaySound((wowThirdLegion or wowClassicRebased or wowTBCRebased) and 856 or "igMainMenuOptionCheckBoxOn") -- SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON
 		if self.open then
 			self.open = nil
 			self.pullout:Close()
