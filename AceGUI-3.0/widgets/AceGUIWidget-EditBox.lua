@@ -9,7 +9,7 @@ if not AceGUI or (AceGUI:GetWidgetVersion(Type) or 0) >= Version then return end
 local tostring, pairs, tconcat, unpack = tostring, pairs, table.concat, unpack
 local assert, type, error, loadstring = assert, type, error, loadstring
 
-local wowThirdLegion, wowLegacy, wowClassicRebased, wowTBCRebased
+local wowThirdLegion, wowLegacy, wowClassicRebased, wowTBCRebased, wowWrathRebased
 do
 	local _, build, _, interface = GetBuildInfo()
 	interface = interface or tonumber(build)
@@ -17,6 +17,7 @@ do
 	wowLegacy = (interface <= 11201)
 	wowClassicRebased = (interface >= 11300 and interface < 20000)
 	wowTBCRebased = (interface >= 20500 and interface < 30000)
+	wowWrathRebased = (interface >= 30400 and interface < 40000)
 end
 
 local supports_ellipsis = loadstring("return ...") ~= nil
@@ -122,7 +123,7 @@ local function EditBox_OnEnterPressed(frame)
 	local value = frame:GetText()
 	local cancel = self:Fire("OnEnterPressed", value)
 	if not cancel then
-		PlaySound((wowThirdLegion or wowClassicRebased or wowTBCRebased) and 856 or "igMainMenuOptionCheckBoxOn") -- SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON
+		PlaySound((wowThirdLegion or wowClassicRebased or wowTBCRebased or wowWrathRebased) and 856 or "igMainMenuOptionCheckBoxOn") -- SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON
 		HideButton(self)
 	end
 end

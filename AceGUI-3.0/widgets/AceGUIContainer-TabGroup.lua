@@ -23,15 +23,16 @@ wipe = (wipe or function(table)
 	return table
 end)
 
-local wowCata, wowWotlk, wowThirdLegion, wowClassicRebased, wowTBCRebased
+local wowCata, wowWrath, wowThirdLegion, wowClassicRebased, wowTBCRebased, wowWrathRebased
 do
 	local _, build, _, interface = GetBuildInfo()
 	interface = interface or tonumber(build)
-	wowWotlk = (interface >= 30000)
-	wowCata = (interface >= 40000)
-	wowThirdLegion = (interface >= 70300)
 	wowClassicRebased = (interface >= 11300 and interface < 20000)
 	wowTBCRebased = (interface >= 20500 and interface < 30000)
+	wowWrathRebased = (interface >= 30400 and interface < 40000)
+	wowWrath = (interface >= 30000 and not wowWrathRebased)
+	wowCata = (interface >= 40000)
+	wowThirdLegion = (interface >= 70300)
 end
 
 -- WoW APIs
@@ -64,9 +65,9 @@ end
 local function Tab_SetText(frame, text)
 	frame:_SetText(text)
 	local width = frame.obj.frame.width or frame.obj.frame:GetWidth() or 0
-	if (wowCata or wowClassicRebased or wowTBCRebased) then
+	if (wowCata or wowClassicRebased or wowTBCRebased or wowWrathRebased) then
 		PanelTemplates_TabResize(frame, 0, nil, nil, width, frame:GetFontString():GetStringWidth())
-	elseif wowWotlk then
+	elseif wowWrath then
 		PanelTemplates_TabResize(frame, 0, nil, width)
 	else
 		PanelTemplates_TabResize(0, frame, nil, width)
@@ -94,7 +95,7 @@ Scripts
 -------------------------------------------------------------------------------]]
 local function Tab_OnClick(frame)
 	if not (frame.selected or frame.disabled) then
-		PlaySound((wowThirdLegion or wowClassicRebased or wowTBCRebased) and 841 or "igCharacterInfoTab") -- SOUNDKIT.IG_CHARACTER_INFO_TAB
+		PlaySound((wowThirdLegion or wowClassicRebased or wowTBCRebased or wowWrathRebased) and 841 or "igCharacterInfoTab") -- SOUNDKIT.IG_CHARACTER_INFO_TAB
 		frame.obj:SelectTab(frame.value)
 	end
 end
@@ -286,9 +287,9 @@ local methods = {
 			end
 
 			for i = starttab, endtab do
-				if (wowCata or wowClassicRebased or wowTBCRebased) then
+				if (wowCata or wowClassicRebased or wowTBCRebased or wowWrathRebased) then
 					PanelTemplates_TabResize(tabs[i], padding + 4, nil, nil, width, tabs[i]:GetFontString():GetStringWidth())
-				elseif wowWotlk then
+				elseif wowWrath then
 					PanelTemplates_TabResize(tabs[i], padding + 4, nil, width)
 				else
 					PanelTemplates_TabResize(padding + 4, tabs[i], nil, width)

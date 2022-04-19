@@ -3,13 +3,14 @@ local AceGUI = LibStub("AceGUI-3.0")
 -- Lua APIs
 local pairs, assert, type = pairs, assert, type
 
-local wowThirdLegion, wowClassicRebased, wowTBCRebased
+local wowThirdLegion, wowClassicRebased, wowTBCRebased, wowWrathRebased
 do
 	local _, build, _, interface = GetBuildInfo()
 	interface = interface or tonumber(build)
 	wowThirdLegion = (interface >= 70300)
 	wowClassicRebased = (interface >= 11300 and interface < 20000)
 	wowTBCRebased = (interface >= 20500 and interface < 30000)
+	wowWrathRebased = (interface >= 30400 and interface < 40000)
 end
 
 -- WoW APIs
@@ -44,7 +45,7 @@ do
 
 	local function closeOnClick(frame)
 		frame = frame or this
-		PlaySound((wowThirdLegion or wowClassicRebased or wowTBCRebased) and 799 or "gsTitleOptionExit") -- SOUNDKIT.GS_TITLE_OPTION_EXIT
+		PlaySound((wowThirdLegion or wowClassicRebased or wowTBCRebased or wowWrathRebased) and 799 or "gsTitleOptionExit") -- SOUNDKIT.GS_TITLE_OPTION_EXIT
 		frame.obj:Hide()
 	end
 

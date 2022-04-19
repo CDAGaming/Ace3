@@ -36,14 +36,15 @@ end
 -- List them here for Mikk's FindGlobals script
 -- GLOBALS: ACCEPT, ChatFontNormal
 
-local wowMoP, wowClassicRebased, wowTBCRebased, wowLegacy
+local wowMoP, wowLegacy, wowClassicRebased, wowTBCRebased, wowWrathRebased
 do
 	local _, build, _, interface = GetBuildInfo()
 	interface = interface or tonumber(build)
 	wowMoP = (interface >= 50000)
+	wowLegacy = (interface <= 11201)
 	wowClassicRebased = (interface >= 11300 and interface < 20000)
 	wowTBCRebased = (interface >= 20500 and interface < 30000)
-	wowLegacy = (interface <= 11201)
+	wowWrathRebased = (interface >= 30400 and interface < 40000)
 end
 
 local hooksecurefunc = hooksecurefunc or function (table, functionName, hookfunc)
@@ -334,7 +335,7 @@ local function Constructor()
 	label:SetText(ACCEPT)
 	label:SetHeight(10)
 
-	local button = CreateFrame("Button", format("%s%dButton", Type, widgetNum), frame, (wowMoP or wowClassicRebased or wowTBCRebased) and "UIPanelButtonTemplate" or "UIPanelButtonTemplate2")
+	local button = CreateFrame("Button", format("%s%dButton", Type, widgetNum), frame, (wowMoP or wowClassicRebased or wowTBCRebased or wowWrathRebased) and "UIPanelButtonTemplate" or "UIPanelButtonTemplate2")
 	button:SetPoint("BOTTOMLEFT", 0, 4)
 	button:SetHeight(22)
 	button:SetWidth(label:GetStringWidth() + 24)

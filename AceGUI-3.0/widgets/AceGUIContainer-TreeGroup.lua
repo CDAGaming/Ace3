@@ -35,12 +35,12 @@ local function vararg(n, f)
 	return assert(loadstring(code, "=(vararg)"))()(f)
 end
 
-local wowBfa, wowWotlk, wowClassicRebased, wowTBCRebased
+local wowBfa, wowWrath, wowClassicRebased, wowTBCRebased
 do
 	local _, build, _, interface = GetBuildInfo()
 	interface = interface or tonumber(build)
 	wowBfa = (interface >= 80000)
-	wowWotlk = (interface >= 30000)
+	wowWrath = (interface >= 30000)
 	wowClassicRebased = (interface >= 11300 and interface < 20000)
 	wowTBCRebased = (interface >= 20500 and interface < 30000)
 end
@@ -364,7 +364,7 @@ local methods = {
 
 	["CreateButton"] = function(self)
 		local num = AceGUI:GetNextWidgetNum("TreeGroupButton")
-		local button = CreateFrame("Button", format("AceGUI30TreeButton%d", num), self.treeframe, (wowWotlk or wowClassicRebased or wowTBCRebased) and "OptionsListButtonTemplate" or "InterfaceOptionsButtonTemplate")
+		local button = CreateFrame("Button", format("AceGUI30TreeButton%d", num), self.treeframe, (wowWrath or wowClassicRebased or wowTBCRebased) and "OptionsListButtonTemplate" or "InterfaceOptionsButtonTemplate")
 		button.obj = self
 
 		local icon = button:CreateTexture(nil, "OVERLAY")

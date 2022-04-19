@@ -17,13 +17,14 @@ local CreateFrame, UIParent = CreateFrame, UIParent
 -- List them here for Mikk's FindGlobals script
 -- GLOBALS: NOT_BOUND
 
-local wowMoP, wowClassicRebased, wowTBCRebased
+local wowMoP, wowClassicRebased, wowTBCRebased, wowWrathRebased
 do
 	local _, build, _, interface = GetBuildInfo()
 	interface = interface or tonumber(build)
 	wowMoP = (interface >= 50000)
 	wowClassicRebased = (interface >= 11300 and interface < 20000)
 	wowTBCRebased = (interface >= 20500 and interface < 30000)
+	wowWrathRebased = (interface >= 30400 and interface < 40000)
 end
 
 --[[-----------------------------------------------------------------------------
@@ -209,7 +210,7 @@ local function Constructor()
 	local name = "AceGUI30KeybindingButton" .. AceGUI:GetNextWidgetNum(Type)
 
 	local frame = CreateFrame("Frame", nil, UIParent)
-	local button = CreateFrame("Button", name, frame, (wowMoP or wowClassicRebased or wowTBCRebased) and "UIPanelButtonTemplate" or "UIPanelButtonTemplate2")
+	local button = CreateFrame("Button", name, frame, (wowMoP or wowClassicRebased or wowTBCRebased or wowWrathRebased) and "UIPanelButtonTemplate" or "UIPanelButtonTemplate2")
 
 	button:EnableMouse(true)
 	button:EnableMouseWheel(false)
