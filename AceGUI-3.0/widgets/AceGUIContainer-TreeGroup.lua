@@ -567,6 +567,7 @@ local methods = {
 		end
 
 		local buttonnum = 1
+		local treewidth = treeframe:GetWidth()
 		for i = first, last do
 			local line = lines[i]
 			local button = buttons[buttonnum]
@@ -576,17 +577,33 @@ local methods = {
 				buttons[buttonnum] = button
 				button:SetParent(treeframe)
 				button:SetFrameLevel(treeframe:GetFrameLevel()+1)
-				button:ClearAllPoints()
-				if buttonnum == 1 then
-					if self.showscroll then
-						button:SetPoint("TOPRIGHT", -22, -10)
-						button:SetPoint("TOPLEFT", 0, -10)
-					else
-						button:SetPoint("TOPRIGHT", 0, -10)
+			end
+
+			button:ClearAllPoints()
+			if buttonnum == 1 then
+				if self.showscroll then
+					if wowLegacy then
+						button:SetWidth(treewidth - 22)
+					end
+					button:SetPoint("TOPRIGHT", -22, -10)
+					if not wowLegacy then
 						button:SetPoint("TOPLEFT", 0, -10)
 					end
 				else
-					button:SetPoint("TOPRIGHT", buttons[buttonnum-1], "BOTTOMRIGHT",0,0)
+					if wowLegacy then
+						button:SetWidth(treewidth)
+					end
+					button:SetPoint("TOPRIGHT", 0, -10)
+					if not wowLegacy then
+						button:SetPoint("TOPLEFT", 0, -10)
+					end
+				end
+			else
+				if wowLegacy then
+					button:SetWidth(self.showscroll and (treewidth - 22) or treewidth)
+				end
+				button:SetPoint("TOPRIGHT", buttons[buttonnum-1], "BOTTOMRIGHT",0,0)
+				if not wowLegacy then
 					button:SetPoint("TOPLEFT", buttons[buttonnum-1], "BOTTOMLEFT",0,0)
 				end
 			end
