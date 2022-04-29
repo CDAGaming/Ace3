@@ -43,8 +43,8 @@ end
 local function UpdateLabels(self)
 	local min, max = (self.min or 0), (self.max or 100)
 	if self.ispercent then
-		self.lowtext:SetFormattedText("%s%%", (min * 100))
-		self.hightext:SetFormattedText("%s%%", (max * 100))
+		self.lowtext:SetText(format("%s%%", (min * 100)))
+		self.hightext:SetText(format("%s%%", (max * 100)))
 	else
 		self.lowtext:SetText(min)
 		self.hightext:SetText(max)
@@ -163,6 +163,7 @@ local methods = {
 		self.disabled = disabled
 		if disabled then
 			self.slider:EnableMouse(false)
+			self.slider:GetThumbTexture():SetDesaturated(true) -- ElvUI
 			self.label:SetTextColor(.5, .5, .5)
 			self.hightext:SetTextColor(.5, .5, .5)
 			self.lowtext:SetTextColor(.5, .5, .5)
@@ -172,6 +173,7 @@ local methods = {
 			self.editbox:ClearFocus()
 		else
 			self.slider:EnableMouse(true)
+			self.slider:GetThumbTexture():SetDesaturated(false) -- ElvUI
 			self.label:SetTextColor(1, .82, 0)
 			self.hightext:SetTextColor(1, 1, 1)
 			self.lowtext:SetTextColor(1, 1, 1)
