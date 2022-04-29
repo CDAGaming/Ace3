@@ -11,6 +11,13 @@ local pairs, assert, type = pairs, assert, type
 local min, max, floor = math.min, math.max, math.floor
 local format = string.format
 
+local wowLegacy
+do
+	local _, build, _, interface = GetBuildInfo()
+	interface = interface or tonumber(build)
+	wowLegacy = (interface <= 11201)
+end
+
 -- WoW APIs
 local CreateFrame, UIParent = CreateFrame, UIParent
 
@@ -114,7 +121,9 @@ local methods = {
 				end
 				self:DoLayout()
 			end
-			offset = 0
+			if wowLegacy then
+				offset = 0
+			end
 		else
 			if not self.scrollBarShown then
 				self.scrollBarShown = true
@@ -128,16 +137,26 @@ local methods = {
 			local value = (offset / (viewheight - height) * 1000)
 			if value > 1000 then
 				value = 1000
-				offset = height - viewheight + 2
+				if wowLegacy then
+					offset = height - viewheight + 2
+				end
 			end
 			self.scrollbar:SetValue(value)
 			self:SetScroll(value)
+			if value < 1000 and not wowLegacy then
+				self.content:ClearAllPoints()
+				self.content:SetPoint("TOPLEFT", 0, offset)
+				self.content:SetPoint("TOPRIGHT", 0, offset)
+				status.offset = offset
+			end
 		end
-		status.offset = offset
-		self.scrollframe:SetScrollChild(self.content)
-		self.content:ClearAllPoints()
-		self.content:SetPoint("TOPLEFT", 0, offset)
-		self.content:SetPoint("TOPRIGHT", 0, offset)
+		if wowLegacy then
+			status.offset = offset
+			self.scrollframe:SetScrollChild(self.content)
+			self.content:ClearAllPoints()
+			self.content:SetPoint("TOPLEFT", 0, offset)
+			self.content:SetPoint("TOPRIGHT", 0, offset)
+		end
 		self.updateLock = nil
 	end,
 
