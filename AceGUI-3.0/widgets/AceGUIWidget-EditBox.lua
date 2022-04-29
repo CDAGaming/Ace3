@@ -8,6 +8,7 @@ if not AceGUI or (AceGUI:GetWidgetVersion(Type) or 0) >= Version then return end
 -- Lua APIs
 local tostring, pairs, tconcat, unpack = tostring, pairs, table.concat, unpack
 local assert, type, error, loadstring = assert, type, error, loadstring
+local gsub, sub = string.gsub, string.sub
 
 local wowThirdLegion, wowLegacy, wowClassicRebased, wowTBCRebased, wowWrathRebased
 do
@@ -43,7 +44,7 @@ end
 
 -- WoW APIs
 local PlaySound = PlaySound
-local GetCursorInfo, ClearCursor, GetSpellInfo = GetCursorInfo, ClearCursor, GetSpellInfo
+local GetCursorInfo, ClearCursor = GetCursorInfo, ClearCursor
 local CreateFrame, UIParent = CreateFrame, UIParent
 local _G = getfenv() or _G or {}
 
@@ -69,17 +70,121 @@ end
 --[[-----------------------------------------------------------------------------
 Support functions
 -------------------------------------------------------------------------------]]
-if not AceGUIEditBoxInsertLink and not wowLegacy then
-	-- upgradeable hook
-	hooksecurefunc("ChatEdit_InsertLink", vararg(0, function(arg)
-		return _G.AceGUIEditBoxInsertLink(unpack(arg))
-	end))
+if not AceGUIEditBoxInsertLink then
+	-- upgradeable hooks
+	if wowLegacy then
+		local GetContainerItemLink = GetContainerItemLink
+		local GetInventoryItemLink = GetInventoryItemLink
+		local GetLootSlotLink = GetLootSlotLink
+		local GetMerchantItemLink = GetMerchantItemLink
+		local GetQuestItemLink = GetQuestItemLink
+		local GetQuestLogItemLink = GetQuestLogItemLink
+		local GetSpellName = GetSpellName
+		local IsShiftKeyDown = IsShiftKeyDown
+		local IsSpellPassive = IsSpellPassive
+		local SpellBook_GetSpellID = SpellBook_GetSpellID
+
+		local BANK_CONTAINER = BANK_CONTAINER
+		local KEYRING_CONTAINER = KEYRING_CONTAINER
+		local MAX_SPELLS = MAX_SPELLS
+
+		hooksecurefunc("BankFrameItemButtonGeneric_OnClick", function(button)
+			if button == "LeftButton" and IsShiftKeyDown() and not this.isBag then
+				return _G.AceGUIEditBoxInsertLink(GetContainerItemLink(BANK_CONTAINER, this:GetID()))
+			end
+		end)
+
+		hooksecurefunc("ContainerFrameItemButton_OnClick", function(button, ignoreModifiers)
+			if button == "LeftButton" and IsShiftKeyDown() and not ignoreModifiers then
+				return _G.AceGUIEditBoxInsertLink(GetContainerItemLink(this:GetParent():GetID(), this:GetID()))
+			end
+		end)
+
+		hooksecurefunc("KeyRingItemButton_OnClick", function(button)
+			if button == "LeftButton" and IsShiftKeyDown() and not this.isBag then
+				return _G.AceGUIEditBoxInsertLink(GetContainerItemLink(KEYRING_CONTAINER, this:GetID()))
+			end
+		end)
+
+		hooksecurefunc("LootFrameItem_OnClick", function(button)
+			if button == "LeftButton" and IsShiftKeyDown() then
+				return _G.AceGUIEditBoxInsertLink(GetLootSlotLink(this.slot))
+			end
+		end)
+
+		hooksecurefunc("SetItemRef", function(link, text, button)
+			if IsShiftKeyDown() then
+				if sub(link, 1, 6) == "player" then
+					local name = sub(link, 8)
+					if name and name ~= "" then
+						return _G.AceGUIEditBoxInsertLink(name)
+					end
+				else
+					return _G.AceGUIEditBoxInsertLink(text)
+				end
+			end
+		end)
+
+		hooksecurefunc("MerchantItemButton_OnClick", function(button, ignoreModifiers)
+			if MerchantFrame.selectedTab == 1 and button == "LeftButton" and IsShiftKeyDown() and not ignoreModifiers then
+				return _G.AceGUIEditBoxInsertLink(GetMerchantItemLink(this:GetID()))
+			end
+		end)
+
+		hooksecurefunc("PaperDollItemSlotButton_OnClick", function(button, ignoreModifiers)
+			if button == "LeftButton" and IsShiftKeyDown() and not ignoreModifiers then
+				return _G.AceGUIEditBoxInsertLink(GetInventoryItemLink("player", this:GetID()))
+			end
+		end)
+
+		hooksecurefunc("QuestItem_OnClick", function()
+			if IsShiftKeyDown() and this.rewardType ~= "spell" then
+				return _G.AceGUIEditBoxInsertLink(GetQuestItemLink(this.type, this:GetID()))
+			end
+		end)
+
+		hooksecurefunc("QuestRewardItem_OnClick", function()
+			if IsShiftKeyDown() and this.rewardType ~= "spell" then
+				return _G.AceGUIEditBoxInsertLink(GetQuestItemLink(this.type, this:GetID()))
+			end
+		end)
+
+		hooksecurefunc("QuestLogTitleButton_OnClick", function(button)
+			if IsShiftKeyDown() and (not this.isHeader) then
+				return _G.AceGUIEditBoxInsertLink(gsub(this:GetText(), " *(.*)", "%1"))
+			end
+		end)
+
+		hooksecurefunc("QuestLogRewardItem_OnClick", function()
+			if IsShiftKeyDown() and this.rewardType ~= "spell" then
+				return _G.AceGUIEditBoxInsertLink(GetQuestLogItemLink(this.type, this:GetID()))
+			end
+		end)
+
+		hooksecurefunc("SpellButton_OnClick", function(drag)
+			local id = SpellBook_GetSpellID(this:GetID())
+			if id <= MAX_SPELLS and (not drag) and IsShiftKeyDown() then
+				local spellName, subSpellName = GetSpellName(id, SpellBookFrame.bookType)
+				if spellName and not IsSpellPassive(id, SpellBookFrame.bookType) then
+					if subSpellName and subSpellName ~= "" then
+						_G.AceGUIEditBoxInsertLink(spellName.."("..subSpellName..")")
+					else
+						_G.AceGUIEditBoxInsertLink(spellName)
+					end
+				end
+			end
+		end)
+	else
+		hooksecurefunc("ChatEdit_InsertLink", vararg(0, function(arg)
+			return _G.AceGUIEditBoxInsertLink(unpack(arg))
+		end))
+	end
 end
 
 function _G.AceGUIEditBoxInsertLink(text)
 	for i = 1, AceGUI:GetWidgetCount(Type) do
 		local editbox = _G["AceGUI-3.0EditBox"..i]
-		if editbox and editbox:IsVisible() and editbox:HasFocus() then
+		if editbox and editbox:IsVisible() and (editbox.HasFocus and editbox:HasFocus() or editbox.hasfocus) then
 			editbox:Insert(text)
 			return true
 		end
@@ -134,6 +239,8 @@ local function EditBox_OnEnterPressed(frame)
 end
 
 local function EditBox_OnReceiveDrag(frame)
+	if not GetCursorInfo then return end
+
 	frame = frame or this
 	local self = frame.obj
 	local type, id, info = GetCursorInfo()
@@ -141,7 +248,15 @@ local function EditBox_OnReceiveDrag(frame)
 	if type == "item" then
 		name = info
 	elseif type == "spell" then
-		name = GetSpellInfo(id, info)
+		if GetSpellInfo then
+			name = GetSpellInfo(id, info)
+		else
+			local spellName, rank = GetSpellName(id, info)
+			if rank ~= "" then
+				spellName = spellName.."("..rank..")"
+			end
+			name = spellName
+		end
 	elseif type == "macro" then
 		name = GetMacroInfo(id)
 	end
@@ -287,6 +402,7 @@ local function Constructor()
 	editbox:SetScript("OnReceiveDrag", EditBox_OnReceiveDrag)
 	editbox:SetScript("OnMouseDown", EditBox_OnReceiveDrag)
 	editbox:SetScript("OnEditFocusGained", EditBox_OnFocusGained)
+	editbox:SetScript("OnEditFocusLost", EditBox_OnFocusLost)
 	editbox:SetTextInsets(0, 0, 3, 3)
 	editbox:SetMaxLetters(256)
 	editbox:SetPoint("BOTTOMLEFT", 6, 0)
