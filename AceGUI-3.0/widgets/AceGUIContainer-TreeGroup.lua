@@ -36,7 +36,7 @@ local function vararg(n, f)
 	return assert(loadstring(code, "=(vararg)"))()(f)
 end
 
-local wowTBC, wowBfa, wowWrath, wowClassicRebased, wowTBCRebased, wowWrathRebased
+local wowLegacy, wowTBC, wowBfa, wowWrath, wowClassicRebased, wowTBCRebased
 do
 	local _, build, _, interface = GetBuildInfo()
 	interface = interface or tonumber(build)
@@ -45,6 +45,7 @@ do
 	wowTBCRebased = (interface >= 20500 and interface < 30000)
 	wowWrath = interface >= 30000
 	wowTBC = (interface >= 20000 and not wowTBCRebased)
+	wowLegacy = (interface <= 11201)
 end
 
 -- Global vars/functions that we don't upvalue since they might get hooked, or upgraded
@@ -663,6 +664,14 @@ local methods = {
 	end,
 
 	["OnHeightSet"] = function(self, height)
+		local parent = self.parent
+		if parent and height then
+			local _, _, _, _, offset = self:GetPoint()
+			height = (parent.content.height or 0) + (offset or 0) or height
+			self.frame.height = (parent.content.height or 0) + (offset or 0)
+		end
+		self.treeframe:SetHeight(height)
+
 		local content = self.content
 		local contentheight = height - 20
 		if contentheight < 0 then

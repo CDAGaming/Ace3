@@ -163,6 +163,13 @@ local methods = {
 	end,
 
 	["OnHeightSet"] = function(self, height)
+		local parent = self.parent
+		if parent and height then
+			height = (parent.content.height or 0) or height
+			self.frame.height = parent.content.height or 0
+		end
+		self.scrollframe:SetHeight(height)
+
 		local content = self.content
 		content.height = height
 	end
