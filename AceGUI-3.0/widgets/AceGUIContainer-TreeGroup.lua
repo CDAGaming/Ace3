@@ -8,8 +8,9 @@ if not AceGUI or (AceGUI:GetWidgetVersion(Type) or 0) >= Version then return end
 
 -- Lua APIs
 local next, pairs, ipairs, assert, type = next, pairs, ipairs, assert, type
-local math_min, math_max, floor, loadstring, format = math.min, math.max, floor, loadstring, string.format
+local math_min, math_max, floor, loadstring = math.min, math.max, floor, loadstring
 local tremove, tinsert, unpack, tconcat, tgetn = table.remove, table.insert, unpack, table.concat, table.getn
+local format, split = string.format, string.split
 
 -- WoW APIs
 local CreateFrame, UIParent = CreateFrame, UIParent
@@ -35,14 +36,15 @@ local function vararg(n, f)
 	return assert(loadstring(code, "=(vararg)"))()(f)
 end
 
-local wowBfa, wowWrath, wowClassicRebased, wowTBCRebased
+local wowTBC, wowBfa, wowWrath, wowClassicRebased, wowTBCRebased, wowWrathRebased
 do
 	local _, build, _, interface = GetBuildInfo()
 	interface = interface or tonumber(build)
 	wowBfa = (interface >= 80000)
-	wowWrath = (interface >= 30000)
 	wowClassicRebased = (interface >= 11300 and interface < 20000)
 	wowTBCRebased = (interface >= 20500 and interface < 30000)
+	wowWrath = interface >= 30000
+	wowTBC = (interface >= 20000 and not wowTBCRebased)
 end
 
 -- Global vars/functions that we don't upvalue since they might get hooked, or upgraded
@@ -200,6 +202,7 @@ end
 
 --fire an update after one frame to catch the treeframes height
 local function FirstFrameUpdate(frame)
+	frame = frame or this
 	local self = frame.obj
 	frame:SetScript("OnUpdate", nil)
 	self:RefreshTree(nil, true)
@@ -218,6 +221,7 @@ end)
 Scripts
 -------------------------------------------------------------------------------]]
 local function Expand_OnClick(frame)
+	frame = frame or this
 	local button = frame.button
 	local self = button.obj
 	local status = (self.status or self.localstatus).groups
@@ -226,6 +230,7 @@ local function Expand_OnClick(frame)
 end
 
 local function Button_OnClick(frame)
+	frame = frame or this
 	local self = frame.obj
 	self:Fire("OnClick", frame.uniquevalue, frame.selected)
 	if not frame.selected then
@@ -238,6 +243,7 @@ local function Button_OnClick(frame)
 end
 
 local function Button_OnDoubleClick(button)
+	button = button or this
 	local self = button.obj
 	local status = (self.status or self.localstatus).groups
 	status[button.uniquevalue] = not status[button.uniquevalue]
@@ -245,6 +251,7 @@ local function Button_OnDoubleClick(button)
 end
 
 local function Button_OnEnter(frame)
+	frame = frame or this
 	local self = frame.obj
 	self:Fire("OnButtonEnter", frame.uniquevalue, frame)
 
@@ -260,6 +267,7 @@ local function Button_OnEnter(frame)
 end
 
 local function Button_OnLeave(frame)
+	frame = frame or this
 	local self = frame.obj
 	self:Fire("OnButtonLeave", frame.uniquevalue, frame)
 
@@ -269,6 +277,8 @@ local function Button_OnLeave(frame)
 end
 
 local function OnScrollValueChanged(frame, value)
+	frame = frame or this
+	value = value or arg1
 	if frame.obj.noupdate then return end
 	local self = frame.obj
 	local status = self.status or self.localstatus
@@ -278,10 +288,13 @@ local function OnScrollValueChanged(frame, value)
 end
 
 local function Tree_OnSizeChanged(frame)
+	frame = frame or this
 	frame.obj:RefreshTree()
 end
 
 local function Tree_OnMouseWheel(frame, delta)
+	frame = frame or this
+	delta = delta or arg1
 	local self = frame.obj
 	if self.showscroll then
 		local scrollbar = self.scrollbar
@@ -295,19 +308,23 @@ local function Tree_OnMouseWheel(frame, delta)
 end
 
 local function Dragger_OnLeave(frame)
+	frame = frame or this
 	frame:SetBackdropColor(1, 1, 1, 0)
 end
 
 local function Dragger_OnEnter(frame)
+	frame = frame or this
 	frame:SetBackdropColor(1, 1, 1, 0.8)
 end
 
 local function Dragger_OnMouseDown(frame)
+	frame = frame or this
 	local treeframe = frame:GetParent()
 	treeframe:StartSizing("RIGHT")
 end
 
 local function Dragger_OnMouseUp(frame)
+	frame = frame or this
 	local treeframe = frame:GetParent()
 	local self = treeframe.obj
 	local treeframeParent = treeframe:GetParent()
@@ -364,8 +381,39 @@ local methods = {
 
 	["CreateButton"] = function(self)
 		local num = AceGUI:GetNextWidgetNum("TreeGroupButton")
-		local button = CreateFrame("Button", format("AceGUI30TreeButton%d", num), self.treeframe, (wowWrath or wowClassicRebased or wowTBCRebased) and "OptionsListButtonTemplate" or "InterfaceOptionsButtonTemplate")
+		local template = (wowWrath or wowClassicRebased or wowTBCRebased) and "OptionsListButtonTemplate" or (wowTBC and "InterfaceOptionsButtonTemplate" or nil)
+		local button = CreateFrame("Button", format("AceGUI30TreeButton%d", num), self.treeframe, template)
 		button.obj = self
+
+		if template == nil then
+			button:SetWidth(175)
+			button:SetHeight(18)
+
+			local toggle = CreateFrame("Button", nil, button)
+			toggle:SetWidth(14)
+			toggle:SetHeight(14)
+			toggle:ClearAllPoints()
+			toggle:SetPoint("TOPRIGHT", button, "TOPRIGHT", -6, -1)
+			toggle:SetHighlightTexture("Interface\Buttons\UI-PlusButton-Hilight", "ADD")
+			toggle:SetScript("OnClick", Button_OnClick)
+			button.toggle = toggle
+			toggle.obj = button
+
+			local text = button:CreateFontString()
+			text:SetFontObject(GameFontNormal)
+			text:SetPoint("RIGHT", toggle, "LEFT", -2, 0)
+			text:SetJustifyH("LEFT")
+			button:SetHighlightFontObject(GameFontHighlight)
+			button.text = text
+
+			local highlight = button:CreateTexture(nil, "HIGHLIGHT")
+			highlight:SetPoint("TOPLEFT", 0, 1)
+			highlight:SetPoint("BOTTOMRIGHT", 0, 1)
+			highlight:SetTexture("Interface\\QuestFrame\\UI-QuestLogTitleHighlight")
+			highlight:SetBlendMode("ADD")
+			highlight:SetVertexColor(.196, .388, .8)
+			button.highlight = highlight
+		end
 
 		local icon = button:CreateTexture(nil, "OVERLAY")
 		icon:SetWidth(14)
@@ -575,7 +623,7 @@ local methods = {
 	end),
 
 	["SelectByValue"] = function(self, uniquevalue)
-		self:Select(uniquevalue, ("\001"):split(uniquevalue))
+		self:Select(uniquevalue, split("\001", uniquevalue))
 	end,
 
 	["ShowScroll"] = function(self, show)
@@ -682,8 +730,8 @@ local function Constructor()
 	local frame = CreateFrame("Frame", nil, UIParent)
 
 	local treeframe = CreateFrame("Frame", nil, frame, BackdropTemplateMixin and "BackdropTemplate" or nil)
-	treeframe:SetPoint("TOPLEFT")
-	treeframe:SetPoint("BOTTOMLEFT")
+	treeframe:SetPoint("TOPLEFT", 0, 0)
+	treeframe:SetPoint("BOTTOMLEFT", 0, 0)
 	treeframe:SetWidth(DEFAULT_TREE_WIDTH)
 	treeframe:EnableMouseWheel(true)
 	treeframe:SetBackdrop(PaneBackdrop)
@@ -727,7 +775,7 @@ local function Constructor()
 
 	local border = CreateFrame("Frame", nil, frame, BackdropTemplateMixin and "BackdropTemplate" or nil)
 	border:SetPoint("TOPLEFT", treeframe, "TOPRIGHT")
-	border:SetPoint("BOTTOMRIGHT")
+	border:SetPoint("BOTTOMRIGHT", 0, 0)
 	border:SetBackdrop(PaneBackdrop)
 	border:SetBackdropColor(0.1, 0.1, 0.1, 0.5)
 	border:SetBackdropBorderColor(0.4, 0.4, 0.4)

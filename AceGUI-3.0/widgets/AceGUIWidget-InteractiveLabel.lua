@@ -34,14 +34,18 @@ end
 Scripts
 -------------------------------------------------------------------------------]]
 local function Control_OnEnter(frame)
+	frame = frame or this
 	frame.obj:Fire("OnEnter")
 end
 
 local function Control_OnLeave(frame)
+	frame = frame or this
 	frame.obj:Fire("OnLeave")
 end
 
 local function Label_OnClick(frame, button)
+	frame = frame or this
+	button = button or arg1
 	frame.obj:Fire("OnClick", button)
 	AceGUI:ClearFocus()
 end

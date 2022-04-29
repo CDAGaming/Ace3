@@ -102,23 +102,28 @@ end
 Scripts
 -------------------------------------------------------------------------------]]
 local function Control_OnEnter(frame)
+	frame = frame or this
 	frame.obj:Fire("OnEnter")
 end
 
 local function Control_OnLeave(frame)
+	frame = frame or this
 	frame.obj:Fire("OnLeave")
 end
 
 local function Frame_OnShowFocus(frame)
+	frame = frame or this
 	frame.obj.editbox:SetFocus()
 	frame:SetScript("OnShow", nil)
 end
 
 local function EditBox_OnEscapePressed(frame)
+	frame = frame or this
 	AceGUI:ClearFocus()
 end
 
 local function EditBox_OnEnterPressed(frame)
+	frame = frame or this
 	local self = frame.obj
 	local value = frame:GetText()
 	local cancel = self:Fire("OnEnterPressed", value)
@@ -129,6 +134,7 @@ local function EditBox_OnEnterPressed(frame)
 end
 
 local function EditBox_OnReceiveDrag(frame)
+	frame = frame or this
 	local self = frame.obj
 	local type, id, info = GetCursorInfo()
 	local name
@@ -149,6 +155,7 @@ local function EditBox_OnReceiveDrag(frame)
 end
 
 local function EditBox_OnTextChanged(frame)
+	frame = frame or this
 	local self = frame.obj
 	local value = frame:GetText()
 	if tostring(value) ~= tostring(self.lasttext) then
@@ -159,10 +166,12 @@ local function EditBox_OnTextChanged(frame)
 end
 
 local function EditBox_OnFocusGained(frame)
+	frame = frame or this
 	AceGUI:SetFocus(frame.obj)
 end
 
 local function Button_OnClick(frame)
+	frame = frame or this
 	local editbox = frame.obj.editbox
 	editbox:ClearFocus()
 	EditBox_OnEnterPressed(editbox)
@@ -203,7 +212,11 @@ local methods = {
 	["SetText"] = function(self, text)
 		self.lasttext = text or ""
 		self.editbox:SetText(text or "")
-		self.editbox:SetCursorPosition(0)
+		if self.editbox.SetCursorPosition then
+			self.editbox:SetCursorPosition(0)
+		else
+			EditBoxSetCursorPosition(self.editbox, 0)
+		end
 		HideButton(self)
 	end,
 
@@ -277,7 +290,7 @@ local function Constructor()
 	editbox:SetTextInsets(0, 0, 3, 3)
 	editbox:SetMaxLetters(256)
 	editbox:SetPoint("BOTTOMLEFT", 6, 0)
-	editbox:SetPoint("BOTTOMRIGHT")
+	editbox:SetPoint("BOTTOMRIGHT", 0, 0)
 	editbox:SetHeight(19)
 
 	local label = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")

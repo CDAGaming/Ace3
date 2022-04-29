@@ -39,14 +39,17 @@ end
 Scripts
 -------------------------------------------------------------------------------]]
 local function Control_OnEnter(frame)
+	frame = frame or this
 	frame.obj:Fire("OnEnter")
 end
 
 local function Control_OnLeave(frame)
+	frame = frame or this
 	frame.obj:Fire("OnLeave")
 end
 
 local function ColorSwatch_OnClick(frame)
+	frame = frame or this
 	ColorPickerFrame:Hide()
 	local self = frame.obj
 	if not self.disabled then
@@ -141,7 +144,7 @@ local function Constructor()
 	colorSwatch:SetWidth(19)
 	colorSwatch:SetHeight(19)
 	colorSwatch:SetTexture("Interface\\ChatFrame\\ChatFrameColorSwatch")
-	colorSwatch:SetPoint("LEFT")
+	colorSwatch:SetPoint("LEFT", 0, 0)
 
 	local texture = frame:CreateTexture(nil, "BACKGROUND")
 	colorSwatch.background = texture
@@ -171,7 +174,7 @@ local function Constructor()
 	text:SetJustifyH("LEFT")
 	text:SetTextColor(1, 1, 1)
 	text:SetPoint("LEFT", colorSwatch, "RIGHT", 2, 0)
-	text:SetPoint("RIGHT")
+	text:SetPoint("RIGHT", 0, 0)
 
 	--local highlight = frame:CreateTexture(nil, "HIGHLIGHT")
 	--highlight:SetTexture("Interface\\QuestFrame\\UI-QuestTitleHighlight")

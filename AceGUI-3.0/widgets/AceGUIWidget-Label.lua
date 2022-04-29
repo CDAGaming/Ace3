@@ -57,27 +57,27 @@ local function UpdateImageAnchor(self)
 		local imagewidth = image:GetWidth()
 		if (width - imagewidth) < 200 or (label:GetText() or "") == "" then
 			-- image goes on top centered when less than 200 width for the text, or if there is no text
-			image:SetPoint("TOP")
+			image:SetPoint("TOP", 0, 0)
 			label:SetPoint("TOP", image, "BOTTOM")
-			label:SetPoint("LEFT")
+			label:SetPoint("LEFT", 0, 0)
 			label:SetWidth(width)
-			height = image:GetHeight() + label:GetStringHeight()
+			height = image:GetHeight() + (label.GetStringHeight and label:GetStringHeight() or label:GetHeight())
 		else
 			-- image on the left
-			image:SetPoint("TOPLEFT")
-			if image:GetHeight() > label:GetStringHeight() then
+			image:SetPoint("TOPLEFT", 0, 0)
+			if image:GetHeight() > (label.GetStringHeight and label:GetStringHeight() or label:GetHeight()) then
 				label:SetPoint("LEFT", image, "RIGHT", 4, 0)
 			else
 				label:SetPoint("TOPLEFT", image, "TOPRIGHT", 4, 0)
 			end
 			label:SetWidth(width - imagewidth - 4)
-			height = max(image:GetHeight(), label:GetStringHeight())
+			height = max(image:GetHeight(), (label.GetStringHeight and label:GetStringHeight() or label:GetHeight()))
 		end
 	else
 		-- no image shown
-		label:SetPoint("TOPLEFT")
+		label:SetPoint("TOPLEFT", 0, 0)
 		label:SetWidth(width)
-		height = label:GetStringHeight()
+		height = (label.GetStringHeight and label:GetStringHeight() or label:GetHeight())
 	end
 
 	-- avoid zero-height labels, since they can used as spacers

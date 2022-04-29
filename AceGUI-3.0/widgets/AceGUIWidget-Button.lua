@@ -48,16 +48,19 @@ end
 Scripts
 -------------------------------------------------------------------------------]]
 local Button_OnClick = vararg(1, function(frame, arg)
+	frame = frame or this
 	AceGUI:ClearFocus()
 	PlaySound((wowThirdLegion or wowClassicRebased or wowTBCRebased or wowWrathRebased) and 852 or "igMainMenuOption") -- SOUNDKIT.IG_MAINMENU_OPTION
 	frame.obj:Fire("OnClick", unpack(arg))
 end)
 
 local function Control_OnEnter(frame)
+	frame = frame or this
 	frame.obj:Fire("OnEnter")
 end
 
 local function Control_OnLeave(frame)
+	frame = frame or this
 	frame.obj:Fire("OnLeave")
 end
 

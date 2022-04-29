@@ -42,28 +42,34 @@ local CreateFrame, UIParent = CreateFrame, UIParent
 Scripts
 -------------------------------------------------------------------------------]]
 local function Button_OnClick(frame)
+	frame = frame or this
 	PlaySound((wowThirdLegion or wowClassicRebased or wowTBCRebased or wowWrathRebased) and 799 or "gsTitleOptionExit") -- SOUNDKIT.GS_TITLE_OPTION_EXIT
 	frame.obj:Hide()
 end
 
 local function Frame_OnShow(frame)
+	frame = frame or this
 	frame.obj:Fire("OnShow")
 end
 
 local function Frame_OnClose(frame)
+	frame = frame or this
 	frame.obj:Fire("OnClose")
 end
 
 local function Frame_OnMouseDown(frame)
+	frame = frame or this
 	AceGUI:ClearFocus()
 end
 
 local function Title_OnMouseDown(frame)
+	frame = frame or this
 	frame:GetParent():StartMoving()
 	AceGUI:ClearFocus()
 end
 
 local function MoverSizer_OnMouseUp(mover)
+	mover = mover or this
 	local frame = mover:GetParent()
 	frame:StopMovingOrSizing()
 	local self = frame.obj
@@ -75,25 +81,30 @@ local function MoverSizer_OnMouseUp(mover)
 end
 
 local function SizerSE_OnMouseDown(frame)
+	frame = frame or this
 	frame:GetParent():StartSizing("BOTTOMRIGHT")
 	AceGUI:ClearFocus()
 end
 
 local function SizerS_OnMouseDown(frame)
+	frame = frame or this
 	frame:GetParent():StartSizing("BOTTOM")
 	AceGUI:ClearFocus()
 end
 
 local function SizerE_OnMouseDown(frame)
+	frame = frame or this
 	frame:GetParent():StartSizing("RIGHT")
 	AceGUI:ClearFocus()
 end
 
 local function StatusBar_OnEnter(frame)
+	frame = frame or this
 	frame.obj:Fire("OnEnterStatusBar")
 end
 
 local function StatusBar_OnLeave(frame)
+	frame = frame or this
 	frame.obj:Fire("OnLeaveStatusBar")
 end
 
@@ -178,7 +189,7 @@ local methods = {
 			frame:SetPoint("TOP", UIParent, "BOTTOM", 0, status.top)
 			frame:SetPoint("LEFT", UIParent, "LEFT", status.left, 0)
 		else
-			frame:SetPoint("CENTER")
+			frame:SetPoint("CENTER", 0, 0)
 		end
 	end
 }
@@ -272,7 +283,7 @@ local function Constructor()
 	titlebg_r:SetHeight(40)
 
 	local sizer_se = CreateFrame("Frame", nil, frame)
-	sizer_se:SetPoint("BOTTOMRIGHT")
+	sizer_se:SetPoint("BOTTOMRIGHT", 0, 0)
 	sizer_se:SetWidth(25)
 	sizer_se:SetHeight(25)
 	sizer_se:EnableMouse()
@@ -297,7 +308,7 @@ local function Constructor()
 
 	local sizer_s = CreateFrame("Frame", nil, frame)
 	sizer_s:SetPoint("BOTTOMRIGHT", -25, 0)
-	sizer_s:SetPoint("BOTTOMLEFT")
+	sizer_s:SetPoint("BOTTOMLEFT", 0, 0)
 	sizer_s:SetHeight(25)
 	sizer_s:EnableMouse(true)
 	sizer_s:SetScript("OnMouseDown", SizerS_OnMouseDown)
@@ -305,7 +316,7 @@ local function Constructor()
 
 	local sizer_e = CreateFrame("Frame", nil, frame)
 	sizer_e:SetPoint("BOTTOMRIGHT", 0, 25)
-	sizer_e:SetPoint("TOPRIGHT")
+	sizer_e:SetPoint("TOPRIGHT", 0, 0)
 	sizer_e:SetWidth(25)
 	sizer_e:EnableMouse(true)
 	sizer_e:SetScript("OnMouseDown", SizerE_OnMouseDown)

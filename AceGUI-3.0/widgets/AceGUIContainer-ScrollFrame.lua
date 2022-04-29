@@ -18,6 +18,7 @@ local CreateFrame, UIParent = CreateFrame, UIParent
 Support functions
 -------------------------------------------------------------------------------]]
 local function FixScrollOnUpdate(frame)
+	frame = frame or this
 	frame:SetScript("OnUpdate", nil)
 	frame.obj:FixScroll()
 end
@@ -26,14 +27,19 @@ end
 Scripts
 -------------------------------------------------------------------------------]]
 local function ScrollFrame_OnMouseWheel(frame, value)
+	frame = frame or this
+	value = value or arg1
 	frame.obj:MoveScroll(value)
 end
 
 local function ScrollFrame_OnSizeChanged(frame)
+	frame = frame or this
 	frame:SetScript("OnUpdate", FixScrollOnUpdate)
 end
 
 local function ScrollBar_OnScrollValueChanged(frame, value)
+	frame = frame or this
+	value = value or arg1
 	frame.obj:SetScroll(value)
 end
 
@@ -51,7 +57,7 @@ local methods = {
 		for k in pairs(self.localstatus) do
 			self.localstatus[k] = nil
 		end
-		self.scrollframe:SetPoint("BOTTOMRIGHT")
+		self.scrollframe:SetPoint("BOTTOMRIGHT", 0, 0)
 		self.scrollbar:Hide()
 		self.scrollBarShown = nil
 		self.content.height, self.content.width, self.content.original_width = nil, nil, nil
@@ -102,7 +108,7 @@ local methods = {
 				self.scrollBarShown = nil
 				self.scrollbar:Hide()
 				self.scrollbar:SetValue(0)
-				self.scrollframe:SetPoint("BOTTOMRIGHT")
+				self.scrollframe:SetPoint("BOTTOMRIGHT", 0, 0)
 				if self.content.original_width then
 					self.content.width = self.content.original_width
 				end
@@ -169,8 +175,8 @@ local function Constructor()
 	local num = AceGUI:GetNextWidgetNum(Type)
 
 	local scrollframe = CreateFrame("ScrollFrame", nil, frame)
-	scrollframe:SetPoint("TOPLEFT")
-	scrollframe:SetPoint("BOTTOMRIGHT")
+	scrollframe:SetPoint("TOPLEFT", 0, 0)
+	scrollframe:SetPoint("BOTTOMRIGHT", 0, 0)
 	scrollframe:EnableMouseWheel(true)
 	scrollframe:SetScript("OnMouseWheel", ScrollFrame_OnMouseWheel)
 	scrollframe:SetScript("OnSizeChanged", ScrollFrame_OnSizeChanged)
@@ -196,8 +202,8 @@ local function Constructor()
 
 	--Container Support
 	local content = CreateFrame("Frame", nil, scrollframe)
-	content:SetPoint("TOPLEFT")
-	content:SetPoint("TOPRIGHT")
+	content:SetPoint("TOPLEFT", 0, 0)
+	content:SetPoint("TOPRIGHT", 0, 0)
 	content:SetHeight(400)
 	scrollframe:SetScrollChild(content)
 

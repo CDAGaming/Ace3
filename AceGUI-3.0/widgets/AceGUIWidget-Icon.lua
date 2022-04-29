@@ -23,14 +23,18 @@ local CreateFrame, UIParent = CreateFrame, UIParent
 Scripts
 -------------------------------------------------------------------------------]]
 local function Control_OnEnter(frame)
+	frame = frame or this
 	frame.obj:Fire("OnEnter")
 end
 
 local function Control_OnLeave(frame)
+	frame = frame or this
 	frame.obj:Fire("OnLeave")
 end
 
 local function Button_OnClick(frame, button)
+	frame = frame or this
+	button = button or arg1
 	frame.obj:Fire("OnClick", button)
 	AceGUI:ClearFocus()
 end
@@ -113,8 +117,8 @@ local function Constructor()
 	frame:SetScript("OnClick", Button_OnClick)
 
 	local label = frame:CreateFontString(nil, "BACKGROUND", "GameFontHighlight")
-	label:SetPoint("BOTTOMLEFT")
-	label:SetPoint("BOTTOMRIGHT")
+	label:SetPoint("BOTTOMLEFT", 0, 0)
+	label:SetPoint("BOTTOMRIGHT", 0, 0)
 	label:SetJustifyH("CENTER")
 	label:SetJustifyV("TOP")
 	label:SetHeight(18)

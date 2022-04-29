@@ -56,10 +56,10 @@ local function AlignImage(self)
 	self.text:ClearAllPoints()
 	if not img then
 		self.text:SetPoint("LEFT", self.checkbg, "RIGHT")
-		self.text:SetPoint("RIGHT")
+		self.text:SetPoint("RIGHT", 0, 0)
 	else
 		self.text:SetPoint("LEFT", self.image, "RIGHT", 1, 0)
-		self.text:SetPoint("RIGHT")
+		self.text:SetPoint("RIGHT", 0, 0)
 	end
 end
 
@@ -67,14 +67,17 @@ end
 Scripts
 -------------------------------------------------------------------------------]]
 local function Control_OnEnter(frame)
+	frame = frame or this
 	frame.obj:Fire("OnEnter")
 end
 
 local function Control_OnLeave(frame)
+	frame = frame or this
 	frame.obj:Fire("OnLeave")
 end
 
 local function CheckBox_OnMouseDown(frame)
+	frame = frame or this
 	local self = frame.obj
 	if not self.disabled then
 		if self.image:GetTexture() then
@@ -87,6 +90,7 @@ local function CheckBox_OnMouseDown(frame)
 end
 
 local function CheckBox_OnMouseUp(frame)
+	frame = frame or this
 	local self = frame.obj
 	if not self.disabled then
 		self:ToggleChecked()
@@ -123,7 +127,7 @@ local methods = {
 		if self.desc then
 			self.desc:SetWidth(width - 30)
 			if self.desc:GetText() and self.desc:GetText() ~= "" then
-				self:SetHeight(28 + self.desc:GetStringHeight())
+				self:SetHeight(28 + (self.desc.GetStringHeight and self.desc:GetStringHeight() or self.desc:GetHeight()))
 			end
 		end
 	end,
@@ -243,7 +247,7 @@ local methods = {
 			self.desc:Show()
 			--self.text:SetFontObject(GameFontNormal)
 			self.desc:SetText(desc)
-			self:SetHeight(28 + self.desc:GetStringHeight())
+			self:SetHeight(28 + (self.desc.GetStringHeight and self.desc:GetStringHeight() or self.desc:GetHeight()))
 		else
 			if self.desc then
 				self.desc:SetText("")
@@ -286,7 +290,7 @@ local function Constructor()
 	local checkbg = frame:CreateTexture(nil, "ARTWORK")
 	checkbg:SetWidth(24)
 	checkbg:SetHeight(24)
-	checkbg:SetPoint("TOPLEFT")
+	checkbg:SetPoint("TOPLEFT", 0, 0)
 	checkbg:SetTexture("Interface\\Buttons\\UI-CheckBox-Up")
 
 	local check = frame:CreateTexture(nil, "OVERLAY")
@@ -297,7 +301,7 @@ local function Constructor()
 	text:SetJustifyH("LEFT")
 	text:SetHeight(18)
 	text:SetPoint("LEFT", checkbg, "RIGHT")
-	text:SetPoint("RIGHT")
+	text:SetPoint("RIGHT", 0, 0)
 
 	local highlight = frame:CreateTexture(nil, "HIGHLIGHT")
 	highlight:SetTexture("Interface\\Buttons\\UI-CheckBox-Highlight")

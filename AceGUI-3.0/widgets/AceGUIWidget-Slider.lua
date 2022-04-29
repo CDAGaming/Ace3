@@ -55,19 +55,24 @@ end
 Scripts
 -------------------------------------------------------------------------------]]
 local function Control_OnEnter(frame)
+	frame = frame or this
 	frame.obj:Fire("OnEnter")
 end
 
 local function Control_OnLeave(frame)
+	frame = frame or this
 	frame.obj:Fire("OnLeave")
 end
 
 local function Frame_OnMouseDown(frame)
+	frame = frame or this
 	frame.obj.slider:EnableMouseWheel(true)
 	AceGUI:ClearFocus()
 end
 
 local function Slider_OnValueChanged(frame, newvalue)
+	frame = frame or this
+	newvalue = newvalue or arg1
 	local self = frame.obj
 	if not frame.setup then
 		if self.step and self.step > 0 then
@@ -85,11 +90,14 @@ local function Slider_OnValueChanged(frame, newvalue)
 end
 
 local function Slider_OnMouseUp(frame)
+	frame = frame or this
 	local self = frame.obj
 	self:Fire("OnMouseUp", self.value)
 end
 
 local function Slider_OnMouseWheel(frame, v)
+	frame = frame or this
+	v = v or arg1
 	local self = frame.obj
 	if not self.disabled then
 		local value = self.value
@@ -103,10 +111,12 @@ local function Slider_OnMouseWheel(frame, v)
 end
 
 local function EditBox_OnEscapePressed(frame)
+	frame = frame or this
 	frame:ClearFocus()
 end
 
 local function EditBox_OnEnterPressed(frame)
+	frame = frame or this
 	local self = frame.obj
 	local value = frame:GetText()
 	if self.ispercent then
@@ -124,10 +134,12 @@ local function EditBox_OnEnterPressed(frame)
 end
 
 local function EditBox_OnEnter(frame)
+	frame = frame or this
 	frame:SetBackdropBorderColor(0.5, 0.5, 0.5, 1)
 end
 
 local function EditBox_OnLeave(frame)
+	frame = frame or this
 	frame:SetBackdropBorderColor(0.3, 0.3, 0.3, 0.8)
 end
 
@@ -230,8 +242,8 @@ local function Constructor()
 	frame:SetScript("OnMouseDown", Frame_OnMouseDown)
 
 	local label = frame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-	label:SetPoint("TOPLEFT")
-	label:SetPoint("TOPRIGHT")
+	label:SetPoint("TOPLEFT", 0, 0)
+	label:SetPoint("TOPRIGHT", 0, 0)
 	label:SetJustifyH("CENTER")
 	label:SetHeight(15)
 

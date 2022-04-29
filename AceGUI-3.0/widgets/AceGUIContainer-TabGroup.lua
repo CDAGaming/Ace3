@@ -23,7 +23,7 @@ wipe = (wipe or function(table)
 	return table
 end)
 
-local wowCata, wowWrath, wowThirdLegion, wowClassicRebased, wowTBCRebased, wowWrathRebased
+local wowLegacy, wowCata, wowWrath, wowThirdLegion, wowClassicRebased, wowTBCRebased, wowWrathRebased
 do
 	local _, build, _, interface = GetBuildInfo()
 	interface = interface or tonumber(build)
@@ -33,6 +33,7 @@ do
 	wowWrath = (interface >= 30000 and not wowWrathRebased)
 	wowCata = (interface >= 40000)
 	wowThirdLegion = (interface >= 70300)
+	wowLegacy = (interface <= 11201)
 end
 
 -- WoW APIs
@@ -85,6 +86,7 @@ local function Tab_SetDisabled(frame, disabled)
 end
 
 local function BuildTabsOnUpdate(frame)
+	frame = frame or this
 	local self = frame.obj
 	self:BuildTabs()
 	frame:SetScript("OnUpdate", nil)
@@ -94,6 +96,7 @@ end
 Scripts
 -------------------------------------------------------------------------------]]
 local function Tab_OnClick(frame)
+	frame = frame or this
 	if not (frame.selected or frame.disabled) then
 		PlaySound((wowThirdLegion or wowClassicRebased or wowTBCRebased or wowWrathRebased) and 841 or "igCharacterInfoTab") -- SOUNDKIT.IG_CHARACTER_INFO_TAB
 		frame.obj:SelectTab(frame.value)
@@ -101,16 +104,19 @@ local function Tab_OnClick(frame)
 end
 
 local function Tab_OnEnter(frame)
+	frame = frame or this
 	local self = frame.obj
 	self:Fire("OnTabEnter", self.tabs[frame.id].value, frame)
 end
 
 local function Tab_OnLeave(frame)
+	frame = frame or this
 	local self = frame.obj
 	self:Fire("OnTabLeave", self.tabs[frame.id].value, frame)
 end
 
 local function Tab_OnShow(frame)
+	frame = frame or this
 	_G[frame:GetName().."HighlightTexture"]:SetWidth(frame:GetTextWidth() + 30)
 end
 
@@ -135,7 +141,7 @@ local methods = {
 
 	["CreateTab"] = function(self, id)
 		local tabname = format("AceGUITabGroup%dTab%d", self.num, id)
-		local tab = CreateFrame("Button", tabname, self.border, "OptionsFrameTabButtonTemplate")
+		local tab = CreateFrame("Button", tabname, self.border, wowLegacy and "TabButtonTemplate" or "OptionsFrameTabButtonTemplate")
 		tab.obj = self
 		tab.id = id
 

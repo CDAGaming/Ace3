@@ -32,14 +32,18 @@ Scripts
 -------------------------------------------------------------------------------]]
 
 local function Control_OnEnter(frame)
+	frame = frame or this
 	frame.obj:Fire("OnEnter")
 end
 
 local function Control_OnLeave(frame)
+	frame = frame or this
 	frame.obj:Fire("OnLeave")
 end
 
 local function Keybinding_OnClick(frame, button)
+	frame = frame or this
+	button = button or arg1
 	if button == "LeftButton" or button == "RightButton" then
 		local self = frame.obj
 		if self.waitingForKey then
@@ -66,6 +70,8 @@ local ignoreKeys = {
 	["RSHIFT"] = true, ["RCTRL"] = true, ["RALT"] = true,
 }
 local function Keybinding_OnKeyDown(frame, key)
+	frame = frame or this
+	key = key or arg1
 	local self = frame.obj
 	if self.waitingForKey then
 		local keyPressed = key
@@ -98,6 +104,8 @@ local function Keybinding_OnKeyDown(frame, key)
 end
 
 local function Keybinding_OnMouseDown(frame, button)
+	frame = frame or this
+	button = button or arg1
 	if button == "LeftButton" or button == "RightButton" then
 		return
 	elseif button == "MiddleButton" then
@@ -111,6 +119,8 @@ local function Keybinding_OnMouseDown(frame, button)
 end
 
 local function Keybinding_OnMouseWheel(frame, direction)
+	frame = frame or this
+	direction = direction or arg1
 	local button
 	if direction >= 0 then
 		button = "MOUSEWHEELUP"
@@ -202,6 +212,7 @@ local ControlBackdrop  = {
 }
 
 local function keybindingMsgFixWidth(frame)
+	frame = frame or this
 	frame:SetWidth(frame.msg:GetWidth() + 10)
 	frame:SetScript("OnUpdate", nil)
 end
@@ -221,8 +232,8 @@ local function Constructor()
 	button:SetScript("OnKeyDown", Keybinding_OnKeyDown)
 	button:SetScript("OnMouseDown", Keybinding_OnMouseDown)
 	button:SetScript("OnMouseWheel", Keybinding_OnMouseWheel)
-	button:SetPoint("BOTTOMLEFT")
-	button:SetPoint("BOTTOMRIGHT")
+	button:SetPoint("BOTTOMLEFT", 0, 0)
+	button:SetPoint("BOTTOMRIGHT", 0, 0)
 	button:SetHeight(24)
 	button:EnableKeyboard(false)
 
@@ -231,8 +242,8 @@ local function Constructor()
 	text:SetPoint("RIGHT", -7, 0)
 
 	local label = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-	label:SetPoint("TOPLEFT")
-	label:SetPoint("TOPRIGHT")
+	label:SetPoint("TOPLEFT", 0, 0)
+	label:SetPoint("TOPRIGHT", 0, 0)
 	label:SetJustifyH("CENTER")
 	label:SetHeight(18)
 
