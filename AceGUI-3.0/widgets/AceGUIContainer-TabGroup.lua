@@ -144,6 +144,24 @@ local methods = {
 		local tab = CreateFrame("Button", tabname, self.border, wowLegacy and "TabButtonTemplate" or "OptionsFrameTabButtonTemplate")
 		tab.obj = self
 		tab.id = id
+		if wowLegacy then
+			tab:SetHeight(24)
+
+			-- Normal texture
+			local texture = _G[tabname.."Left"]
+			texture:SetTexture("Interface\\ChatFrame\\ChatFrameTab")
+			texture = _G[tabname.."Middle"]
+			texture:SetTexture("Interface\\ChatFrame\\ChatFrameTab")
+			texture = _G[tabname.."Right"]
+			texture:SetTexture("Interface\\ChatFrame\\ChatFrameTab")
+			-- Disabled texture
+			texture = _G[tabname.."LeftDisabled"]
+			texture:SetTexture("Interface\\ChatFrame\\ChatFrameTab")
+			texture = _G[tabname.."MiddleDisabled"]
+			texture:SetTexture("Interface\\ChatFrame\\ChatFrameTab")
+			texture = _G[tabname.."RightDisabled"]
+			texture:SetTexture("Interface\\ChatFrame\\ChatFrameTab")
+		end
 
 		tab.text = _G[tabname .. "Text"]
 		tab.text:ClearAllPoints()
@@ -223,9 +241,14 @@ local methods = {
 			end
 
 			tab:Show()
-			tab:SetText(v.text)
-			tab:SetDisabled(v.disabled)
-			tab.value = v.value
+			if type(v) == "table" then
+				tab:SetText(v.text)
+				tab:SetDisabled(v.disabled)
+				tab.value = v.value
+			elseif type(v) == "string" then
+				tab:SetText(v)
+				tab.value = v
+			end
 
 			widths[i] = tab:GetWidth() - 6 --tabs are anchored 10 pixels from the right side of the previous one to reduce spacing, but add a fixed 4px padding for the text
 		end

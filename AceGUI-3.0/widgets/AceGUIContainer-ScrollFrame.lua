@@ -114,6 +114,7 @@ local methods = {
 				end
 				self:DoLayout()
 			end
+			offset = 0
 		else
 			if not self.scrollBarShown then
 				self.scrollBarShown = true
@@ -125,16 +126,18 @@ local methods = {
 				self:DoLayout()
 			end
 			local value = (offset / (viewheight - height) * 1000)
-			if value > 1000 then value = 1000 end
+			if value > 1000 then
+				value = 1000
+				offset = height - viewheight + 2
+			end
 			self.scrollbar:SetValue(value)
 			self:SetScroll(value)
-			if value < 1000 then
-				self.content:ClearAllPoints()
-				self.content:SetPoint("TOPLEFT", 0, offset)
-				self.content:SetPoint("TOPRIGHT", 0, offset)
-				status.offset = offset
-			end
 		end
+		status.offset = offset
+		self.scrollframe:SetScrollChild(self.content)
+		self.content:ClearAllPoints()
+		self.content:SetPoint("TOPLEFT", 0, offset)
+		self.content:SetPoint("TOPRIGHT", 0, offset)
 		self.updateLock = nil
 	end,
 
