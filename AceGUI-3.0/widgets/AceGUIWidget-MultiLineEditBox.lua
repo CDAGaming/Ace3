@@ -5,9 +5,10 @@ if not AceGUI or (AceGUI:GetWidgetVersion(Type) or 0) >= Version then return end
 -- Lua APIs
 local pairs, assert, loadstring, tconcat, format = pairs, assert, loadstring, table.concat, string.format
 local unpack, type, error = unpack, type, error
+local gsub, sub = string.gsub, string.sub
 
 -- WoW APIs
-local GetCursorInfo, GetSpellInfo, ClearCursor = GetCursorInfo, GetSpellInfo, ClearCursor
+local GetCursorInfo, ClearCursor = GetCursorInfo, ClearCursor
 local CreateFrame, UIParent = CreateFrame, UIParent
 local _G = getfenv() or _G or {}
 
@@ -66,17 +67,121 @@ end
 Support functions
 -------------------------------------------------------------------------------]]
 
-if not AceGUIMultiLineEditBoxInsertLink and not wowLegacy then
-	-- upgradeable hook
-	hooksecurefunc("ChatEdit_InsertLink", vararg(0, function(arg)
-		return _G.AceGUIMultiLineEditBoxInsertLink(unpack(arg))
-	end))
+if not AceGUIMultiLineEditBoxInsertLink then
+	-- upgradeable hooks
+	if wowLegacy then
+		local GetContainerItemLink = GetContainerItemLink
+		local GetInventoryItemLink = GetInventoryItemLink
+		local GetLootSlotLink = GetLootSlotLink
+		local GetMerchantItemLink = GetMerchantItemLink
+		local GetQuestItemLink = GetQuestItemLink
+		local GetQuestLogItemLink = GetQuestLogItemLink
+		local GetSpellName = GetSpellName
+		local IsShiftKeyDown = IsShiftKeyDown
+		local IsSpellPassive = IsSpellPassive
+		local SpellBook_GetSpellID = SpellBook_GetSpellID
+
+		local BANK_CONTAINER = BANK_CONTAINER
+		local KEYRING_CONTAINER = KEYRING_CONTAINER
+		local MAX_SPELLS = MAX_SPELLS
+
+		hooksecurefunc("BankFrameItemButtonGeneric_OnClick", function(button)
+			if button == "LeftButton" and IsShiftKeyDown() and not this.isBag then
+				return _G.AceGUIMultiLineEditBoxInsertLink(GetContainerItemLink(BANK_CONTAINER, this:GetID()))
+			end
+		end)
+
+		hooksecurefunc("ContainerFrameItemButton_OnClick", function(button, ignoreModifiers)
+			if button == "LeftButton" and IsShiftKeyDown() and not ignoreModifiers then
+				return _G.AceGUIMultiLineEditBoxInsertLink(GetContainerItemLink(this:GetParent():GetID(), this:GetID()))
+			end
+		end)
+
+		hooksecurefunc("KeyRingItemButton_OnClick", function(button)
+			if button == "LeftButton" and IsShiftKeyDown() and not this.isBag then
+				return _G.AceGUIMultiLineEditBoxInsertLink(GetContainerItemLink(KEYRING_CONTAINER, this:GetID()))
+			end
+		end)
+
+		hooksecurefunc("LootFrameItem_OnClick", function(button)
+			if button == "LeftButton" and IsShiftKeyDown() then
+				return _G.AceGUIMultiLineEditBoxInsertLink(GetLootSlotLink(this.slot))
+			end
+		end)
+
+		hooksecurefunc("SetItemRef", function(link, text, button)
+			if IsShiftKeyDown() then
+				if sub(link, 1, 6) == "player" then
+					local name = sub(link,8)
+					if name and name ~= "" then
+						return _G.AceGUIMultiLineEditBoxInsertLink(name)
+					end
+				else
+					return _G.AceGUIMultiLineEditBoxInsertLink(text)
+				end
+			end
+		end)
+
+		hooksecurefunc("MerchantItemButton_OnClick", function(button, ignoreModifiers)
+			if MerchantFrame.selectedTab == 1 and button == "LeftButton" and IsShiftKeyDown() and not ignoreModifiers then
+				return _G.AceGUIMultiLineEditBoxInsertLink(GetMerchantItemLink(this:GetID()))
+			end
+		end)
+
+		hooksecurefunc("PaperDollItemSlotButton_OnClick", function(button, ignoreModifiers)
+			if button == "LeftButton" and IsShiftKeyDown() and not ignoreModifiers then
+				return _G.AceGUIMultiLineEditBoxInsertLink(GetInventoryItemLink("player", this:GetID()))
+			end
+		end)
+
+		hooksecurefunc("QuestItem_OnClick", function()
+			if IsShiftKeyDown() and this.rewardType ~= "spell" then
+				return _G.AceGUIMultiLineEditBoxInsertLink(GetQuestItemLink(this.type, this:GetID()))
+			end
+		end)
+
+		hooksecurefunc("QuestRewardItem_OnClick", function()
+			if IsShiftKeyDown() and this.rewardType ~= "spell" then
+				return _G.AceGUIMultiLineEditBoxInsertLink(GetQuestItemLink(this.type, this:GetID()))
+			end
+		end)
+
+		hooksecurefunc("QuestLogTitleButton_OnClick", function(button)
+			if IsShiftKeyDown() and (not this.isHeader) then
+				return _G.AceGUIMultiLineEditBoxInsertLink(gsub(this:GetText(), " *(.*)", "%1"))
+			end
+		end)
+
+		hooksecurefunc("QuestLogRewardItem_OnClick", function()
+			if IsShiftKeyDown() and this.rewardType ~= "spell" then
+				return _G.AceGUIMultiLineEditBoxInsertLink(GetQuestLogItemLink(this.type, this:GetID()))
+			end
+		end)
+
+		hooksecurefunc("SpellButton_OnClick", function(drag)
+			local id = SpellBook_GetSpellID(this:GetID())
+			if id <= MAX_SPELLS and (not drag) and IsShiftKeyDown() then
+				local spellName, subSpellName = GetSpellName(id, SpellBookFrame.bookType)
+				if spellName and not IsSpellPassive(id, SpellBookFrame.bookType) then
+					if subSpellName and subSpellName ~= "" then
+						_G.AceGUIMultiLineEditBoxInsertLink(spellName.."("..subSpellName..")")
+					else
+						_G.AceGUIMultiLineEditBoxInsertLink(spellName)
+					end
+				end
+			end
+		end)
+	else
+		hooksecurefunc("ChatEdit_InsertLink", vararg(0, function(arg)
+			return _G.AceGUIMultiLineEditBoxInsertLink(unpack(arg))
+		end))
+	end
 end
 
 function _G.AceGUIMultiLineEditBoxInsertLink(text)
 	for i = 1, AceGUI:GetWidgetCount(Type) do
 		local editbox = _G[format("MultiLineEditBox%uEdit", i)]
-		if editbox and editbox:IsVisible() and editbox:HasFocus() then
+		if editbox and editbox:IsVisible() and (editbox.HasFocus and editbox:HasFocus() or editbox.hasfocus) then
 			editbox:Insert(text)
 			return true
 		end
@@ -166,17 +271,28 @@ local function OnMouseUp(self)                                                  
 end
 
 local function OnReceiveDrag(self)                                               -- EditBox / ScrollFrame
+	if not GetCursorInfo then return end
+
 	self = self or this
 	local type, id, info = GetCursorInfo()
 	if type == "spell" then
-		info = GetSpellInfo(id, info)
+		if GetSpellInfo then
+			info = GetSpellInfo(id, info)
+		else
+			local spellName, rank = GetSpellName(id, info)
+			if rank ~= "" then
+				spellName = spellName.."("..rank..")"
+			end
+			info = spellName
+		end
 	elseif type ~= "item" then
 		return
 	end
 	ClearCursor()
 	self = self.obj
 	local editBox = self.editBox
-	if not editBox:HasFocus() then
+	if not (editBox.HasFocus and editBox:HasFocus() or editBox.hasfocus) then
+		editBox.hasfocus = true
 		editBox:SetFocus()
 		if editBox.SetCursorPosition then
 			editBox:SetCursorPosition(editBox:GetNumLetters())
@@ -192,6 +308,10 @@ local function OnSizeChanged(self, width, height)                               
 	self = self or this
 	width = width or arg1
 	height = height or arg2
+	if wowLegacy then
+		self:UpdateScrollChildRect()
+		self:SetVerticalScroll(self:GetHeight())
+	end
 	self.obj.editBox:SetWidth(width)
 end
 
@@ -224,6 +344,10 @@ local function OnVerticalScroll(self, offset)                                   
 	offset = offset or arg1
 	local editBox = self.obj.editBox
 	editBox:SetHitRectInsets(0, 0, offset, editBox:GetHeight() - offset - self:GetHeight())
+
+	self.obj.scrollFrame:SetScrollChild(editBox)
+	editBox:SetPoint("TOPLEFT", 0, offset)
+	editBox:SetPoint("TOPRIGHT", 0, offset)
 end
 
 local function OnShowFocus(frame)
@@ -234,8 +358,13 @@ end
 
 local function OnEditFocusGained(frame)
 	frame = frame or this
+	frame.hasfocus = true
 	AceGUI:SetFocus(frame.obj)
 	frame.obj:Fire("OnEditFocusGained")
+end
+
+local function OnEscapePressed()
+	AceGUI:ClearFocus()
 end
 
 --[[-----------------------------------------------------------------------------
@@ -429,7 +558,7 @@ local function Constructor()
 	editBox:SetScript("OnCursorChanged", OnCursorChanged)
 	editBox:SetScript("OnEditFocusLost", OnEditFocusLost)
 	editBox:SetScript("OnEnter", OnEnter)
-	editBox:SetScript("OnEscapePressed", editBox.ClearFocus)
+	editBox:SetScript("OnEscapePressed", OnEscapePressed)
 	editBox:SetScript("OnLeave", OnLeave)
 	editBox:SetScript("OnMouseDown", OnReceiveDrag)
 	editBox:SetScript("OnReceiveDrag", OnReceiveDrag)
