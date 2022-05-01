@@ -681,13 +681,15 @@ local methods = {
 	end,
 
 	["OnHeightSet"] = function(self, height)
-		local parent = self.parent
-		if parent and height then
-			local _, _, _, _, offset = self:GetPoint()
-			height = (parent.content.height or 0) + (offset or 0) or height
-			self.frame.height = (parent.content.height or 0) + (offset or 0)
+		if wowLegacy then
+			local parent = self.parent
+			if parent and height then
+				local _, _, _, _, offset = self:GetPoint()
+				height = (parent.content.height or 0) + (offset or 0) or height
+				self.frame.height = (parent.content.height or 0) + (offset or 0)
+			end
+			self.treeframe:SetHeight(height)
 		end
-		self.treeframe:SetHeight(height)
 
 		local content = self.content
 		local contentheight = height - 20
