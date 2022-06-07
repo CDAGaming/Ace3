@@ -184,7 +184,13 @@ end
 function _G.AceGUIEditBoxInsertLink(text)
 	for i = 1, AceGUI:GetWidgetCount(Type) do
 		local editbox = _G["AceGUI-3.0EditBox"..i]
-		if editbox and editbox:IsVisible() and (editbox.HasFocus and editbox:HasFocus() or editbox.hasfocus) then
+		local hasfocus = false
+		if editbox.HasFocus then
+			hasfocus = editbox:HasFocus()
+		else
+			hasfocus = editbox.hasfocus
+		end
+		if editbox and editbox:IsVisible() and hasfocus then
 			editbox:Insert(text)
 			return true
 		end

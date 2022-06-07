@@ -181,7 +181,13 @@ end
 function _G.AceGUIMultiLineEditBoxInsertLink(text)
 	for i = 1, AceGUI:GetWidgetCount(Type) do
 		local editbox = _G[format("MultiLineEditBox%uEdit", i)]
-		if editbox and editbox:IsVisible() and (editbox.HasFocus and editbox:HasFocus() or editbox.hasfocus) then
+		local hasfocus = false
+		if editbox.HasFocus then
+			hasfocus = editbox:HasFocus()
+		else
+			hasfocus = editbox.hasfocus
+		end
+		if editbox and editbox:IsVisible() and hasfocus then
 			editbox:Insert(text)
 			return true
 		end
@@ -237,6 +243,7 @@ end
 
 local function OnEditFocusLost(self)                                             -- EditBox
 	self = self or this
+	self.hasfocus = false
 	self:HighlightText(0, 0)
 	self.obj:Fire("OnEditFocusLost")
 end
@@ -291,7 +298,13 @@ local function OnReceiveDrag(self)                                              
 	ClearCursor()
 	self = self.obj
 	local editBox = self.editBox
-	if not (editBox.HasFocus and editBox:HasFocus() or editBox.hasfocus) then
+	local hasfocus = false
+	if editBox.HasFocus then
+		hasfocus = editBox:HasFocus()
+	else
+		hasfocus = editBox.hasfocus
+	end
+	if not hasfocus then
 		editBox.hasfocus = true
 		editBox:SetFocus()
 		if editBox.SetCursorPosition then
@@ -345,9 +358,11 @@ local function OnVerticalScroll(self, offset)                                   
 	local editBox = self.obj.editBox
 	editBox:SetHitRectInsets(0, 0, offset, editBox:GetHeight() - offset - self:GetHeight())
 
-	self.obj.scrollFrame:SetScrollChild(editBox)
-	editBox:SetPoint("TOPLEFT", 0, offset)
-	editBox:SetPoint("TOPRIGHT", 0, offset)
+	if wowLegacy then
+		self.obj.scrollFrame:SetScrollChild(editBox)
+		editBox:SetPoint("TOPLEFT", 0, offset)
+		editBox:SetPoint("TOPRIGHT", 0, offset)
+	end
 end
 
 local function OnShowFocus(frame)
