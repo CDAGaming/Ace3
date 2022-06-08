@@ -116,7 +116,7 @@ local methods = {
 				self.scrollbar:Hide()
 				self.scrollbar:SetValue(0)
 				self.scrollframe:SetPoint("BOTTOMRIGHT", 0, 0)
-				if self.content.original_width then
+				if not wowLegacy and self.content.original_width then
 					self.content.width = self.content.original_width
 				end
 				self:DoLayout()
@@ -129,7 +129,7 @@ local methods = {
 				self.scrollBarShown = true
 				self.scrollbar:Show()
 				self.scrollframe:SetPoint("BOTTOMRIGHT", -20, 0)
-				if self.content.original_width then
+				if not wowLegacy and self.content.original_width then
 					self.content.width = self.content.original_width - 20
 				end
 				self:DoLayout()
@@ -180,8 +180,13 @@ local methods = {
 
 	["OnWidthSet"] = function(self, width)
 		local content = self.content
-		content.width = width - (self.scrollBarShown and 20 or 0)
-		content.original_width = width
+		if wowLegacy then
+			content:SetWidth(width)
+			content.width = width
+		else
+			content.width = width - (self.scrollBarShown and 20 or 0)
+			content.original_width = width
+		end
 	end,
 
 	["OnHeightSet"] = function(self, height)
