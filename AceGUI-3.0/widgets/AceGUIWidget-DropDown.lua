@@ -128,7 +128,9 @@ do
 		end
 		child:ClearAllPoints()
 		child:SetPoint("TOPLEFT", frame, "TOPLEFT", 0, offset)
-		child:SetPoint("TOPRIGHT", frame, "TOPRIGHT", self.slider:IsShown() and -12 or 0, offset)
+		if not wowLegacy then
+			child:SetPoint("TOPRIGHT", frame, "TOPRIGHT", self.slider:IsShown() and -12 or 0, offset)
+		end
 		status.offset = offset
 		status.scrollvalue = value
 	end
@@ -172,7 +174,9 @@ do
 			if value < 1000 then
 				child:ClearAllPoints()
 				child:SetPoint("TOPLEFT", frame, "TOPLEFT", 0, offset)
-				child:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -12, offset)
+				if not wowLegacy then
+					child:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -12, offset)
+				end
 				status.offset = offset
 			end
 		end
@@ -217,7 +221,16 @@ do
 
 		local height = 8
 		for i, item in pairs(items) do
-			item:SetPoint("TOP", itemFrame, "TOP", 0, -2 + (i - 1) * -16)
+			if not wowLegacy then
+				item:SetPoint("TOP", itemFrame, "TOP", 0, -2 + (i - 1) * -16)
+			else
+				if i == 1 then
+					item:SetPoint("TOP", itemFrame, "TOP", 0, -2)
+				else
+					item:SetPoint("TOP", items[i-1].frame, "BOTTOM", 0, 1)
+				end
+			end
+
 			item:Show()
 
 			height = height + 16
@@ -340,16 +353,27 @@ do
 		slider.obj = self
 
 		scrollFrame:SetScrollChild(itemFrame)
+		if wowLegacy then
+			scrollFrame:SetWidth(defaultWidth - 12)
+			scrollFrame:SetHeight(self.maxHeight - 24)
+		end
 		scrollFrame:SetPoint("TOPLEFT", frame, "TOPLEFT", 6, -12)
-		scrollFrame:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", -6, 12)
+		if not wowLegacy then
+			scrollFrame:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", -6, 12)
+		end
 		scrollFrame:EnableMouseWheel(true)
 		scrollFrame:SetScript("OnMouseWheel", OnMouseWheel)
 		scrollFrame:SetScript("OnSizeChanged", OnSizeChanged)
 		scrollFrame:SetToplevel(true)
 		scrollFrame:SetFrameStrata("FULLSCREEN_DIALOG")
 
+		if wowLegacy then
+			itemFrame:SetWidth(defaultWidth - 12)
+		end
 		itemFrame:SetPoint("TOPLEFT", scrollFrame, "TOPLEFT", 0, 0)
-		itemFrame:SetPoint("TOPRIGHT", scrollFrame, "TOPRIGHT", -12, 0)
+		if not wowLegacy then
+			itemFrame:SetPoint("TOPRIGHT", scrollFrame, "TOPRIGHT", -12, 0)
+		end
 		itemFrame:SetHeight(400)
 		itemFrame:SetToplevel(true)
 		itemFrame:SetFrameStrata("FULLSCREEN_DIALOG")
@@ -414,7 +438,12 @@ do
 			AceGUI:ClearFocus()
 		else
 			self.open = true
-			self.pullout:SetWidth(self.pulloutWidth or self.frame:GetWidth())
+			local width = self.pulloutWidth or self.frame:GetWidth()
+			self.pullout:SetWidth(width)
+			if wowLegacy then
+				self.pullout.scrollFrame:SetWidth(width - 12)
+				self.pullout.itemFrame:SetWidth(width - (self.pullout.slider:IsShown() and 24 or 12))
+			end
 			self.pullout:Open("TOPLEFT", self.frame, "BOTTOMLEFT", 0, self.label:IsShown() and -2 or 0)
 			AceGUI:SetFocus(self)
 		end
