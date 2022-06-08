@@ -48,9 +48,9 @@ local function fixstrata(strata, parent)
 	local child
 	local childList = {parent:GetChildren()}
 
+	parent:SetFrameStrata(strata)
 	for i = 1, tgetn(childList) do
 		child = childList[i]
-		child:SetFrameStrata(strata)
 		fixstrata(strata, child)
 	end
 end
