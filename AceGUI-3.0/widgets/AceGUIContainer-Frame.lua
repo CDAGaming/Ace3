@@ -20,14 +20,16 @@ wipe = (wipe or function(table)
 	return table
 end)
 
-local wowThirdLegion, wowClassicRebased, wowTBCRebased, wowWrathRebased
+local wowLegacy, wowBfa, wowThirdLegion, wowClassicRebased, wowTBCRebased, wowWrathRebased
 do
 	local _, build, _, interface = GetBuildInfo()
 	interface = interface or tonumber(build)
+	wowBfa = (interface >= 80000)
 	wowThirdLegion = (interface >= 70300)
 	wowClassicRebased = (interface >= 11300 and interface < 20000)
 	wowTBCRebased = (interface >= 20500 and interface < 30000)
 	wowWrathRebased = (interface >= 30400 and interface < 40000)
+	wowLegacy = (interface <= 11201)
 end
 
 -- WoW APIs
@@ -115,7 +117,9 @@ local methods = {
 	["OnAcquire"] = function(self)
 		self.frame:SetParent(UIParent)
 		self.frame:SetFrameStrata("FULLSCREEN_DIALOG")
-		self.frame:SetFrameLevel(100) -- Lots of room to draw under it
+		if wowBfa then
+			self.frame:SetFrameLevel(100) -- Lots of room to draw under it
+		end
 		self:SetTitle()
 		self:SetStatusText()
 		self:ApplyStatus()
@@ -140,7 +144,7 @@ local methods = {
 
 	["OnHeightSet"] = function(self, height)
 		local content = self.content
-		local contentheight = height - 57
+		local contentheight = height - (wowLegacy and 67 or 57)
 		if contentheight < 0 then
 			contentheight = 0
 		end
@@ -219,7 +223,9 @@ local function Constructor()
 	frame:SetMovable(true)
 	frame:SetResizable(true)
 	frame:SetFrameStrata("FULLSCREEN_DIALOG")
-	frame:SetFrameLevel(100) -- Lots of room to draw under it
+	if wowBfa then
+		frame:SetFrameLevel(100) -- Lots of room to draw under it
+	end
 	frame:SetBackdrop(FrameBackdrop)
 	frame:SetBackdropColor(0, 0, 0, 1)
 	frame:SetMinResize(400, 200)
@@ -325,7 +331,9 @@ local function Constructor()
 	--Container Support
 	local content = CreateFrame("Frame", nil, frame)
 	content:SetPoint("TOPLEFT", 17, -27)
-	content:SetPoint("BOTTOMRIGHT", -17, 40)
+	if not wowLegacy then
+		content:SetPoint("BOTTOMRIGHT", -17, 40)
+	end
 
 	local widget = {
 		localstatus = {},
