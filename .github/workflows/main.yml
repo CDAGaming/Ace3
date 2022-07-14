@@ -32,27 +32,40 @@ jobs:
 
       # we first have to clone the AddOn project, this is a required step
       - name: Clone project
-        uses: actions/checkout@v1
+        uses: actions/checkout@v3
         with:
           # you can specify how much of the commit history you want to fetch,
           # which is useful for controlling the length of the automated changelog
-          fetch-depth: 50
+          fetch-depth: 0
           submodules: "recursive"
 
-      # once cloned, we just run the GitHub Action for the packager project
-      - name: Package and release
-        uses: BigWigsMods/packager@master
+      # run a luacheck analysis before proceeding with release
+      - name: Install and run Luacheck
+        uses: nebularg/actions-luacheck@v1
+        with:
+          args: "--no-color -q"
+          annotate: warning
 
-      # another example where we supply additional arguments, this example is specifically to release
-      # for the Classic version of the game
+      # Release - Retail
+      - name: Package and release for Retail
+        uses: BigWigsMods/packager@master
+        with:
+          args: -g retail
+
+      # Release - Vanilla Classic
       - name: Package and release for Classic
         uses: BigWigsMods/packager@master
         with:
-          args: -g classic -w 0
+          args: -g classic
 
-      # another example where we supply additional arguments, this example is specifically to release
-      # for the TBC Classic version of the game
+      # Release - TBC Classic
       - name: Package and release for TBC Classic
         uses: BigWigsMods/packager@master
         with:
-          args: -g bcc -w 0
+          args: -g bcc
+
+      # Release - Wrath Classic
+      - name: Package and release for Wrath Classic
+        uses: BigWigsMods/packager@master
+        with:
+          args: -g wrath
