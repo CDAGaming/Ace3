@@ -57,7 +57,7 @@ local wowLegacy
 do
 	local _, build, _, interface = GetBuildInfo()
 	interface = interface or tonumber(build)
-	wowLegacy = (interface <= 11201)
+	wowLegacy = (interface < 11300)
 end
 
 -- Global vars/functions that we don't upvalue since they might get hooked, or upgraded

@@ -42,7 +42,7 @@ do
 	local _, build, _, interface = GetBuildInfo()
 	interface = interface or tonumber(build)
 	wowMoP = (interface >= 50000)
-	wowLegacy = (interface <= 11201)
+	wowLegacy = (interface < 11300)
 	wowClassicRebased = (interface >= 11300 and interface < 20000)
 	wowTBCRebased = (interface >= 20500 and interface < 30000)
 	wowWrathRebased = (interface >= 30400 and interface < 40000)

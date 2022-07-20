@@ -10,7 +10,7 @@ local wowLegacy, wowBfa, wowThirdLegion, wowClassicRebased, wowTBCRebased, wowWr
 do
 	local _, build, _, interface = GetBuildInfo()
 	interface = interface or tonumber(build)
-	wowLegacy = (interface <= 11201)
+	wowLegacy = (interface < 11300)
 	wowBfa = (interface >= 80000)
 	wowThirdLegion = (interface >= 70300)
 	wowClassicRebased = (interface >= 11300 and interface < 20000)

@@ -33,7 +33,7 @@ do
 	wowWrath = (interface >= 30000 and not wowWrathRebased)
 	wowCata = (interface >= 40000)
 	wowThirdLegion = (interface >= 70300)
-	wowLegacy = (interface <= 11201)
+	wowLegacy = (interface < 11300)
 end
 
 -- WoW APIs

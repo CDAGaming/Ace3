@@ -15,7 +15,7 @@ local wowLegacy
 do
 	local _, build, _, interface = GetBuildInfo()
 	interface = interface or tonumber(build)
-	wowLegacy = (interface <= 11201)
+	wowLegacy = (interface < 11300)
 end
 
 -- WoW APIs
