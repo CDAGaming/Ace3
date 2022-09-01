@@ -395,7 +395,7 @@ local methods = {
 			toggle:SetHeight(14)
 			toggle:ClearAllPoints()
 			toggle:SetPoint("TOPRIGHT", button, "TOPRIGHT", -6, -1)
-			toggle:SetHighlightTexture("Interface\Buttons\UI-PlusButton-Hilight", "ADD")
+			toggle:SetHighlightTexture("Interface\\Buttons\\UI-PlusButton-Hilight", "ADD")
 			toggle:SetScript("OnClick", Button_OnClick)
 			button.toggle = toggle
 			toggle.obj = button
