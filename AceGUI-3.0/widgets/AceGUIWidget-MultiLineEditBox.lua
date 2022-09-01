@@ -1,4 +1,4 @@
-local Type, Version = "MultiLineEditBox", 29
+local Type, Version = "MultiLineEditBox", 32
 local AceGUI = LibStub and LibStub("AceGUI-3.0", true)
 if not AceGUI or (AceGUI:GetWidgetVersion(Type) or 0) >= Version then return end
 
@@ -365,6 +365,17 @@ local function OnVerticalScroll(self, offset)                                   
 	end
 end
 
+local function OnScrollRangeChanged(self, xrange, yrange)
+	self = self or this
+	xrange = xrange or arg1
+	yrange = yrange or arg2
+	if yrange == 0 then
+		self.obj.editBox:SetHitRectInsets(0, 0, 0, 0)
+	else
+		OnVerticalScroll(self, self:GetVerticalScroll())
+	end
+end
+
 local function OnShowFocus(frame)
 	frame = frame or this
 	frame.obj.editBox:SetFocus()
@@ -493,7 +504,6 @@ local methods = {
 			return EditBoxSetCursorPosition(self.editBox, unpack(arg))
 		end
 	end),
-
 }
 
 --[[-----------------------------------------------------------------------------
@@ -557,8 +567,10 @@ local function Constructor()
 	scrollFrame:SetScript("OnSizeChanged", OnSizeChanged)
 	if scrollFrame.HookScript then
 		scrollFrame:HookScript("OnVerticalScroll", OnVerticalScroll)
+		scrollFrame:HookScript("OnScrollRangeChanged", OnScrollRangeChanged)
 	else
 		HookScript(scrollFrame, "OnVerticalScroll", OnVerticalScroll)
+		HookScript(scrollFrame, "OnScrollRangeChanged", OnScrollRangeChanged)
 	end
 
 	local editBox = CreateFrame("EditBox", format("%s%dEdit", Type, widgetNum), scrollFrame)

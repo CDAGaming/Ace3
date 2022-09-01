@@ -73,7 +73,7 @@ local ItemBase = {
 	-- NOTE: The ItemBase version is added to each item's version number
 	--       to ensure proper updates on ItemBase changes.
 	--       Use at least 1000er steps.
-	version = 1000,
+	version = 2000,
 	counter = 0,
 }
 
@@ -212,7 +212,7 @@ function ItemBase.Create(type)
 	highlight:Hide()
 	self.highlight = highlight
 
-	local check = frame:CreateTexture("OVERLAY")
+	local check = frame:CreateTexture(nil, "OVERLAY")
 	check:SetWidth(16)
 	check:SetHeight(16)
 	check:SetPoint("LEFT",frame,"LEFT",3,-1)
@@ -220,7 +220,7 @@ function ItemBase.Create(type)
 	check:Hide()
 	self.check = check
 
-	local sub = frame:CreateTexture("OVERLAY")
+	local sub = frame:CreateTexture(nil, "OVERLAY")
 	sub:SetWidth(16)
 	sub:SetHeight(16)
 	sub:SetPoint("RIGHT",frame,"RIGHT",-3,-1)
