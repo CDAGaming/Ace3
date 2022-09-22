@@ -2,7 +2,7 @@
 TabGroup Container
 Container that uses tabs on top to switch between groups.
 -------------------------------------------------------------------------------]]
-local Type, Version = "TabGroup", 37
+local Type, Version = "TabGroup", 38
 local AceGUI = LibStub and LibStub("AceGUI-3.0", true)
 if not AceGUI or (AceGUI:GetWidgetVersion(Type) or 0) >= Version then return end
 
@@ -23,7 +23,7 @@ wipe = (wipe or function(table)
 	return table
 end)
 
-local wowLegacy, wowCata, wowWrath, wowThirdLegion, wowClassicRebased, wowTBCRebased, wowWrathRebased
+local wowLegacy, wowDragonflight, wowCata, wowWrath, wowThirdLegion, wowClassicRebased, wowTBCRebased, wowWrathRebased
 do
 	local _, build, _, interface = GetBuildInfo()
 	interface = interface or tonumber(build)
@@ -33,6 +33,7 @@ do
 	wowWrath = (interface >= 30000 and not wowWrathRebased)
 	wowCata = (interface >= 40000)
 	wowThirdLegion = (interface >= 70300)
+	wowDragonflight = (interface >= 100000)
 	wowLegacy = (interface < 11300)
 end
 
@@ -44,6 +45,10 @@ local _G = getfenv() or _G or {}
 -- Global vars/functions that we don't upvalue since they might get hooked, or upgraded
 -- List them here for Mikk's FindGlobals script
 -- GLOBALS: PanelTemplates_TabResize, PanelTemplates_SetDisabledTabState, PanelTemplates_SelectTab, PanelTemplates_DeselectTab
+local PanelTemplates_TabResize = PanelTemplates_TabResize
+local PanelTemplates_SetDisabledTabState = PanelTemplates_SetDisabledTabState
+local PanelTemplates_SelectTab = PanelTemplates_SelectTab
+local PanelTemplates_DeselectTab = PanelTemplates_DeselectTab
 
 -- local upvalue storage used by BuildTabs
 local widths = {}
@@ -53,6 +58,145 @@ local rowends = {}
 --[[-----------------------------------------------------------------------------
 Support functions
 -------------------------------------------------------------------------------]]
+
+if (wowDragonflight) then
+	PanelTemplates_TabResize = function(tab, padding, absoluteSize, minWidth, maxWidth, absoluteTextSize)
+		local tabName = tab:GetName();
+	
+		local buttonMiddle = tab.Middle or tab.middleTexture or _G[tabName.."Middle"];
+		local buttonMiddleDisabled = tab.MiddleDisabled or (tabName and _G[tabName.."MiddleDisabled"]);
+		local left = tab.Left or tab.leftTexture or _G[tabName.."Left"];
+		local sideWidths = 2 * left:GetWidth();
+		local tabText = tab.Text or _G[tab:GetName().."Text"];
+		local highlightTexture = tab.HighlightTexture or (tabName and _G[tabName.."HighlightTexture"]);
+	
+		local width, tabWidth;
+		local textWidth;
+		if ( absoluteTextSize ) then
+			textWidth = absoluteTextSize;
+		else
+			tabText:SetWidth(0);
+			textWidth = tabText:GetWidth();
+		end
+		-- If there's an absolute size specified then use it
+		if ( absoluteSize ) then
+			if ( absoluteSize < sideWidths) then
+				width = 1;
+				tabWidth = sideWidths
+			else
+				width = absoluteSize - sideWidths;
+				tabWidth = absoluteSize
+			end
+			tabText:SetWidth(width);
+		else
+			-- Otherwise try to use padding
+			if ( padding ) then
+				width = textWidth + padding;
+			else
+				width = textWidth + 24;
+			end
+			-- If greater than the maxWidth then cap it
+			if ( maxWidth and width > maxWidth ) then
+				if ( padding ) then
+					width = maxWidth + padding;
+				else
+					width = maxWidth + 24;
+				end
+				tabText:SetWidth(width);
+			else
+				tabText:SetWidth(0);
+			end
+			if (minWidth and width < minWidth) then
+				width = minWidth;
+			end
+			tabWidth = width + sideWidths;
+		end
+	
+		if ( buttonMiddle ) then
+			buttonMiddle:SetWidth(width);
+		end
+		if ( buttonMiddleDisabled ) then
+			buttonMiddleDisabled:SetWidth(width);
+		end
+	
+		tab:SetWidth(tabWidth);
+	
+		if ( highlightTexture ) then
+			highlightTexture:SetWidth(tabWidth);
+		end
+	end
+	
+	PanelTemplates_DeselectTab = function(tab)
+		local name = tab:GetName();
+	
+		local left = tab.Left or _G[name.."Left"];
+		local middle = tab.Middle or _G[name.."Middle"];
+		local right = tab.Right or _G[name.."Right"];
+		left:Show();
+		middle:Show();
+		right:Show();
+		--tab:UnlockHighlight();
+		tab:Enable();
+		local text = tab.Text or _G[name.."Text"];
+		text:SetPoint("CENTER", tab, "CENTER", (tab.deselectedTextX or 0), (tab.deselectedTextY or 2));
+	
+		local leftDisabled = tab.LeftDisabled or _G[name.."LeftDisabled"];
+		local middleDisabled = tab.MiddleDisabled or _G[name.."MiddleDisabled"];
+		local rightDisabled = tab.RightDisabled or _G[name.."RightDisabled"];
+		leftDisabled:Hide();
+		middleDisabled:Hide();
+		rightDisabled:Hide();
+	end
+	
+	PanelTemplates_SelectTab = function(tab)
+		local name = tab:GetName();
+	
+		local left = tab.Left or _G[name.."Left"];
+		local middle = tab.Middle or _G[name.."Middle"];
+		local right = tab.Right or _G[name.."Right"];
+		left:Hide();
+		middle:Hide();
+		right:Hide();
+		--tab:LockHighlight();
+		tab:Disable();
+		tab:SetDisabledFontObject(GameFontHighlightSmall);
+		local text = tab.Text or _G[name.."Text"];
+		text:SetPoint("CENTER", tab, "CENTER", (tab.selectedTextX or 0), (tab.selectedTextY or -3));
+	
+		local leftDisabled = tab.LeftDisabled or _G[name.."LeftDisabled"];
+		local middleDisabled = tab.MiddleDisabled or _G[name.."MiddleDisabled"];
+		local rightDisabled = tab.RightDisabled or _G[name.."RightDisabled"];
+		leftDisabled:Show();
+		middleDisabled:Show();
+		rightDisabled:Show();
+	
+		if GameTooltip:IsOwned(tab) then
+			GameTooltip:Hide();
+		end
+	end
+	
+	PanelTemplates_SetDisabledTabState = function(tab)
+		local name = tab:GetName();
+		local left = tab.Left or _G[name.."Left"];
+		local middle = tab.Middle or _G[name.."Middle"];
+		local right = tab.Right or _G[name.."Right"];
+		left:Show();
+		middle:Show();
+		right:Show();
+		--tab:UnlockHighlight();
+		tab:Disable();
+		tab.text = tab:GetText();
+		-- Gray out text
+		tab:SetDisabledFontObject(GameFontDisableSmall);
+		local leftDisabled = tab.LeftDisabled or _G[name.."LeftDisabled"];
+		local middleDisabled = tab.MiddleDisabled or _G[name.."MiddleDisabled"];
+		local rightDisabled = tab.RightDisabled or _G[name.."RightDisabled"];
+		leftDisabled:Hide();
+		middleDisabled:Hide();
+		rightDisabled:Hide();
+	end
+end
+
 local function UpdateTabLook(frame)
 	if frame.disabled then
 		PanelTemplates_SetDisabledTabState(frame)
@@ -141,7 +285,61 @@ local methods = {
 
 	["CreateTab"] = function(self, id)
 		local tabname = format("AceGUITabGroup%dTab%d", self.num, id)
-		local tab = CreateFrame("Button", tabname, self.border, wowLegacy and "TabButtonTemplate" or "OptionsFrameTabButtonTemplate")
+		local tab = CreateFrame("Button", tabname, self.border, wowLegacy and "TabButtonTemplate" or not wowDragonflight and "OptionsFrameTabButtonTemplate" or nil)
+		if wowDragonflight then
+			tab:SetSize(115, 24)
+			tab.deselectedTextY = -3
+			tab.selectedTextY = -2
+
+			tab.LeftDisabled = tab:CreateTexture(tabname .. "LeftDisabled", "BORDER")
+			tab.LeftDisabled:SetTexture("Interface\\OptionsFrame\\UI-OptionsFrame-ActiveTab")
+			tab.LeftDisabled:SetSize(20, 24)
+			tab.LeftDisabled:SetPoint("BOTTOMLEFT", 0, -3)
+			tab.LeftDisabled:SetTexCoord(0, 0.15625, 0, 1.0)
+
+			tab.MiddleDisabled = tab:CreateTexture(tabname .. "MiddleDisabled", "BORDER")
+			tab.MiddleDisabled:SetTexture("Interface\\OptionsFrame\\UI-OptionsFrame-ActiveTab")
+			tab.MiddleDisabled:SetSize(88, 24)
+			tab.MiddleDisabled:SetPoint("LEFT", tab.LeftDisabled, "RIGHT")
+			tab.MiddleDisabled:SetTexCoord(0.15625, 0.84375, 0, 1.0)
+
+			tab.RightDisabled = tab:CreateTexture(tabname .. "RightDisabled", "BORDER")
+			tab.RightDisabled:SetTexture("Interface\\OptionsFrame\\UI-OptionsFrame-ActiveTab")
+			tab.RightDisabled:SetSize(20, 24)
+			tab.RightDisabled:SetPoint("LEFT", tab.MiddleDisabled, "RIGHT")
+			tab.RightDisabled:SetTexCoord(0.84375, 1.0, 0, 1.0)
+
+			tab.Left = tab:CreateTexture(tabname .. "Left", "BORDER")
+			tab.Left:SetTexture("Interface\\OptionsFrame\\UI-OptionsFrame-InActiveTab")
+			tab.Left:SetSize(20, 24)
+			tab.Left:SetPoint("TOPLEFT")
+			tab.Left:SetTexCoord(0, 0.15625, 0, 1.0)
+
+			tab.Middle = tab:CreateTexture(tabname .. "Middle", "BORDER")
+			tab.Middle:SetTexture("Interface\\OptionsFrame\\UI-OptionsFrame-InActiveTab")
+			tab.Middle:SetSize(88, 24)
+			tab.Middle:SetPoint("LEFT", tab.Left, "RIGHT")
+			tab.Middle:SetTexCoord(0.15625, 0.84375, 0, 1.0)
+
+			tab.Right = tab:CreateTexture(tabname .. "Right", "BORDER")
+			tab.Right:SetTexture("Interface\\OptionsFrame\\UI-OptionsFrame-InActiveTab")
+			tab.Right:SetSize(20, 24)
+			tab.Right:SetPoint("LEFT", tab.Middle, "RIGHT")
+			tab.Right:SetTexCoord(0.84375, 1.0, 0, 1.0)
+
+			tab.Text = tab:CreateFontString(tabname .. "Text")
+			tab:SetFontString(tab.Text)
+
+			tab:SetNormalFontObject(GameFontNormalSmall)
+			tab:SetHighlightFontObject(GameFontHighlightSmall)
+			tab:SetDisabledFontObject(GameFontHighlightSmall)
+			tab:SetHighlightTexture("Interface\\PaperDollInfoFrame\\UI-Character-Tab-Highlight", "ADD")
+			tab.HighlightTexture = tab:GetHighlightTexture()
+			tab.HighlightTexture:ClearAllPoints()
+			tab.HighlightTexture:SetPoint("LEFT", tab, "LEFT", 10, -4)
+			tab.HighlightTexture:SetPoint("RIGHT", tab, "RIGHT", -10, -4)
+			_G[tabname .. "HighlightTexture"] = tab.HighlightTexture
+		end
 		tab.obj = self
 		tab.id = id
 		if wowLegacy then
@@ -163,7 +361,7 @@ local methods = {
 			texture:SetTexture("Interface\\ChatFrame\\ChatFrameTab")
 		end
 
-		tab.text = _G[tabname .. "Text"]
+		tab.text = wowDragonflight and tab.Text or _G[tabname .. "Text"]
 		tab.text:ClearAllPoints()
 		tab.text:SetPoint("LEFT", 14, -3)
 		tab.text:SetPoint("RIGHT", -12, -3)
