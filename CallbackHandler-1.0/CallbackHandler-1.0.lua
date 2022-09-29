@@ -85,7 +85,7 @@ end})
 --   UnregisterName    - name of the callback unregistration API, default "UnregisterCallback"
 --   UnregisterAllName - name of the API to unregister all callbacks, default "UnregisterAllCallbacks". false == don't publish this API.
 
-function CallbackHandler:New(target, RegisterName, UnregisterName, UnregisterAllName)
+function CallbackHandler.New(_self, target, RegisterName, UnregisterName, UnregisterAllName)
 
 	RegisterName = RegisterName or "RegisterCallback"
 	UnregisterName = UnregisterName or "UnregisterCallback"
@@ -101,8 +101,7 @@ function CallbackHandler:New(target, RegisterName, UnregisterName, UnregisterAll
 	local events = setmetatable({}, meta)
 	local registry = { recurse=0, events=events }
 
-	registry.Fire = self:vararg(2, function(self, eventname, arg)
-		self = self or this
+	registry.Fire = _self:vararg(2, function(self, eventname, arg)
 		if not rawget(events, eventname) or not next(events[eventname]) then return end
 		local oldrecurse = registry.recurse
 		registry.recurse = oldrecurse + 1
@@ -133,7 +132,7 @@ function CallbackHandler:New(target, RegisterName, UnregisterName, UnregisterAll
 	--   self with function ref, leads to functionref(...)
 	--   "addonId" (instead of self) with function ref, leads to functionref(...)
 	-- all with an optional arg, which, if present, gets passed as first argument (after self if present)
-	target[RegisterName] = self:vararg(3, function(self, eventname, method, arg)
+	target[RegisterName] = _self:vararg(3, function(self, eventname, method, arg)
 		if type(eventname) ~= "string" then
 			error("Usage: "..RegisterName.."(eventname, method[, arg]): 'eventname' - string expected.", 2)
 		end
