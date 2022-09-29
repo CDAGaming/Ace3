@@ -8,7 +8,7 @@ if not AceGUI or (AceGUI:GetWidgetVersion(Type) or 0) >= Version then return end
 
 -- Lua APIs
 local next, pairs, ipairs, assert, type = next, pairs, ipairs, assert, type
-local math_min, math_max, floor, loadstring = math.min, math.max, floor, loadstring
+local math_min, math_max, floor, loadstring = math.min, math.max, math.floor, loadstring
 local tremove, tinsert, unpack, tconcat, tgetn = table.remove, table.insert, unpack, table.concat, table.getn
 local format, split = string.format, string.split
 
