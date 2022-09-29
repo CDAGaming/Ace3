@@ -59,14 +59,14 @@ local PanelTemplates_DeselectTab = PanelTemplates_DeselectTab
 if (wowDragonflight) then
 	PanelTemplates_TabResize = function(tab, padding, absoluteSize, minWidth, maxWidth, absoluteTextSize)
 		local tabName = tab:GetName();
-	
+
 		local buttonMiddle = tab.Middle or tab.middleTexture or _G[tabName.."Middle"];
 		local buttonMiddleDisabled = tab.MiddleDisabled or (tabName and _G[tabName.."MiddleDisabled"]);
 		local left = tab.Left or tab.leftTexture or _G[tabName.."Left"];
 		local sideWidths = 2 * left:GetWidth();
 		local tabText = tab.Text or _G[tab:GetName().."Text"];
 		local highlightTexture = tab.HighlightTexture or (tabName and _G[tabName.."HighlightTexture"]);
-	
+
 		local width, tabWidth;
 		local textWidth;
 		if ( absoluteTextSize ) then
@@ -108,24 +108,24 @@ if (wowDragonflight) then
 			end
 			tabWidth = width + sideWidths;
 		end
-	
+
 		if ( buttonMiddle ) then
 			buttonMiddle:SetWidth(width);
 		end
 		if ( buttonMiddleDisabled ) then
 			buttonMiddleDisabled:SetWidth(width);
 		end
-	
+
 		tab:SetWidth(tabWidth);
-	
+
 		if ( highlightTexture ) then
 			highlightTexture:SetWidth(tabWidth);
 		end
 	end
-	
+
 	PanelTemplates_DeselectTab = function(tab)
 		local name = tab:GetName();
-	
+
 		local left = tab.Left or _G[name.."Left"];
 		local middle = tab.Middle or _G[name.."Middle"];
 		local right = tab.Right or _G[name.."Right"];
@@ -136,7 +136,7 @@ if (wowDragonflight) then
 		tab:Enable();
 		local text = tab.Text or _G[name.."Text"];
 		text:SetPoint("CENTER", tab, "CENTER", (tab.deselectedTextX or 0), (tab.deselectedTextY or 2));
-	
+
 		local leftDisabled = tab.LeftDisabled or _G[name.."LeftDisabled"];
 		local middleDisabled = tab.MiddleDisabled or _G[name.."MiddleDisabled"];
 		local rightDisabled = tab.RightDisabled or _G[name.."RightDisabled"];
@@ -144,10 +144,10 @@ if (wowDragonflight) then
 		middleDisabled:Hide();
 		rightDisabled:Hide();
 	end
-	
+
 	PanelTemplates_SelectTab = function(tab)
 		local name = tab:GetName();
-	
+
 		local left = tab.Left or _G[name.."Left"];
 		local middle = tab.Middle or _G[name.."Middle"];
 		local right = tab.Right or _G[name.."Right"];
@@ -159,19 +159,19 @@ if (wowDragonflight) then
 		tab:SetDisabledFontObject(GameFontHighlightSmall);
 		local text = tab.Text or _G[name.."Text"];
 		text:SetPoint("CENTER", tab, "CENTER", (tab.selectedTextX or 0), (tab.selectedTextY or -3));
-	
+
 		local leftDisabled = tab.LeftDisabled or _G[name.."LeftDisabled"];
 		local middleDisabled = tab.MiddleDisabled or _G[name.."MiddleDisabled"];
 		local rightDisabled = tab.RightDisabled or _G[name.."RightDisabled"];
 		leftDisabled:Show();
 		middleDisabled:Show();
 		rightDisabled:Show();
-	
+
 		if GameTooltip:IsOwned(tab) then
 			GameTooltip:Hide();
 		end
 	end
-	
+
 	PanelTemplates_SetDisabledTabState = function(tab)
 		local name = tab:GetName();
 		local left = tab.Left or _G[name.."Left"];

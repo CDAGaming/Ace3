@@ -42,6 +42,7 @@ read_globals = {
 	"GetContainerItemLink",
 	"GetCurrentRegion",
 	"GetCursorInfo",
+	"GetCVar",
 	"GetFramerate",
 	"GetInventoryItemLink",
 	"GetLocale",
@@ -74,6 +75,7 @@ read_globals = {
 
 	-- FrameXML API
 	"ChatEdit_GetActiveWindow",
+	"EditBoxGetCursorPosition",
 	"EditBoxSetCursorPosition",
 	"EditBox_OnFocusLost",
 	"InterfaceOptions_AddCategory",

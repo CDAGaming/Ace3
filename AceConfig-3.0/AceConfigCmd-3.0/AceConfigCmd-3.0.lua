@@ -28,9 +28,9 @@ local AceConsole -- LoD
 local AceConsoleName = "AceConsole-3.0"
 
 -- Lua APIs
-local strgsub, strsub, strsplit, strmatch = string.gsub, string.sub, string.split, string.match
+local strgsub, strsub, strsplit, strfind, strmatch = string.gsub, string.sub, string.split, string.find, string.match
 local strlower, strupper, format = string.lower, string.upper, string.format
-local format, tonumber, tostring = string.format, tonumber, tostring
+local tonumber, tostring = tonumber, tostring
 local tsort, tinsert, tconcat, tremove, tgetn = table.sort, table.insert, table.concat, table.remove, table.getn
 local pairs, next, type = pairs, next, type
 local error, assert, loadstring = error, assert, loadstring

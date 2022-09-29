@@ -46,7 +46,7 @@ do
 	end
 
 	local function frameOnMouseDown(frame)
-		frame = frame or this
+		--frame = frame or this
 		AceGUI:ClearFocus()
 	end
 
@@ -58,7 +58,7 @@ do
 
 	local function frameOnMouseUp(frame)
 		frame = frame or this
-		local frame = frame:GetParent()
+		frame = frame:GetParent()
 		frame:StopMovingOrSizing()
 		local self = frame.obj
 		local status = self.status or self.localstatus

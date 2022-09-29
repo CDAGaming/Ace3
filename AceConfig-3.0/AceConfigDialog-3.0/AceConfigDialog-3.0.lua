@@ -14,7 +14,7 @@ if not AceConfigDialog then return end
 
 -- Lua APIs
 local tinsert, tremove, tgetn, tsort, wipe = table.insert, table.remove, table.getn, table.sort, table.wipe
-local strmatch, format, strgsub, strsub, strupper = string.match, string.format, string.gsub, string.sub, string.upper
+local strmatch, format, strgsub, strsplit, strupper = string.match, string.format, string.gsub, string.split, string.upper
 local loadstring, assert, error = loadstring, assert, error
 local pairs, next, type, unpack, ipairs, tconcat = pairs, next, type, unpack, ipairs, table.concat
 local rawset, tostring, tonumber = rawset, tostring, tonumber

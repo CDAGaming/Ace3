@@ -180,7 +180,7 @@ end
 function _G.AceGUIEditBoxInsertLink(text)
 	for i = 1, AceGUI:GetWidgetCount(Type) do
 		local editbox = _G["AceGUI-3.0EditBox"..i]
-		local hasfocus = false
+		local hasfocus
 		if editbox.HasFocus then
 			hasfocus = editbox:HasFocus()
 		else
@@ -225,7 +225,7 @@ local function Frame_OnShowFocus(frame)
 end
 
 local function EditBox_OnEscapePressed(frame)
-	frame = frame or this
+	--frame = frame or this
 	AceGUI:ClearFocus()
 end
 
@@ -245,11 +245,11 @@ local function EditBox_OnReceiveDrag(frame)
 
 	frame = frame or this
 	local self = frame.obj
-	local type, id, info = GetCursorInfo()
+	local infoType, id, info = GetCursorInfo()
 	local name
-	if type == "item" then
+	if infoType == "item" then
 		name = info
-	elseif type == "spell" then
+	elseif infoType == "spell" then
 		if GetSpellInfo then
 			name = GetSpellInfo(id, info)
 		else
@@ -259,7 +259,7 @@ local function EditBox_OnReceiveDrag(frame)
 			end
 			name = spellName
 		end
-	elseif type == "macro" then
+	elseif infoType == "macro" then
 		name = GetMacroInfo(id)
 	end
 	if name then

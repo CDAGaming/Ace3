@@ -335,7 +335,7 @@ do
 
 	local function Frame_OnClick(frame, button)
 		frame = frame or this
-		button = button or arg1
+		--button = button or arg1
 		local self = frame.obj
 		if self.disabled then return end
 		self:Fire("OnClick")
@@ -378,7 +378,7 @@ do
 
 	local function Frame_OnClick(frame, button)
 		frame = frame or this
-		button = button or arg1
+		--button = button or arg1
 		local self = frame.obj
 		if self.disabled then return end
 		self.value = not self.value

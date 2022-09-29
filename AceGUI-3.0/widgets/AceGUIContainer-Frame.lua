@@ -56,7 +56,7 @@ local function Frame_OnClose(frame)
 end
 
 local function Frame_OnMouseDown(frame)
-	frame = frame or this
+	--frame = frame or this
 	AceGUI:ClearFocus()
 end
 

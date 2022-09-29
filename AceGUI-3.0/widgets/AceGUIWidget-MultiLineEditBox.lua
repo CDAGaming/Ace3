@@ -33,15 +33,11 @@ local function vararg(n, f)
 	return assert(loadstring(code, "=(vararg)"))()(f)
 end
 
-local wowMoP, wowLegacy, wowClassicRebased, wowTBCRebased, wowWrathRebased
+local wowLegacy
 do
 	local _, build, _, interface = GetBuildInfo()
 	interface = interface or tonumber(build)
-	wowMoP = (interface >= 50000)
 	wowLegacy = (interface < 11300)
-	wowClassicRebased = (interface >= 11300 and interface < 20000)
-	wowTBCRebased = (interface >= 20500 and interface < 30000)
-	wowWrathRebased = (interface >= 30400 and interface < 40000)
 end
 
 local hooksecurefunc = hooksecurefunc or function (table, functionName, hookfunc)
@@ -177,7 +173,7 @@ end
 function _G.AceGUIMultiLineEditBoxInsertLink(text)
 	for i = 1, AceGUI:GetWidgetCount(Type) do
 		local editbox = _G[format("MultiLineEditBox%uEdit", i)]
-		local hasfocus = false
+		local hasfocus
 		if editbox.HasFocus then
 			hasfocus = editbox:HasFocus()
 		else
@@ -277,8 +273,8 @@ local function OnReceiveDrag(self)                                              
 	if not GetCursorInfo then return end
 
 	self = self or this
-	local type, id, info = GetCursorInfo()
-	if type == "spell" then
+	local infoType, id, info = GetCursorInfo()
+	if infoType == "spell" then
 		if GetSpellInfo then
 			info = GetSpellInfo(id, info)
 		else
@@ -288,13 +284,13 @@ local function OnReceiveDrag(self)                                              
 			end
 			info = spellName
 		end
-	elseif type ~= "item" then
+	elseif infoType ~= "item" then
 		return
 	end
 	ClearCursor()
 	self = self.obj
 	local editBox = self.editBox
-	local hasfocus = false
+	local hasfocus
 	if editBox.HasFocus then
 		hasfocus = editBox:HasFocus()
 	else
@@ -316,7 +312,7 @@ end
 local function OnSizeChanged(self, width, height)                                -- ScrollFrame
 	self = self or this
 	width = width or arg1
-	height = height or arg2
+	--height = height or arg2
 	if wowLegacy then
 		self:UpdateScrollChildRect()
 		self:SetVerticalScroll(self:GetHeight())
@@ -363,7 +359,7 @@ end
 
 local function OnScrollRangeChanged(self, xrange, yrange)
 	self = self or this
-	xrange = xrange or arg1
+	--xrange = xrange or arg1
 	yrange = yrange or arg2
 	if yrange == 0 then
 		self.obj.editBox:SetHitRectInsets(0, 0, 0, 0)
