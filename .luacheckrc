@@ -131,6 +131,7 @@ read_globals = {
 	"arg9",
 	"event",
 	"this",
+	"self",
 
 	-- Lua API Compatibility
 	"math.mod",
