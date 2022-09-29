@@ -51,9 +51,6 @@ end
 -- WoW APIs
 local _G = getfenv() or _G or {}
 
--- Global vars/functions that we don't upvalue since they might get hooked, or upgraded
--- List them here for Mikk's FindGlobals script
--- GLOBALS: DEFAULT_CHAT_FRAME, SlashCmdList, hash_SlashCmdList
 local Print
 do
 local tmp = {}
@@ -200,7 +197,7 @@ function AceConsole:GetArgs(str, numargs, startpos)
 
 	while true do
 		-- find delimiter or hyperlink
-		local ch,_
+		local _
 		pos,_,ch = strfind(str, delim_or_pipe, pos)
 
 		if not pos then break end

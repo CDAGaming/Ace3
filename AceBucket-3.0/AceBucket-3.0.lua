@@ -52,10 +52,6 @@ local type, next, pairs = type, next, pairs
 local tonumber, tostring = tonumber, tostring
 local error = error
 
--- Global vars/functions that we don't upvalue since they might get hooked, or upgraded
--- List them here for Mikk's FindGlobals script
--- GLOBALS: LibStub, geterrorhandler
-
 local bucketCache = setmetatable({}, {__mode='k'})
 
 --[[

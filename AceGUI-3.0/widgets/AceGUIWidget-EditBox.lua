@@ -63,10 +63,6 @@ local hooksecurefunc = hooksecurefunc or function (table, functionName, hookfunc
 	end)
 end
 
--- Global vars/functions that we don't upvalue since they might get hooked, or upgraded
--- List them here for Mikk's FindGlobals script
--- GLOBALS: AceGUIEditBoxInsertLink, ChatFontNormal, OKAY
-
 --[[-----------------------------------------------------------------------------
 Support functions
 -------------------------------------------------------------------------------]]

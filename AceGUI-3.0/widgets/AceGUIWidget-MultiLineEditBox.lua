@@ -33,10 +33,6 @@ local function vararg(n, f)
 	return assert(loadstring(code, "=(vararg)"))()(f)
 end
 
--- Global vars/functions that we don't upvalue since they might get hooked, or upgraded
--- List them here for Mikk's FindGlobals script
--- GLOBALS: ACCEPT, ChatFontNormal
-
 local wowMoP, wowLegacy, wowClassicRebased, wowTBCRebased, wowWrathRebased
 do
 	local _, build, _, interface = GetBuildInfo()

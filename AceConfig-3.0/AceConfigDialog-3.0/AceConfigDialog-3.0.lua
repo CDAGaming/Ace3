@@ -49,12 +49,6 @@ wipe = (wipe or function(table)
 	return table
 end)
 
--- Global vars/functions that we don't upvalue since they might get hooked, or upgraded
--- List them here for Mikk's FindGlobals script
--- GLOBALS: NORMAL_FONT_COLOR, ACCEPT, CANCEL
--- GLOBALS: PlaySound, GameFontHighlight, GameFontHighlightSmall, GameFontHighlightLarge
--- GLOBALS: CloseSpecialWindows, InterfaceOptions_AddCategory, geterrorhandler
-
 AceConfigDialog.OpenFrames = AceConfigDialog.OpenFrames or {}
 AceConfigDialog.Status = AceConfigDialog.Status or {}
 AceConfigDialog.frame = AceConfigDialog.frame or CreateFrame("Frame")
@@ -282,9 +276,8 @@ local GetOptionsMemberValue = AceConfigDialog:vararg(5, function(membername, opt
 		--We have a function to call
 		local info = new()
 		--traverse the options table, picking up the handler and filling the info with the path
-		local handler
 		local group = options
-		handler = group.handler or handler
+		local handler = group.handler
 
 		local x = tgetn(path)
 		for i = 1, x do
@@ -624,8 +617,7 @@ local function OptionOnMouseLeave(widget, event)
 end
 
 local function GetFuncName(option)
-	local type = option.type
-	if type == "execute" then
+	if option.type == "execute" then
 		return "func"
 	else
 		return "set"
@@ -678,7 +670,7 @@ do
 		text:SetPoint("TOP", 0, -16)
 		frame.text = text
 
-		local function newButton(text)
+		local function newButton(newText)
 			local button = CreateFrame("Button", nil, frame)
 			button:SetWidth(128)
 			button:SetHeight(21)
@@ -696,7 +688,7 @@ do
 			button:GetPushedTexture():SetTexCoord(0.0, 1.0, 0.0, 0.71875)
 			button:SetHighlightTexture("Interface\\Buttons\\UI-DialogBox-Button-Highlight")
 			button:GetHighlightTexture():SetTexCoord(0.0, 1.0, 0.0, 0.71875)
-			button:SetText(text)
+			button:SetText(newText)
 			return button
 		end
 
@@ -783,7 +775,7 @@ local ActivateControl = AceConfigDialog:vararg(2, function(widget, event, arg)
 	if group[funcname] ~= nil then
 		func =  group[funcname]
 	end
-	handler = group.handler or handler
+	handler = group.handler
 	confirm = group.confirm
 	validate = group.validate
 	local x = tgetn(path)
@@ -849,7 +841,6 @@ local ActivateControl = AceConfigDialog:vararg(2, function(widget, event, arg)
 		end
 	end
 
-	local rootframe = user.rootframe
 	if not validated or type(validated) == "string" then
 		if not validated then
 			if usage then
@@ -864,8 +855,8 @@ local ActivateControl = AceConfigDialog:vararg(2, function(widget, event, arg)
 		end
 
 		-- show validate message
-		if rootframe.SetStatusText then
-			rootframe:SetStatusText(validated)
+		if user.rootframe.SetStatusText then
+			user.rootframe:SetStatusText(validated)
 		else
 			validationErrorPopup(validated)
 		end
@@ -902,14 +893,14 @@ local ActivateControl = AceConfigDialog:vararg(2, function(widget, event, arg)
 		if type(confirm) == "boolean" then
 			if confirm then
 				if not confirmText then
-					local name, desc = option.name, option.desc
-					if type(name) == "function" then
-						name = name(info)
+					local option_name, desc = option.name, option.desc
+					if type(option_name) == "function" then
+						option_name = option_name(info)
 					end
 					if type(desc) == "function" then
 						desc = desc(info)
 					end
-					confirmText = name
+					confirmText = option_name
 					if desc then
 						confirmText = confirmText.." - "..desc
 					end
@@ -1253,8 +1244,6 @@ local function FeedOptions(appName, options,container,rootframe,path,group,inlin
 				--Control to feed
 				local control
 
-				local name = GetOptionsMemberValue("name", v, options, path, appName)
-
 				if v.type == "execute" then
 
 					local imageCoords = GetOptionsMemberValue("imageCoords",v, options, path, appName)
@@ -1359,7 +1348,7 @@ local function FeedOptions(appName, options,container,rootframe,path,group,inlin
 							end
 							tsort(sorting, sortTblAsStrings)
 						end
-						for k, value in ipairs(sorting) do
+						for _, value in ipairs(sorting) do
 							local text = values[value]
 							local radio = gui:Create("CheckBox")
 							radio:SetLabel(text)
@@ -1441,8 +1430,8 @@ local function FeedOptions(appName, options,container,rootframe,path,group,inlin
 							control:SetWidth(width_multiplier)
 						end
 						--check:SetTriState(v.tristate)
-						for i = 1, tgetn(valuesort) do
-							local key = valuesort[i]
+						for s = 1, tgetn(valuesort) do
+							local key = valuesort[s]
 							local value = GetOptionsMemberValue("get",v, options, path, appName, key)
 							control:SetItemValue(key,value)
 						end
@@ -1454,8 +1443,8 @@ local function FeedOptions(appName, options,container,rootframe,path,group,inlin
 
 						control:PauseLayout()
 						local width = GetOptionsMemberValue("width",v,options,path,appName)
-						for i = 1, tgetn(valuesort) do
-							local value = valuesort[i]
+						for s = 1, tgetn(valuesort) do
+							local value = valuesort[s]
 							local text = values[value]
 							local check = gui:Create("CheckBox")
 							check:SetLabel(text)
@@ -1542,8 +1531,8 @@ local function FeedOptions(appName, options,container,rootframe,path,group,inlin
 						end
 						control:SetImageSize(width, height)
 					end
-					local width = GetOptionsMemberValue("width",v,options,path,appName)
-					control.width = not width and "fill"
+					local controlWidth = GetOptionsMemberValue("width",v,options,path,appName)
+					control.width = not controlWidth and "fill"
 				end
 
 				--Common Init
@@ -1811,29 +1800,29 @@ function AceConfigDialog:FeedGroup(appName,options,container,rootframe,path, isR
 
 		elseif grouptype == "select" then
 
-			local select = gui:Create("DropdownGroup")
-			select:SetTitle(name)
-			InjectInfo(select, options, group, path, rootframe, appName)
-			select:SetCallback("OnGroupSelected", GroupSelected)
+			local selectGroup = gui:Create("DropdownGroup")
+			selectGroup:SetTitle(name)
+			InjectInfo(selectGroup, options, group, path, rootframe, appName)
+			selectGroup:SetCallback("OnGroupSelected", GroupSelected)
 			local status = AceConfigDialog:GetStatusTable(appName, path)
 			if not status.groups then
 				status.groups = {}
 			end
-			select:SetStatusTable(status.groups)
+			selectGroup:SetStatusTable(status.groups)
 			local grouplist, orderlist = BuildSelect(group, options, path, appName)
-			select:SetGroupList(grouplist, orderlist)
-			select:SetUserData("grouplist", grouplist)
-			select:SetUserData("orderlist", orderlist)
+			selectGroup:SetGroupList(grouplist, orderlist)
+			selectGroup:SetUserData("grouplist", grouplist)
+			selectGroup:SetUserData("orderlist", orderlist)
 
 			local firstgroup = orderlist[1]
 			if firstgroup then
-				select:SetGroup((GroupExists(appName, options, path,status.groups.selected) and status.groups.selected) or firstgroup)
+				selectGroup:SetGroup((GroupExists(appName, options, path,status.groups.selected) and status.groups.selected) or firstgroup)
 			end
 
-			select.width = "fill"
-			select.height = "fill"
+			selectGroup.width = "fill"
+			selectGroup.height = "fill"
 
-			container:AddChild(select)
+			container:AddChild(selectGroup)
 
 		--assume tree group by default
 		--if parenttype is tree then this group is already a node on that tree
@@ -2062,13 +2051,13 @@ end)
 -- convert pre-39 BlizOptions structure to the new format
 if oldminor and oldminor < 39 and AceConfigDialog.BlizOptions then
 	local old = AceConfigDialog.BlizOptions
-	local new = {}
+	local newOpt = {}
 	for key, widget in pairs(old) do
 		local appName = widget:GetUserData("appName")
-		if not new[appName] then new[appName] = {} end
-		new[appName][key] = widget
+		if not newOpt[appName] then newOpt[appName] = {} end
+		newOpt[appName][key] = widget
 	end
-	AceConfigDialog.BlizOptions = new
+	AceConfigDialog.BlizOptions = newOpt
 else
 	AceConfigDialog.BlizOptions = AceConfigDialog.BlizOptions or {}
 end

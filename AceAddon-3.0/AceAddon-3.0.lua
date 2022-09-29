@@ -57,10 +57,6 @@ do
 	wowLegacy = (interface < 11300)
 end
 
--- Global vars/functions that we don't upvalue since they might get hooked, or upgraded
--- List them here for Mikk's FindGlobals script
--- GLOBALS: LibStub, IsLoggedIn, geterrorhandler
-
 --[[
 	 xpcall safecall implementation
 ]]

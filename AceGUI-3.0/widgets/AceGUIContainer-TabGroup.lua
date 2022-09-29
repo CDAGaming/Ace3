@@ -42,14 +42,6 @@ local PlaySound = PlaySound
 local CreateFrame, UIParent = CreateFrame, UIParent
 local _G = getfenv() or _G or {}
 
--- Global vars/functions that we don't upvalue since they might get hooked, or upgraded
--- List them here for Mikk's FindGlobals script
--- GLOBALS: PanelTemplates_TabResize, PanelTemplates_SetDisabledTabState, PanelTemplates_SelectTab, PanelTemplates_DeselectTab
-local PanelTemplates_TabResize = PanelTemplates_TabResize
-local PanelTemplates_SetDisabledTabState = PanelTemplates_SetDisabledTabState
-local PanelTemplates_SelectTab = PanelTemplates_SelectTab
-local PanelTemplates_DeselectTab = PanelTemplates_DeselectTab
-
 -- local upvalue storage used by BuildTabs
 local widths = {}
 local rowwidths = {}
@@ -58,6 +50,11 @@ local rowends = {}
 --[[-----------------------------------------------------------------------------
 Support functions
 -------------------------------------------------------------------------------]]
+
+local PanelTemplates_TabResize = PanelTemplates_TabResize
+local PanelTemplates_SetDisabledTabState = PanelTemplates_SetDisabledTabState
+local PanelTemplates_SelectTab = PanelTemplates_SelectTab
+local PanelTemplates_DeselectTab = PanelTemplates_DeselectTab
 
 if (wowDragonflight) then
 	PanelTemplates_TabResize = function(tab, padding, absoluteSize, minWidth, maxWidth, absoluteTextSize)
